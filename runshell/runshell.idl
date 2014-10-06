@@ -1,0 +1,12 @@
+name: runshell
+display: Run Shell
+description: a simple wrapper to run shell scripts 
+execute: thread
+mainfile: runshell.py
+inherits:
+   - DispatchAgent  
+variables:
+   - name: path
+     type: string 
+     help: The path to the shell script   
+

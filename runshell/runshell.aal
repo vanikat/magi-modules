@@ -1,0 +1,60 @@
+## The agent implementation and addressing information 
+agents:
+  script1:
+    group: group1
+    code: runshell 
+    path: /share/magi/modules/runshell/runshell.tar.gz
+    execargs: {'path': '/share/magi/modules/runshell/test.sh'}
+
+## The mapping from the AAL procedure to the experiment apparatus 
+## The topology should have a node named clientnode 
+groups:
+  group1: [node1]
+
+streamstarts: [ main ]
+
+eventstreams:
+  main: 
+       # Run the script test.sh once and generate trigger "execDone" on completion 
+      - type: event
+        agent: script1 
+        method: execute 
+        trigger: execDone 
+        args: {}
+
+      # Wait for the trigger before proceeding 
+      - type: trigger
+        triggers: [ { event: execDone } ] 
+
+      # Run the script again and wait for the trigger  
+      - type: event
+        agent: script1 
+        method: execute 
+        trigger: execDoneAgain 
+        args: {} 
+
+      - type: trigger
+        triggers: [ { event: execDoneAgain } ] 
+
+      # Change the configuration to point to a new script iter.sh 
+      - type: event
+        agent: script1 
+        method: setConfiguration  
+        trigger: configDone 
+        args: 
+            path: "/share/magi/modules/runshell/iter.sh" 
+         
+      # Wait for the configuration to complete 
+      - type: trigger
+        triggers: [ { event: configDone } ] 
+
+      # Run the script iter.sh once and generate trigger "execDoneAgainAndAgain" 
+      - type: event
+        agent: script1 
+        method: execute 
+        trigger: execDoneAgainAndAgain  
+        args: {} 
+
+      # Wait for the execution to complete and then jump to targer exit which unloads agents 
+      - type: trigger
+        triggers: [ { event: execDoneAgainAndAgain, target: exit }, { event: shutdown, target: exit } ] 
