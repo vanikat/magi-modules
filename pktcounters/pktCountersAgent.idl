@@ -1,6 +1,6 @@
 name: pktcounters
 display: System Packet Counters
-description: uses system local features (packet filters, winpcap) to count packets passing through the node
+description: Agent uses system local features (packet filters, winpcap) to populate the traffic passing through all the interfaces
 execute: thread 
 mainfile: pktCountersAgent.py
 variables:
@@ -75,5 +75,26 @@ datatypes:
     byterate:
         type: float
         desc: a byte rate over the last second
-    
+
+dbfields:
+     packets:
+        keytype: int
+        keydesc: Total number of packets per second seen on an interface
+        value: int
+     trafficDirection:
+        keytype: str
+        keydesc: Direction of traffic seen on an interface
+        value: in or out
+     bytes:
+        keytype: int
+        keydesc: Total number of Bytes per second seen on an interface
+        value: int
+     peerNode:
+        keytype: str
+        keydesc: Hostname of peer nodes for a given interface
+        value: str
+     intfName:
+        keytype: str
+        keydesc: Interface name
+        value: ethX
 
