@@ -111,7 +111,14 @@ class CounterRecorder(ReportingDispatchAgent):
 	def populateIntf2Node(self):
 		self.intf2NodeMap = dict()
 		for intf in testbed.getInterfaceList():
-			self.intf2NodeMap[intf.name] = self.intf2Node(intf.name)
+			try:
+				peerNode = self.intf2Node(intf.name)
+			except:
+				# If the topology information is not available,
+				# as in the case of desktop mode
+				log.error("Peer node information could not be retrieved for %s" %(intf.name))
+				peerNode = 'peerNode'
+			self.intf2NodeMap[intf.name] = peerNode
 
 	def intf2Node(self, intf):
 		try:
