@@ -1,0 +1,7 @@
+name: httpserver
+display: HTTP Server
+description: An agent to start, stop and config of a simple HTTP server
+execute: socket 
+mainfile: http_server.py
+inherits:
+   - sharedserver
