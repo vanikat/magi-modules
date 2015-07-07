@@ -2,7 +2,7 @@
 
 from magi.util.agent import DispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
-
+from magi.testbed import testbed
 from subprocess import Popen, PIPE
 import logging
 import sys
@@ -26,12 +26,10 @@ class DTN_send_recv(DispatchAgent):
     
     def setup_server(self, msg):
         
-        configFile = "/proj/montage/exp/casestudy1/servernode_dtn.conf"
+        configFile = "/proj/montage/exp/casestudy1/servernode_dtn.conf" #it is better to take it as an argument
         logFile = "/home/user/dtn/dtnd.log"
         
         log.info("Setting up server")
-#         return True
-        # this has to be changed to setting up a conf file on its own
         
         # this initialized the database required for the DTN
         log.info("Initializing the database")
@@ -88,9 +86,9 @@ class DTN_send_recv(DispatchAgent):
 
     def random_send(self, msg):
         for i in range(0, 50):
-            filename = '/tmp/' + str(i) + '.txt'
+            filename = '/tmp/' + testbed.nodename + str(i) + '.txt'
             Popen(["sudo", "touch", filename])
-            self.start_send(filename, 'dtn://servernode.dtn')
+            self.start_send(filename, 'dtn://hub.dtn')
             #time.sleep(0.5)
         return True  
     
@@ -105,20 +103,10 @@ class DTN_send_recv(DispatchAgent):
                                     "send_time" : t})
             log.info(out)
             log.info("File: %s sent at time: %s " %(filename, str(t)))
-
-
         else:
             log.error(err)
             log.error("Error sending file: %s sent at time: %s " %(filename, str(time.time())))
-        
-        
-    #    if ret_val == 0:
-    #        to_log = "\nFILE: "+filename+" sent at TIME: " + str(t) + "\n"
-    #        log.info(to_log)
-    #    else: 
-    #        to_log = "\nFILE: "+filename+" not sent to "+dest_dtn_eid+". Return Value is" + str(ret_val) + "\n"
-    #        log.info(to_log)
-    
+           
         return True    
 
 
@@ -156,11 +144,11 @@ class DTN_send_recv(DispatchAgent):
             log.info("No client process running")
         return True    
 
-    def parse_output_to_database(out):
+    def parse_output_to_database(self, out):
 	# format of output: "%ld,%ld,%s,%s,%d\n", recv_count, current, host, filename,(int) st.st_size
 	list_out = out.split( );
 	for s in list_out:
-		srno, time, source, filename, size = line.split(',')       # split up line around comma characters
+		srno, time, source, filename, size = s.split(',')       # split up line around comma characters
 		self.collection.insert({"srno" : srno,
 					"recv_time" : time, 
 					"source" : source, 
@@ -176,16 +164,15 @@ class DTN_send_recv(DispatchAgent):
             self.process_dtncpd.terminate()
             out, err = self.process_dtncpd.communicate()
             returncode = self.process_dtncpd.poll()
-            if returncode == 0:
+            if returncode == 143:#this is actually a returncode when the process is terminated using SIGTERM (it is infinaite loop program)
                 log.info("Receive process terminated")
                 log.info("Received Files:")
                 log.info(out)
-		parse_output_to_database(out)
+		self.parse_output_to_database(out)
             else:
                 log.error("Error terminating receive process. Returncode: %d" %(returncode))
                 log.error(err)
-            log.info("Received Files:")
-            log.info(out)
+            	log.info(out)
         else:
             log.info("No receive process running")
         log.info("All done!")

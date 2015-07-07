@@ -16,7 +16,7 @@ sudo /share/magi/dev/source/oasys-old.install /tmp /share/magi/dev/source
 sudo /share/magi/dev/source/dtn.install /tmp /share/magi/dev/source
 
 short_hostname="$(echo $HOSTNAME| cut -d"." -f1)"
-configfile="/proj/montage/modules/DTN_send_recv/"$short_hostname"_dtn.conf"
+configfile="/proj/montage/magi-modules/DTN_send_recv/"$short_hostname"_dtn.conf"
 
 #instantiating DTN
 sudo dtnd -c $configfile --init-db
