@@ -2,12 +2,12 @@
 agents:
   client_agent:
     group: client_group
-    path: /proj/montage/modules/DTN_send_recv
+    path: /proj/montage/magi-modules/DTN_send_recv
     execargs: []
 
   server_agent:
     group: server_group
-    path: /proj/montage/modules/DTN_send_recv 
+    path: /proj/montage/magi-modules/DTN_send_recv 
     execargs: []
 
 ## The mapping from the AAL procedure to the experiment apparatus 
