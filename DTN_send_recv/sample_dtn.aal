@@ -1,0 +1,99 @@
+## The agent implementation and addressing information 
+agents:
+  client_agent:
+    group: client_group
+    path: /proj/montage/modules/DTN_send_recv
+    execargs: []
+
+  server_agent:
+    group: server_group
+    path: /proj/montage/modules/DTN_send_recv 
+    execargs: []
+
+## The mapping from the AAL procedure to the experiment apparatus 
+groups:
+  client_group: [clientnode]
+  server_group: [servernode]
+
+streamstarts: [ serverstream, clientstream, cleanupstream ]
+
+eventstreams:
+  serverstream: 
+      - type: event
+        agent: server_agent 
+        method: setup_server
+        trigger: dtndUpServer
+        args: {}
+
+      - type: trigger
+        triggers: [ {event: dtndUpServer} ] 
+
+      - type: event
+        agent: server_agent 
+        method: start_recv
+        trigger: serverStarted 
+        args: {}
+
+      - type: trigger
+        triggers: [ {event: clientStopped} ] 
+
+      - type: event
+        agent: server_agent 
+        method: stop_recv
+        args: {}
+
+      - type: event
+        agent: server_agent 
+        method: stop_server 
+        trigger: serverStopped 
+        args: {}
+
+  clientstream:      
+      - type: trigger
+        triggers: [ {event: serverStarted } ] 
+
+      - type: event
+        agent: client_agent 
+        method: setup_client
+        trigger: dtndUpClient
+        args: {}
+
+      - type: trigger
+        triggers: [ {event: dtndUpClient } ] 
+
+      - type: event
+        agent: client_agent 
+        method: random_send
+        trigger: filesSent
+        args: {}
+
+      - type: trigger
+        triggers: [ {event: filesSent } ]
+
+      - type: trigger
+        triggers: [ {timeout: 2000 } ]
+
+      - type: event
+        agent: client_agent
+        method: stop_client
+        trigger: clientStopped 
+        args: {}
+      
+
+  cleanupstream:
+      - type: trigger
+        triggers: [ {event: serverStopped } ]
+
+      - type: event
+        agent: server_agent
+        method: close_log
+        trigger: now_exit 
+        args: {}
+
+      - type: trigger
+        triggers: [ {event: now_exit, target: exit} ] 
+
+
+
+###########################################################
+

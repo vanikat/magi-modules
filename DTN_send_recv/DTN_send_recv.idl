@@ -1,0 +1,38 @@
+name: DTN_send_recv
+display: DTN File send and receive agent
+description:  This agent opens the dtn daemon and sends a file and receives a file
+execute: socket 
+mainfile: DTN_send_recv.py
+inherits:
+   - DispatchAgent 
+
+methods:
+   - name: setupServer
+     help: starts the DTN daemon after copying the dtn.conf file on server
+     args: [] 
+   - name: setupClient
+     help: starts the DTN daemon after copying the dtn.conf file on client
+     args: [] 
+   - name: start_recv
+     help: starts the DTN CP daemon which becomes ready to accept files
+     args: []  
+
+#software:
+#    - libxerces-c2-dev
+#    - libxerces-c28
+#    - libxerces-c3.1
+#    - libxerces2-java
+#    - berkely-db
+#    - tcl-old
+#    - oasys-old
+#    - dtn
+
+# sudo apt-get -y install libxerces-c2-dev
+# sudo apt-get -y install libxerces-c28
+# sudo apt-get -y install libxerces-c3.1
+# sudo apt-get -y install libxerces2-java
+# sudo /share/magi/dev/source/berkely-db.install /tmp /share/magi/dev/source
+# sudo /share/magi/dev/source/tcl-old.install /tmp /share/magi/dev/source
+# sudo /share/magi/dev/source/oasys-old.install /tmp /share/magi/dev/source
+# sudo /share/magi/dev/source/dtn.install /tmp /share/magi/dev/source
+
