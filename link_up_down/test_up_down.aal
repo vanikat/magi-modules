@@ -1,0 +1,38 @@
+## The agent implementation and addressing information 
+agents:
+  link_modify_agent:
+    group: node_group
+    path: /proj/montage/magi-modules/link_up_down
+    execargs: []
+
+## The mapping from the AAL procedure to the experiment apparatus 
+groups:
+  node_group: [clientnode]
+
+streamstarts: [ updownstream ]
+
+eventstreams:
+  updownstream: 
+      - type: event
+        agent: link_modify_agent 
+        method: link_down
+        args:
+          linkName: link
+          timing: 0
+
+      - type: trigger
+        triggers: [ { timeout: 300000 } ] 
+  
+      - type: event
+        agent: link_modify_agent 
+        method: link_up
+        trigger: now_exit
+        args:
+          linkName: link
+          timing: 0
+          
+      - type: trigger
+        triggers: [ {event: now_exit, target: exit} ] 
+
+###########################################################
+
