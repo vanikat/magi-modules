@@ -84,11 +84,11 @@ class DTN_send_recv(DispatchAgent):
         log.info("Started receiving")
         return True    
 
-    def random_send(self, msg):
-        for i in range(0, 50):
+    def random_send(self, msg, no_of_files, final_dest):
+        for i in range(0, no_of_files):
             filename = '/tmp/' + testbed.nodename + str(i) + '.txt'
             Popen(["sudo", "touch", filename])
-            self.start_send(filename, 'dtn://hub.dtn')
+            self.start_send(filename, final_dest)
             #time.sleep(0.5)
         return True  
     

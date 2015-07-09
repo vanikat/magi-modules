@@ -43,7 +43,9 @@ eventstreams:
         agent: client_agent 
         method: random_send
         trigger: clientStopped
-        args: {}
+        args: 
+          no_of_files: 50
+          final_dest: 'dtn://hub.dtn'
 
 
 
