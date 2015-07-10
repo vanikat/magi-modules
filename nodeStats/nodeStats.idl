@@ -1,7 +1,8 @@
 name: nodeStats
+magi_version: 1.7
 display: Node Statistics
 description: An agent that collects general node information and CPU + load average statistics
-execute: socket 
+execute: thread 
 mainfile: nodeStats.py
 inherits:
   - ReportingDispatchAgent

@@ -1,4 +1,5 @@
 name: pktcounters
+magi_version: 1.7
 display: System Packet Counters
 description: Agent uses system local features (packet filters, winpcap) to populate the traffic passing through all the interfaces
 execute: thread 
