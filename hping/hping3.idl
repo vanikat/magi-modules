@@ -1,0 +1,7 @@
+name: hping
+display: hping Agent
+description: An agent to push traffic 
+execute: thread
+mainfile: hping3.py
+software:
+   - hping3

@@ -1,0 +1,37 @@
+## The agent implementation and addressing information 
+agents:
+  client_agent:
+    group: client_group
+    path: /share/magi/modules/hping/
+    execargs: {}
+
+## The mapping from the AAL procedure to the experiment apparatus 
+groups:
+  client_group: [clientnode]
+
+streamstarts: [ clientstream, cleanupstream ]
+
+eventstreams:
+  clientstream:      
+      - type: event
+        agent: client_agent 
+        method: startHping
+        trigger: hpingStarted
+        args:
+            dest: servernode
+
+      - type: trigger
+        triggers: [ { timeout: 60000 } ]
+
+      - type: event
+        agent: client_agent
+        method: stopHping
+        trigger: hpingStopped 
+        args: {}
+
+  cleanupstream:
+      - type: trigger
+        triggers: [ {event: hpingStopped, target: exit} ] 
+
+################################################
+
