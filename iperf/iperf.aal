@@ -1,0 +1,55 @@
+## The agent implementation and addressing information 
+agents:
+  client_agent:
+    group: client_group
+    path: /share/magi/modules/iperf/
+    execargs: {}
+
+  server_agent:
+    group: server_group
+    path: /share/magi/modules/iperf/
+    execargs: {}
+
+## The mapping from the AAL procedure to the experiment apparatus 
+groups:
+  client_group: [clientnode]
+  server_group: [servernode]
+
+streamstarts: [ serverstream, clientstream, cleanupstream ]
+
+eventstreams:
+  serverstream: 
+      - type: event
+        agent: server_agent 
+        method: startServer
+        trigger: serverStarted 
+        args:
+            port: 38888
+
+      - type: trigger
+        triggers: [ { event: clientDone} ] 
+
+      - type: event
+        agent: server_agent 
+        method: stopServer 
+        trigger: serverStopped 
+        args: {} 
+
+  clientstream:      
+      - type: trigger
+        triggers: [ { event: serverStarted } ] 
+
+      - type: event
+        agent: client_agent 
+        method: startClient
+        trigger: clientDone 
+        args:
+            server: servernode
+            port: 38888
+
+  cleanupstream:
+      - type: trigger
+        triggers: [ {event: serverStopped, target: exit} ] 
+
+################################################
+

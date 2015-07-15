@@ -1,0 +1,7 @@
+name: iperf
+display: iperf Agent
+description: An agent to calculate the link bandwidth using iperf
+execute: thread
+mainfile: iperf.py
+software:
+   - iperf
