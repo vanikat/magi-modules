@@ -1,0 +1,28 @@
+name: ISOClientAgent
+display: ISO Client Agent
+description: Acts as the client of an ISO
+execute: thread
+mainfile: iso_client_agent.py
+inherits:
+  - DispatchAgent
+
+software:
+  - python-simplejson
+
+methods:
+  - name: initClient
+    help: sets up the client's initial configuration
+    args: []
+
+  - name: registerWithServer
+    help: client connects and registers itself with the server
+    args: []
+
+  - name: startClient
+    help: starts the client's event loop
+    args: []
+
+  - name: stopClient
+    help: shuts down the client
+    args: []
+

@@ -1,0 +1,21 @@
+name: ScenarioCreatorAgent
+display: Scenario Creator Agent
+description: This agent creates the scenario config files for each node in the experiment
+execute: thread
+mainfile: scenario_creator_agent.py
+inherits:
+    - DispatchAgent
+methods:
+    - name: createScenario
+      help: Create the scenario for the experiment
+      args: []
+    - name: releaseScenario
+      help: Release the scenario for other agents
+      args: []
+variables:
+    - name: filename
+      help: the full path of the scenario file
+      type: string
+
+
+

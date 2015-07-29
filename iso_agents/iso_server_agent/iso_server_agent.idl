@@ -1,0 +1,22 @@
+name: ISOServerAgent
+display: ISO Server Agent
+description: This agent acts as the ISO in the simulation
+execute: thread
+mainfile: iso_server_agent.py
+inherits:
+  - DispatchAgent
+software:
+  - python-simplejson
+
+methods:
+  - name: initServer
+    help: Initialize the server
+    args: []
+
+  - name: startSimulation
+    help: Start the sim
+    args: []
+  
+  - name: stopSimulation
+    help: End the sim
+    args: []
