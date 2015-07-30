@@ -25,6 +25,7 @@ class ISOClientAgent(DispatchAgent):
 
     def __init__(self):
         DispatchAgent.__init__(self)
+        self.server = 'DEFAULT' # must be configured by MAGI
 
     @agentmethod()
     def initClient(self, msg):
@@ -44,12 +45,10 @@ class ISOClientAgent(DispatchAgent):
         config["e"] = 0
         config["p"] = 0
         config["CID"] = clientID
-        config["server"] = 'localhost' #todo, change this
 
         self.unit = BBB_ISO.dictToUnit(config)
         self.unit.tS = TIME_STEP
         self.CID = config["CID"]
-        self.server = config["server"]
         self.t = 0
 
     @agentmethod()

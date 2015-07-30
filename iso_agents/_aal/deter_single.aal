@@ -1,7 +1,7 @@
 groups:
   scenario_creator_group: [servernode]
   iso_server_group: &serverlist [servernode]
-  iso_client_group: &clientlist [clientnode-1, clientnode-2, clientnode-3]
+  iso_client_group: &clientlist [clientnode-1]
 
 agents:
   scenario_creator_agent:
@@ -20,7 +20,7 @@ agents:
     group: iso_client_group
     path: /proj/montage/magi-modules/iso_agents/iso_client_agent
     execargs: {
-      server: *serverlist, 
+      server: servernode, 
     }
 
 streamstarts: [

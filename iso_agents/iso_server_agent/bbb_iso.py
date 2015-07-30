@@ -133,6 +133,8 @@ class BBB_ISO(object):
         return data
 
     def generateStats(self,t,lastDispatch):
+        data = {}
+
         units = self.unitList
         unitGroups={
             'Bucket': [],
@@ -154,9 +156,9 @@ class BBB_ISO(object):
         for val in unitGroups['Bakery']:
             bakeP = bakeP + val.p
         
-        pResidual = lastDispatch-battP-buckP-bakeP
+        pResidual = lastDispatch - battP - buckP - bakeP
 
-        data = {}
+        
         data["t"] = t
         data["pDispatch"] = lastDispatch
         data["pResidual"] = pResidual
@@ -166,16 +168,16 @@ class BBB_ISO(object):
         data["units"] = {}
 
         for k,v in units.iteritems():
-            data["units"]["k"] = v.__dict__
+            data["units"][k] = v.__dict__.copy()
 
         return data
         
 
     @staticmethod
     def dictToUnit(client):
-        cmd='newUnit=BBB_ISO.dictTo'+client["type"]+'(client)'
+        cmd = 'newUnit=BBB_ISO.dictTo' + client["type"] + '(client)'
         exec(cmd)
-        newUnit.type=client["type"]
+        newUnit.type = client["type"]
         return newUnit
     
     @staticmethod

@@ -20,7 +20,7 @@ agents:
     group: iso_client_group
     path: /proj/montage/magi-modules/iso_agents/iso_client_agent
     execargs: {
-      server: *serverlist, 
+      server: servernode, 
     }
 
 streamstarts: [

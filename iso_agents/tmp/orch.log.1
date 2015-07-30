@@ -1,0 +1,15 @@
+07-29 17:26:06.068 __main__                       INFO     set log level to info (20)
+07-29 17:26:06.117 magi.orchestrator.parse        INFO     Incoming event triggers is a subset of outgoing event triggers
+07-29 17:26:06.129 magi.messaging.transportTCP    INFO     connect node-1:18808
+07-29 17:26:06.129 magi.messaging.transportTCP    INFO     If connection fails, it will retry shortly.
+07-29 17:26:06.131 magi.db.Connection             INFO     Connected to mongodb server at node-1:27017
+07-29 17:26:06.211 magi.messaging.worker          INFO     Worker started. Thread id: -1
+07-29 17:26:06.415 magi.messaging.worker          INFO     Request to add new transport TCPTransport node-1:18808 to map keepConnected: True
+07-29 17:26:06.415 magi.messaging.worker          INFO     Request to add new transport TCPTransport node-1:18808 to map keepConnected: True
+07-29 17:26:06.415 magi.messaging.routerGroup     INFO     added transport TCPTransport node-1:18808, init rxgroup to: {}
+07-29 17:26:06.416 magi.messaging.routerGroup     INFO     Sending transport add message In:None,Out:[6] (msgid:0,flags:0x0,conttype:5) src:dock - None:None --> dstgroups:set(['__NEIGH__']), dstnodes: set([]), dstdocks: set(['__GROUPS__']) = data: {resend: true}
+
+07-29 17:26:36.463 magi.orchestrator.orchestrator ERROR    Cannot initialize database
+07-29 17:26:36.568 magi.orchestrator.orchestrator INFO     Running Initialization Stream
+07-29 17:26:56.700 magi.orchestrator.orchestrator INFO     Running Event Stream
+07-29 17:26:56.700 magi.orchestrator.orchestrator INFO     Running Exit Stream
