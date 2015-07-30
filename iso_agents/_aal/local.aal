@@ -20,7 +20,7 @@ agents:
     group: iso_client_group
     path: /Users/david/Dropbox/SchoolWork/2015-Summer/ISI/magi-modules/iso_agents/iso_client_agent
     execargs: {
-      server: *slist, 
+      server: node-1, 
     }
 
 streamstarts: [
