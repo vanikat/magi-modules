@@ -1,3 +1,4 @@
+import os
 import sys
 import traceback
 from os.path import basename
@@ -7,6 +8,7 @@ from threading import Thread
 import threading
 import random
 import logging
+import simplejson as json
 
 from client_comm_service import ClientCommService
 from bbb_iso import BBB_ISO
@@ -17,38 +19,29 @@ from magi.util.processAgent import initializeProcessAgent
 
 log = logging.getLogger(__name__)
 
-TIME_STEP = 0.2
-
-import os
-
 class ISOClientAgent(DispatchAgent):
 
     def __init__(self):
         DispatchAgent.__init__(self)
-        self.server = 'DEFAULT' # must be configured by MAGI
+        self.server = None # must be configured by MAGI
+        self.configFileName = None # must be configured by MAGI
 
     @agentmethod()
     def initClient(self, msg):
         log.info("Initializing client...")
 
         self.collection = database.getCollection(self.name)
+        self.nodeIndex = magi.util. look this up############## 
 
-        config = {}
-        clientID = 'Battery' + str(random.randint(1,1000))
-        config = {}
-        config["type"] = 'Battery'
-        config["eMin"] = 0
-        config["eMax"] = random.randint(10,100)
-        config["pMin"] = random.randint(1,4)
-        config["pMax"] = random.randint(5,10)
-        config["tEnd"] = random.randint(10, 50)
-        config["e"] = 0
-        config["p"] = 0
-        config["CID"] = clientID
+        globalConfig = None
+        with open(self.configFileName, 'r') as configFile:
+            globalConfig = json.load(configFile)
 
-        self.unit = BBB_ISO.dictToUnit(config)
-        self.unit.tS = TIME_STEP
-        self.CID = config["CID"]
+        unitConfig = globalConfig["units"][self.nodeIndex]
+
+        self.CID = unitConfig["CID"]
+        self.unit = BBB_ISO.dictToUnit(unitConfig)
+        self.unit.tS = globalConfig["timeStep"]
         self.t = 0
 
     @agentmethod()
@@ -73,9 +66,9 @@ class ISOClientAgent(DispatchAgent):
     def stopClient(self, msg):
         log.info("Shutting client down...")
         self.running = 0
-        time.sleep(0.1)
+        time.sleep(0.1) # wait for thread to stop
         self.deRegister()
-        time.sleep(0.1)
+        time.sleep(0.1)  # wait for thread to stop
         self.comms.running = 0
         return True
 

@@ -5,8 +5,8 @@ import simplejson as json
 class ConfigureScenario(object):
     """
         Loads configuration file
-        Writes AAL and TCL to specified path (from user)
-        Then experiment AAL/TCL should be run on DETER
+        Writes AAL and TCL and configJSON to specified path (from user)
+        Then experiment AAL/TCL/JSON should be run on DETER
         Then compare_results.py should be used to test for accuracy
 
     """
@@ -26,9 +26,9 @@ class ConfigureScenario(object):
 
     def loadVPP(self, vppfn):
         vppPower = []
-        with open(vppfn) as vpp_file:
-            vpp_reader = csv.reader(vpp_file)
-            for i, row in enumerate(vpp_reader):
+        with open(vppfn) as vppFile:
+            vppReader = csv.reader(vppFile)
+            for i, row in enumerate(vppReader):
                 if i == 0:
                     # append phony value for at 0 to make timesteps line up
                     vppPower.append(9.999) 
@@ -39,11 +39,11 @@ class ConfigureScenario(object):
 
     def loadUnits(self, unitsfn):
         units = []
-        with open(unitsfn) as unit_file:
-            canonical_keys = ["CID", "p", "e", "pMax", "pMin", "eMax", "eMin", "tEnd", "tRun", "type"]
+        with open(unitsfn) as unitFile:
+            canonicalKeys = ["CID", "p", "e", "pMax", "pMin", "eMax", "eMin", "tEnd", "tRun", "type"]
             keys = []
-            unit_reader = csv.reader(unit_file)
-            for i,row in enumerate(unit_reader):
+            unitReader = csv.reader(unitFile)
+            for i,row in enumerate(unitReader):
                 if i == 0:
                     for key in row:
                         keys.append(key)
@@ -51,7 +51,7 @@ class ConfigureScenario(object):
                 else:
                     unit = {}
                     for j, val in enumerate(row):
-                        unit[canonical_keys[j]] = val
+                        unit[canonicalKeys[j]] = val
                     units.append(unit)
 
                 # clean up values from CSV
@@ -66,6 +66,8 @@ class ConfigureScenario(object):
                                 unit["type"] = "Battery"
                             elif prefix == "bkt":
                                 unit["type"] = "Bakery"
+                            else:
+                                raise Exception, "Unknown unit type prefix: '%s'" % prefix
                         elif key == "type":
                             pass
                         else:
@@ -76,34 +78,35 @@ class ConfigureScenario(object):
 
     def generateTCL(self, vpp, units, tclfn):
         print "Generating TCL file..."
-        num_clients = len(units)
+        numClients = len(units)
         BASE_TCL_FN = "output/base-tcl.tcl"
-        tcl_text = ""
-        with open(BASE_TCL_FN) as base_tcl_file:
-            tcl_text = base_tcl_file.read()
-        with open(tclfn, 'w') as output_tcl_file:
-            output_tcl_file.write(tcl_text % num_clients)
+        tclText = ""
+        with open(BASE_TCL_FN) as baseTclFile:
+            tclText = baseTclFile.read()
+        with open(tclfn, 'w') as outputTclFile:
+            outputTclFile.write(tcl_text % numClients)
 
     def generateAAL(self, vpp, units, aalfn):
         print "Generating AAL file..."
-        num_clients = len(units)
+        numClients = len(units)
         BASE_AAL_FN = "output/base-aal.aal"
-        aal_text = ""
-        with open(BASE_AAL_FN) as base_aal_file:
-            aal_text = base_aal_file.read()
-        with open(aalfn, 'w') as output_aal_file:
-            custom_aal = []
+        aalText = ""
+        with open(BASE_AAL_FN) as baseAalFile:
+            aalText = baseAalFile.read()
+        with open(aalfn, 'w') as outputAalFile:
+            customAal = []
             for i in range(len(units)):
-                custom_aal.append("clientnode-%d" % i)
-            output_aal_file.write(aal_text % ", ".join(custom_aal))
+                customAal.append("clientnode-%d" % i)
+            outputAalFile.write(aalText % ", ".join(customAal))
 
     def generateConfig(self, vpp, units, configfn):
         print "Generating config file..."
         params = {}
         params["vpp"] = vpp
         params["units"] = units
-        with open(configfn, 'w') as config_file:
-            config_file.write(json.dumps(params))
+        params["timeStep"] = 1.0
+        with open(configfn, 'w') as configFile:
+            configFile.write(json.dumps(params))
 
 
 # CLient / Server changes:

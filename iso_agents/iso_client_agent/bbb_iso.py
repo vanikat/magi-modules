@@ -11,11 +11,11 @@ from bakery import Bakery
 
 class BBB_ISO(object):
 
-    def __init__(self):
-        self.unitList={}
-        self.tS=1.0
-        self.UID=0 #unique ID for assigning to clients
-        self.currentTime=0
+    def __init__(self, timeStep=1.0):
+        self.unitList = {}
+        self.tS = timeStep
+        self.UID = 0 #unique ID for assigning to clients
+        self.currentTime = 0
     
     #To Be Completed
 
