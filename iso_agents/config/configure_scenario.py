@@ -1,5 +1,6 @@
 import csv
 import sys
+import simplejson as json
 
 class ConfigureScenario(object):
     """
@@ -39,17 +40,37 @@ class ConfigureScenario(object):
     def loadUnits(self, unitsfn):
         units = []
         with open(unitsfn) as unit_file:
+            canonical_keys = ["CID", "p", "e", "pMax", "pMin", "eMax", "eMin", "tEnd", "tRun", "type"]
             keys = []
             unit_reader = csv.reader(unit_file)
             for i,row in enumerate(unit_reader):
                 if i == 0:
                     for key in row:
                         keys.append(key)
+                    assert "---".join(keys) == "Type-ID---P---E---Pmax---Pmin---Emax---Emin---Tend---Trun", Exception("Error: Input format supplied does not match expected order of Type-ID---P---E---Pmax---Pmin---Emax---Emin---Tend---Trun. Order supplied = %s" % "---".join(keys))
                 else:
                     unit = {}
                     for j, val in enumerate(row):
-                        unit[keys[j]] = val
+                        unit[canonical_keys[j]] = val
                     units.append(unit)
+
+                # clean up values from CSV
+                for unit in units:
+                    unit["type"] = None # will be set below
+                    for key in unit:
+                        if key == "CID":
+                            prefix = unit["CID"][0:3].lower()
+                            if  prefix == "bak":
+                                unit["type"] = "Bakery"
+                            elif prefix == "bat":
+                                unit["type"] = "Battery"
+                            elif prefix == "bkt":
+                                unit["type"] = "Bakery"
+                        elif key == "type":
+                            pass
+                        else:
+                            unit[key] = float(unit[key])
+
         print "Units: %s" % repr(units)
         return units
 
@@ -78,9 +99,11 @@ class ConfigureScenario(object):
 
     def generateConfig(self, vpp, units, configfn):
         print "Generating config file..."
-        # clean up param names
-        # clean up param vals
-        # dump json string, tied to nodename
+        params = {}
+        params["vpp"] = vpp
+        params["units"] = units
+        with open(configfn, 'w') as config_file:
+            config_file.write(json.dumps(params))
 
 
 # CLient / Server changes:
