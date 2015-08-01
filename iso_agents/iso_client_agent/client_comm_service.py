@@ -30,10 +30,8 @@ log = logging.getLogger(__name__)
 class ClientCommService:
     
     def __init__(self):
-        self.threadMap={}
-        self.valueOutMap={}
-        self.slock={}
-        self.running=1
+        self.valueOutMap = {}
+        self.running =1
         self.connected = False
         self.registered = False
     
@@ -82,7 +80,7 @@ class ClientCommService:
             try:
                 jdata = json.loads(rxdata.strip())
             except json.JSONDecodeError:
-                log.info("Exception in ClientHandler while trying to parse JSON string: %s" % repr(rxdata))
+                log.info("ClientHandler could not parse JSON string: %s" % repr(rxdata))
                 continue
             
             # dispatch = jdata["dispatch"]
@@ -99,9 +97,8 @@ class ClientCommService:
         log.info("%s Leaving ClientHandler" % threading.currentThread().name)
                 
     def close(self):
-        self.running=0
-        for key,value in self.slock.iteritems():
-            value.release()
+        self.running = 0
+        self.slock.release()
         
     def stop(self):
         self.close()

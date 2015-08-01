@@ -35,6 +35,7 @@ class ISOServerAgent(DispatchAgent):
             globalConfig = json.load(configFile)
 
         self.tS = globalConfig["timeStep"]
+        self.numIterations = globalConfig["numIterations"]
         self.ISO = BBB_ISO(self.tS)
         self.VPP = globalConfig["vpp"]
         self.CIDList = {}
@@ -62,11 +63,11 @@ class ISOServerAgent(DispatchAgent):
             log.info("ISO.unitList: %s" % repr(self.ISO.unitList))
             time.sleep(self.tS) # let all clients connect and get ready
 
-            for t in range(1, 100):
+            for t in range(1, self.numIterations):
                 if self.simRunning:
                     log.info("Simulation Timestep %d..." % t)
                     time.sleep(self.tS)
-                    pDispatch = vpp[t]
+                    pDispatch = self.VPP[t]
                     log.info("AgileBalancing %d units of power..." % pDispatch)
                     self.ISO.agileBalancing(t,pDispatch)
                     
@@ -83,11 +84,15 @@ class ISOServerAgent(DispatchAgent):
             log.info("Thread %s threw an exception during main loop" % threading.currentThread().name)
             exc_type, exc_value, exc_tb = sys.exc_info()
             log.error(''.join(traceback.format_exception(exc_type, exc_value, exc_tb)))
+        finally:
+            self.sendAllExitMsg()
+            self.comms.stop()
 
         log.info("RunServer ending...")
 
     @agentmethod()
     def stopSimulation(self, msg):
+        """No longer used"""
         log.info("Stopping simulation...")
         self.simRunning = False
         self.comms.stop()
@@ -124,6 +129,14 @@ class ISOServerAgent(DispatchAgent):
         msg["type"] = 'dispatch'
         msg["payload"] = dispatch
         self.comms.serverSendValue(CID,msg)
+
+    def sendAllExitMsg(self):
+        log.info("Sending exit message to all clients")
+        msg = {}
+        msg["type"] = 'exit'
+        msg["payload"] = {}
+        for CID in self.CIDList:
+            self.comms.serverSendValue(CID,msg)
     
 
 def getAgent(**kwargs):

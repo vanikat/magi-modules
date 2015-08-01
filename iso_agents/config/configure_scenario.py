@@ -82,13 +82,14 @@ class ConfigureScenario(object):
         params["vpp"] = vpp
         params["units"] = units
         params["timeStep"] = 1.0
+        params["numIterations"] = len(vpp)-1 # -1 for dummy vpp entry
         with open(configfn, 'w') as configFile:
             json.dump(params, configFile, sort_keys=True, indent=4, ensure_ascii=False)
 
     def generateTCL(self, vpp, units, tclfn):
         print "Generating TCL file..."
         numClients = len(units)
-        BASE_TCL_FN = "output/base-tcl.tcl"
+        BASE_TCL_FN = "output/base.tcl"
         tclText = ""
         with open(BASE_TCL_FN) as baseTclFile:
             tclText = baseTclFile.read()
@@ -98,7 +99,7 @@ class ConfigureScenario(object):
     def generateAAL(self, vpp, units, aalfn, configfn):
         print "Generating AAL file..."
         numClients = len(units)
-        BASE_AAL_FN = "output/base-aal.aal"
+        BASE_AAL_FN = "output/base.aal"
         aalText = ""
         with open(BASE_AAL_FN) as baseAalFile:
             aalText = baseAalFile.read()

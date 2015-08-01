@@ -62,19 +62,19 @@ class ISOClientAgent(DispatchAgent):
     def startClient(self, msg):
         log.info("Starting client's simulation...")
         self.running = 1
-        self.thread = Thread(target=self.runClient, name=self.CID+"Client")
-        self.thread.start()
+        self.runClient()
         return True
 
     @agentmethod()
     def stopClient(self, msg):
+        """ No longer being used..."""
         log.info("Shutting client down...")
-        self.running = 0
-        time.sleep(0.1) # wait for thread to stop
-        self.deRegister()
-        time.sleep(0.1)  # wait for thread to stop
-        self.comms.running = 0
-        return True
+        # self.running = 0
+        # time.sleep(0.1) # wait for thread to stop
+        # self.deRegister()
+        # time.sleep(0.1)  # wait for thread to stop
+        # self.comms.running = 0
+        # return True
 
     def runClient(self):
         try:
@@ -93,6 +93,8 @@ class ISOClientAgent(DispatchAgent):
             log.info("Thread %s threw an exception during main loop" % threading.currentThread().name)
             exc_type, exc_value, exc_tb = sys.exc_info()
             log.error(''.join(traceback.format_exception(exc_type, exc_value, exc_tb)))
+        finally:
+            self.comms.stop()
 
     def logUnit(self):
         log.info("%s Logging/Saving unit stats to mongo" % threading.currentThread().name)
@@ -130,6 +132,9 @@ class ISOClientAgent(DispatchAgent):
             self.t = newTime
             # self.sendEnergy() 
             # self.sendParams()
+        elif mtype == 'exit':
+            log.info("Exit message received from server")
+            self.running = 0
         else:
             log.info("UNKNOWN MESSAGE TYPE RECEIVED")
 
