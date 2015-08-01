@@ -15,9 +15,9 @@ class ConfigureScenario(object):
 
     def configure(self, vppfn, unitsfn, tclfn, aalfn, configfn):
         vpp, units = self.loadParams(vppfn, unitsfn)
-        self.generateTCL(vpp, units, tclfn)
-        self.generateAAL(vpp, units, aalfn)
         self.generateConfig(vpp, units, configfn)
+        self.generateTCL(vpp, units, tclfn)
+        self.generateAAL(vpp, units, aalfn, configfn)
     
     def loadParams(self, vppfn, unitsfn):
         vpp = self.loadVPP(vppfn)
@@ -76,6 +76,15 @@ class ConfigureScenario(object):
         print "Units: %s" % repr(units)
         return units
 
+    def generateConfig(self, vpp, units, configfn):
+        print "Generating config file..."
+        params = {}
+        params["vpp"] = vpp
+        params["units"] = units
+        params["timeStep"] = 1.0
+        with open(configfn, 'w') as configFile:
+            json.dump(params, configFile, sort_keys=True, indent=4, ensure_ascii=False)
+
     def generateTCL(self, vpp, units, tclfn):
         print "Generating TCL file..."
         numClients = len(units)
@@ -84,9 +93,9 @@ class ConfigureScenario(object):
         with open(BASE_TCL_FN) as baseTclFile:
             tclText = baseTclFile.read()
         with open(tclfn, 'w') as outputTclFile:
-            outputTclFile.write(tcl_text % numClients)
+            outputTclFile.write(tclText % numClients)
 
-    def generateAAL(self, vpp, units, aalfn):
+    def generateAAL(self, vpp, units, aalfn, configfn):
         print "Generating AAL file..."
         numClients = len(units)
         BASE_AAL_FN = "output/base-aal.aal"
@@ -96,17 +105,9 @@ class ConfigureScenario(object):
         with open(aalfn, 'w') as outputAalFile:
             customAal = []
             for i in range(len(units)):
-                customAal.append("clientnode-%d" % i)
-            outputAalFile.write(aalText % ", ".join(customAal))
+                customAal.append("clientnode-%s" % str(i+1))
+            outputAalFile.write(aalText % (", ".join(customAal), configfn, configfn))
 
-    def generateConfig(self, vpp, units, configfn):
-        print "Generating config file..."
-        params = {}
-        params["vpp"] = vpp
-        params["units"] = units
-        params["timeStep"] = 1.0
-        with open(configfn, 'w') as configFile:
-            configFile.write(json.dumps(params))
 
 
 # CLient / Server changes:

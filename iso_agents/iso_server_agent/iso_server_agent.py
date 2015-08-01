@@ -16,6 +16,7 @@ import logging
 log = logging.getLogger(__name__)
 
 import os
+import io
 
 class ISOServerAgent(DispatchAgent):
 
@@ -29,8 +30,9 @@ class ISOServerAgent(DispatchAgent):
         log.info("Initializing ISOServer...")
         
         globalConfig = None
-        with open(self.configFileName, 'r') as config_file:
-            globalConfig = json.load(config_file)
+        log.info("Attempting to read from configFile: %s" % self.configFileName)
+        with open(self.configFileName, 'r') as configFile:
+            globalConfig = json.load(configFile)
 
         self.tS = globalConfig["timeStep"]
         self.ISO = BBB_ISO(self.tS)
@@ -38,6 +40,8 @@ class ISOServerAgent(DispatchAgent):
         self.CIDList = {}
         
         self.collection = database.getCollection(self.name)
+        self.collection.remove()
+        
         self.comms = ServerCommService()
         self.comms.initAsServer(self.replyHandler)
         return True

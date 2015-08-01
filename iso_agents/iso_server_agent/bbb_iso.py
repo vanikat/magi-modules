@@ -7,19 +7,15 @@ from bucket import Bucket
 from battery import Battery
 from bakery import Bakery
 
-# degug notes:
-#code.interact(local=dict(globals(), **locals())) 
-# import pdb
-#pdb.set_trace()
-
 class BBB_ISO(object):
 
-    def __init__(self):
-        self.unitList={}
-        self.tS=1.0
-        self.UID=0 #unique ID for assigning to clients
-        self.currentTime=0
-    
+    ## updatated 7/31
+    def __init__(self, timeStep = 1.0):
+        self.unitList = {}
+        self.tS = timeStep
+        self.UID = 0 #unique ID for assigning to clients
+        self.currentTime = 0
+
     def agileBalancing(self, k, pDispatch):
         self.currentTime = k
         initialPDispatch = pDispatch

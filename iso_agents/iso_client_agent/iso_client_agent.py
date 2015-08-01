@@ -16,6 +16,7 @@ from bbb_iso import BBB_ISO
 from magi.util import database
 from magi.util.agent import DispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
+from magi.util.config import getNodeName
 
 log = logging.getLogger(__name__)
 
@@ -31,13 +32,16 @@ class ISOClientAgent(DispatchAgent):
         log.info("Initializing client...")
 
         self.collection = database.getCollection(self.name)
-        self.nodeIndex = magi.util. look this up############## 
+        self.collection.remove()
+        
+        # nodeName: "clietnode-3" --> nodeIndex: 3
+        self.nodeIndex = int(getNodeName().split("-")[1]) 
 
         globalConfig = None
         with open(self.configFileName, 'r') as configFile:
             globalConfig = json.load(configFile)
 
-        unitConfig = globalConfig["units"][self.nodeIndex]
+        unitConfig = globalConfig["units"][self.nodeIndex-1]
 
         self.CID = unitConfig["CID"]
         self.unit = BBB_ISO.dictToUnit(unitConfig)
