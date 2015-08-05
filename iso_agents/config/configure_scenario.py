@@ -65,7 +65,7 @@ class ConfigureScenario(object):
                             elif prefix == "bat":
                                 unit["type"] = "Battery"
                             elif prefix == "bkt":
-                                unit["type"] = "Bakery"
+                                unit["type"] = "Bucket"
                             else:
                                 raise Exception, "Unknown unit type prefix: '%s'" % prefix
                         elif key == "type":

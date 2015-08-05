@@ -17,6 +17,10 @@ class CompareResults(object):
         actualData = self.loadActualDataFromDeter(projectName, expName)
         self.compareResults(testData, actualData)
 
+    def export(self, outFn, projectName, expName):
+        actualData = self.loadActualDataFromDeter(projectName, expName)
+        self.exportCSV(outFn, actualData)
+
     def loadTestData(self, testFn):
         testData = []
 
@@ -58,6 +62,21 @@ class CompareResults(object):
         print repr(data)
         return data
 
+    def exportCSV(self, outFn, data):
+        with open(outFn, 'w') as outFile:
+            writer = csv.writer(outFile)
+            keys = ['Timestep','Residual','Pbak','Pbat','PBkt','VppOut']
+            writer.writerow(keys)
+            for record in data:
+                d = []
+                d.append(record['t'])
+                d.append(record['pResidual'])
+                d.append(record['bakeryP'])
+                d.append(record['batteryP'])
+                d.append(record['bucketP'])
+                d.append(record['pDispatch'])
+                writer.writerow(d)
+
     def compareResults(self, testData, actualData):
         testTimeInterval = (testData[0]["t"], testData[-1]["t"])
         filteredData = []
@@ -71,10 +90,10 @@ class CompareResults(object):
                 if i >= len(actualData):
                     print "Actual data not present for t = %d" % i
                 elif actualData[i][k] == testValue:
-                    print "%s OK: actual: %s == test: %s" % (k, actualData[i][k], testValue)
+                    print "'%s' OK: actual: %s == test: %s" % (k, actualData[i][k], testValue)
                     successes += 1
                 else:
-                    print "%s FAILED: actual: %s == test: %s" % (k, actualData[i][k], testValue)
+                    print "'%s' FAILED: actual: %s == test: %s" % (k, actualData[i][k], testValue)
                     failures += 1
         
         print "REPORT CARD: %d failures, %d successes, Overall: %f" % (failures, successes, float(successes)/(len(testData)*6))
@@ -85,19 +104,10 @@ if __name__ == "__main__":
     if len(sys.argv) == 4:
         cr = CompareResults()
         cr.test(sys.argv[1], sys.argv[2], sys.argv[3])
+    elif len(sys.argv) == 5:
+        cr = CompareResults()
+        cr.export(sys.argv[2], sys.argv[3], sys.argv[4])
     else:
-        print "Usage: compare_results.py testFn projectName expName"
-
-
-
-
-
-
-
-
-# Consume testdata file:
-#     - For UNIT: 
-#         - Test each value (eMin, pForced, etc.) with each step unit history in testdata
-#     - For ISO:
-#         - Test each value of power Function at each timestep
-#         - Test pDispatch for each unit, and all other parameters
+        print "Usage:"
+        print "\tCOMPARE RESULTS: compare_results.py testFn projectName expName"
+        print "\tEXPORT MONGO TO CSV: compare_results.py export testFn projectName expName"

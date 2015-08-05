@@ -80,7 +80,7 @@ class ISOClientAgent(DispatchAgent):
         try:
             while self.running:
                 log.info("%s Running" % threading.currentThread().name)
-                time.sleep(self.unit.tS)
+                time.sleep(self.unit.tS/10.0)
                 #Adapt to constraints (change P value when constrained despite no comms)
                 if self.unit.pForced > self.unit.p:
                     log.info("%s Unit forced to modify its own power, not dispatched enough" % threading.currentThread().name)

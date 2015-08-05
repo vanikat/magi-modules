@@ -9,7 +9,6 @@ from bakery import Bakery
 
 class BBB_ISO(object):
 
-    ## updatated 7/31
     def __init__(self, timeStep = 1.0):
         self.unitList = {}
         self.tS = timeStep
@@ -47,9 +46,6 @@ class BBB_ISO(object):
         for unit in unitGroups['Bucket']:
             pBucketsAvailable += unit.pAvailable()
 
-        # pBucketsAvailable = reduce(
-        #   lambda x,y:x+y, [b.pAvailable() for b in unitGroups['Bucket']]
-        # )
         totalPAvailable = pDispatch + pBucketsAvailable
         if pForced > pDispatch:
             # Just give all batts & bakes the power we're forced to
@@ -57,7 +53,7 @@ class BBB_ISO(object):
             for unit in (unitGroups['Battery'] + unitGroups['Bakery']):
                 p = min(unit.pForced, totalPAvailable)
                 unit.setP(p)
-                totalPAvailable = totalPAvailable - p
+                totalPAvailable -= p
         else:
             # Sort Batteries and Bakeries according to increasing agility factor.
             # Distribute PDispatch to Batteries and Bakeries in increasing agility factor order and such that PBatteries(k) + PBakeries(k) is as large as possible, but less than or equal to PDispatch(k).
@@ -68,21 +64,15 @@ class BBB_ISO(object):
             for b in bakeriesAndBatteries:
                 p = min(b.pMax, (b.eMax - b.e)/self.tS, pDispatch)
                 b.setP(p)
-                pDispatch = pDispatch - p
+                pDispatch -= p
 
-        # pBatteries = reduce(
-        #   lambda x,y: x+y, [b.p for b in unitGroups['Battery']]
-        # )
-        # pBakeries = reduce(
-        #   lambda x,y: x+y, [b.p for b in unitGroups['Bakery']]
-        # )
         pBatteries = 0.0
         for unit in unitGroups['Battery']:
-            pBatteriesForced += unit.p
+            pBatteries += unit.p
         
         pBakeries = 0.0
         for unit in unitGroups['Bakery']:
-            pBakeriesForced += unit.p
+            pBakeries += unit.p
         
         pDispatch = initialPDispatch - pBatteries - pBakeries
 
@@ -96,7 +86,7 @@ class BBB_ISO(object):
                 # send power to buckets for future use
                 p = min(b.pReserve(), pDispatch)
             b.setP(p)
-            pDispatch = pDispatch - p
+            pDispatch -= p
 
     def start(self):
         pass

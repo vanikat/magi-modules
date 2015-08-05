@@ -66,7 +66,7 @@ class ISOServerAgent(DispatchAgent):
             for t in range(1, self.numIterations):
                 if self.simRunning:
                     log.info("Simulation Timestep %d..." % t)
-                    time.sleep(self.tS)
+                    time.sleep(self.tS/10.0)
                     pDispatch = self.VPP[t]
                     log.info("AgileBalancing %d units of power..." % pDispatch)
                     self.ISO.agileBalancing(t,pDispatch)
