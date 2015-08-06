@@ -17,19 +17,17 @@ eventstreams:
         agent: link_modify_agent 
         method: link_down
         args:
-          linkName: link
-          timing: 0
+          dest: servernode
 
       - type: trigger
-        triggers: [ { timeout: 300000 } ] 
+        triggers: [ { timeout: 10000 } ] 
   
       - type: event
         agent: link_modify_agent 
         method: link_up
         trigger: now_exit
         args:
-          linkName: link
-          timing: 0
+          dest: servernode
           
       - type: trigger
         triggers: [ {event: now_exit, target: exit} ] 
