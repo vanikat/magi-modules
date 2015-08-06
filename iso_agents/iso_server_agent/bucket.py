@@ -8,7 +8,7 @@ class Bucket(LocalUnit):
 		self.updatePForced()
 
 	def updateAgility(self,k):
-		self.agility = (self.eMax-self.e)/(self.tS*self.pMax)
+		self.agility = (self.eMax - self.e)/(self.tS * self.pMax)
 		return self.agility
 
 	def updatePForced(self):
@@ -18,13 +18,13 @@ class Bucket(LocalUnit):
 	def pReserve(self):
 		return min(
 			self.pMax, 
-			(self.eMax-self.e)/self.tS
+			(self.eMax - self.e)/self.tS
 		)
 
 	def pAvailable(self):
 		return min(
 			-self.pMin, 
-			(self.e-self.eMin)/self.tS
+			(self.e - self.eMin)/self.tS
 		)
 
 if __name__=="__main__":

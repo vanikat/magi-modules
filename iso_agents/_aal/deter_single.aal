@@ -1,12 +1,12 @@
 groups:
   scenario_creator_group: [servernode]
   iso_server_group: &serverlist [servernode]
-  iso_client_group: &clientlist [clientnode-1, clientnode-2, clientnode-3]
+  iso_client_group: &clientlist [clientnode-1]
 
 agents:
   scenario_creator_agent:
     group: scenario_creator_group
-    path: /proj/montage/magi-modules/iso_agents/scenario_creator_agent/
+    path: /proj/montage/magi-modules/iso_agents/scenario_creator_agent
     execargs: {
       filename: /proj/montage/magi-modules/iso_agents/tmp/custom-scenario.json
     }
@@ -20,7 +20,7 @@ agents:
     group: iso_client_group
     path: /proj/montage/magi-modules/iso_agents/iso_client_agent
     execargs: {
-      server: *serverlist, 
+      server: servernode, 
     }
 
 streamstarts: [
@@ -114,4 +114,4 @@ eventstreams:
             agent: iso_client_agent, 
             target: exit
           } 
-        ] 
+        ]

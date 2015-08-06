@@ -14,13 +14,16 @@ agents:
   iso_server_agent:
     group: iso_server_group
     path: /Users/david/Dropbox/SchoolWork/2015-Summer/ISI/magi-modules/iso_agents/iso_server_agent
-    execargs: {}
+    execargs: {
+      configFileName: /Users/david/Dropbox/SchoolWork/2015-Summer/ISI/magi-modules/iso_agents/config.json
+    }
   
   iso_client_agent:
     group: iso_client_group
     path: /Users/david/Dropbox/SchoolWork/2015-Summer/ISI/magi-modules/iso_agents/iso_client_agent
     execargs: {
-      server: *slist, 
+      server: node-1,
+      configFileName: /Users/david/Dropbox/SchoolWork/2015-Summer/ISI/magi-modules/iso_agents/config.json
     }
 
 streamstarts: [

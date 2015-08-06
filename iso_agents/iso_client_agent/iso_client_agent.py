@@ -1,3 +1,4 @@
+import os
 import sys
 import traceback
 from os.path import basename
@@ -7,6 +8,7 @@ from threading import Thread
 import threading
 import random
 import logging
+import simplejson as json
 
 from client_comm_service import ClientCommService
 from bbb_iso import BBB_ISO
@@ -14,42 +16,36 @@ from bbb_iso import BBB_ISO
 from magi.util import database
 from magi.util.agent import DispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
+from magi.util.config import getNodeName
 
 log = logging.getLogger(__name__)
-
-TIME_STEP = 0.2
-
-import os
 
 class ISOClientAgent(DispatchAgent):
 
     def __init__(self):
         DispatchAgent.__init__(self)
+        self.server = None # must be configured by MAGI
+        self.configFileName = None # must be configured by MAGI
 
     @agentmethod()
     def initClient(self, msg):
         log.info("Initializing client...")
 
         self.collection = database.getCollection(self.name)
+        self.collection.remove()
+        
+        # nodeName: "clietnode-3" --> nodeIndex: 3
+        self.nodeIndex = int(getNodeName().split("-")[1]) 
 
-        config = {}
-        clientID = 'Battery' + str(random.randint(1,1000))
-        config = {}
-        config["type"] = 'Battery'
-        config["eMin"] = 0
-        config["eMax"] = random.randint(10,100)
-        config["pMin"] = random.randint(1,4)
-        config["pMax"] = random.randint(5,10)
-        config["tEnd"] = random.randint(10, 50)
-        config["e"] = 0
-        config["p"] = 0
-        config["CID"] = clientID
-        config["server"] = 'localhost' #todo, change this
+        globalConfig = None
+        with open(self.configFileName, 'r') as configFile:
+            globalConfig = json.load(configFile)
 
-        self.unit = BBB_ISO.dictToUnit(config)
-        self.unit.tS = TIME_STEP
-        self.CID = config["CID"]
-        self.server = config["server"]
+        unitConfig = globalConfig["units"][self.nodeIndex-1]
+
+        self.CID = unitConfig["CID"]
+        self.unit = BBB_ISO.dictToUnit(unitConfig)
+        self.unit.tS = globalConfig["timeStep"]
         self.t = 0
 
     @agentmethod()
@@ -66,25 +62,25 @@ class ISOClientAgent(DispatchAgent):
     def startClient(self, msg):
         log.info("Starting client's simulation...")
         self.running = 1
-        self.thread = Thread(target=self.runClient, name=self.CID+"Client")
-        self.thread.start()
+        self.runClient()
         return True
 
     @agentmethod()
     def stopClient(self, msg):
+        """ No longer being used..."""
         log.info("Shutting client down...")
-        self.running = 0
-        time.sleep(0.1)
-        self.deRegister()
-        time.sleep(0.1)
-        self.comms.running = 0
-        return True
+        # self.running = 0
+        # time.sleep(0.1) # wait for thread to stop
+        # self.deRegister()
+        # time.sleep(0.1)  # wait for thread to stop
+        # self.comms.running = 0
+        # return True
 
     def runClient(self):
         try:
             while self.running:
                 log.info("%s Running" % threading.currentThread().name)
-                time.sleep(self.unit.tS)
+                time.sleep(self.unit.tS/10.0)
                 #Adapt to constraints (change P value when constrained despite no comms)
                 if self.unit.pForced > self.unit.p:
                     log.info("%s Unit forced to modify its own power, not dispatched enough" % threading.currentThread().name)
@@ -97,6 +93,8 @@ class ISOClientAgent(DispatchAgent):
             log.info("Thread %s threw an exception during main loop" % threading.currentThread().name)
             exc_type, exc_value, exc_tb = sys.exc_info()
             log.error(''.join(traceback.format_exception(exc_type, exc_value, exc_tb)))
+        finally:
+            self.comms.stop()
 
     def logUnit(self):
         log.info("%s Logging/Saving unit stats to mongo" % threading.currentThread().name)
@@ -134,6 +132,9 @@ class ISOClientAgent(DispatchAgent):
             self.t = newTime
             # self.sendEnergy() 
             # self.sendParams()
+        elif mtype == 'exit':
+            log.info("Exit message received from server")
+            self.running = 0
         else:
             log.info("UNKNOWN MESSAGE TYPE RECEIVED")
 

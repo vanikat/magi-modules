@@ -1,12 +1,12 @@
 groups:
   scenario_creator_group: [servernode]
   iso_server_group: &serverlist [servernode]
-  iso_client_group: &clientlist [clientnode-1, clientnode-2, clientnode-3]
+  iso_client_group: &clientlist [%s]
 
 agents:
   scenario_creator_agent:
     group: scenario_creator_group
-    path: /proj/montage/magi-modules/iso_agents/scenario_creator_agent
+    path: /proj/montage/magi-modules/iso_agents/scenario_creator_agent/
     execargs: {
       filename: /proj/montage/magi-modules/iso_agents/tmp/custom-scenario.json
     }
@@ -14,13 +14,16 @@ agents:
   iso_server_agent:
     group: iso_server_group
     path: /proj/montage/magi-modules/iso_agents/iso_server_agent
-    execargs: {}
+    execargs: {
+      configFileName: %s
+    }
   
   iso_client_agent:
     group: iso_client_group
     path: /proj/montage/magi-modules/iso_agents/iso_client_agent
     execargs: {
-      server: *serverlist, 
+      server: servernode,
+      configFileName: %s
     }
 
 streamstarts: [
@@ -66,13 +69,7 @@ eventstreams:
         args: {}
 
       - type: trigger
-        triggers: [ { timeout: 10000 } ]
-
-      - type: event
-        agent: iso_server_agent 
-        trigger: simulationStopped 
-        method: stopSimulation 
-        args: {} 
+        triggers: [ { event: clientStopped, agent: iso_client_agent} ] 
 
   iso_client_stream:      
       - type: trigger
@@ -97,15 +94,6 @@ eventstreams:
         method: startClient
         args: {}
 
-      - type: trigger
-        triggers: [ { event: simulationStopped } ]
-
-      - type: event
-        trigger: clientStopped
-        agent: iso_client_agent
-        method: stopClient
-        args: {}
-
   cleanup_stream:
       - type: trigger
         triggers: [ 
@@ -114,4 +102,4 @@ eventstreams:
             agent: iso_client_agent, 
             target: exit
           } 
-        ]
+        ] 

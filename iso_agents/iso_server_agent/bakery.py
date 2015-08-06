@@ -6,14 +6,14 @@ class Bakery(LocalUnit):
 		super(Bakery, self).__init__(e, eMin, eMax, p, pMin, pMax)
 		self.tEnd = tEnd
 		self.tRun = tRun
-		self.v = 0
+		self.v = False
 		self.updateAgility(0)
 		self.updatePForced()
 
 	def updateE(self,k):
-		self.e += (self.p*self.tS)
-		if self.e == self.eMax:
-			self.v = 0
+		self.e += (self.p * self.tS)
+		if self.e >= self.eMax:
+			self.v = False
 		return self.e
 
 	def setP(self, newP):
@@ -22,16 +22,16 @@ class Bakery(LocalUnit):
 			self.v = True
 		return self.p
 
-	def updateAgility(self,k):
+	def updateAgility(self, k):
 		if self.v:
-			self.agility = 0
+			self.agility = 0.0
 		else:
 			self.agility = self.tEnd - self.tRun - k
 		return self.agility
 
 	def updatePForced(self):
 		if self.agility <= 0 and self.e < self.eMax:
-			self.pForced = self.pMax
+			self.pForced = min(self.pMax, (self.eMax - self.e)/self.tS)
 		else:
 			self.pForced = 0.0
 		return self.pForced

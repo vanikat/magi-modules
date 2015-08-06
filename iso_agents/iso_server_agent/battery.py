@@ -8,18 +8,17 @@ class Battery(LocalUnit):
 		self.updateAgility(0)
 		self.updatePForced()
 
-	#DG: Lets use k instead of currentTime, since the BBB paper uses k and k*timestep will give us currentTime if we need it
 	def updateAgility(self,k):
 		self.agility = (
-			self.tEnd - k - ((self.eMax-self.e) / (self.tS*self.pMax))
+			self.tEnd - k - ((self.eMax - self.e) / (self.tS * self.pMax))
 		)
 		return self.agility
 
 	def updatePForced(self):
-		if self.agility > 1:
+		if self.agility > 1.0:
 			self.pForced = 0.0
-		elif self.agility > 0:
-			self.pForced = self.pMax*(1-self.agility)
+		elif self.agility > 0.0:
+			self.pForced = self.pMax * (1 - self.agility)
 		else:
 			self.pForced = self.pMax
 		return self.pForced

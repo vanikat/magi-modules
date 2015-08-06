@@ -7,19 +7,14 @@ from bucket import Bucket
 from battery import Battery
 from bakery import Bakery
 
-# degug notes:
-#code.interact(local=dict(globals(), **locals())) 
-# import pdb
-#pdb.set_trace()
-
 class BBB_ISO(object):
 
-    def __init__(self):
-        self.unitList={}
-        self.tS=1.0
-        self.UID=0 #unique ID for assigning to clients
-        self.currentTime=0
-    
+    def __init__(self, timeStep = 1.0):
+        self.unitList = {}
+        self.tS = timeStep
+        self.UID = 0 #unique ID for assigning to clients
+        self.currentTime = 0
+
     def agileBalancing(self, k, pDispatch):
         self.currentTime = k
         initialPDispatch = pDispatch
@@ -51,9 +46,6 @@ class BBB_ISO(object):
         for unit in unitGroups['Bucket']:
             pBucketsAvailable += unit.pAvailable()
 
-        # pBucketsAvailable = reduce(
-        #   lambda x,y:x+y, [b.pAvailable() for b in unitGroups['Bucket']]
-        # )
         totalPAvailable = pDispatch + pBucketsAvailable
         if pForced > pDispatch:
             # Just give all batts & bakes the power we're forced to
@@ -61,7 +53,7 @@ class BBB_ISO(object):
             for unit in (unitGroups['Battery'] + unitGroups['Bakery']):
                 p = min(unit.pForced, totalPAvailable)
                 unit.setP(p)
-                totalPAvailable = totalPAvailable - p
+                totalPAvailable -= p
         else:
             # Sort Batteries and Bakeries according to increasing agility factor.
             # Distribute PDispatch to Batteries and Bakeries in increasing agility factor order and such that PBatteries(k) + PBakeries(k) is as large as possible, but less than or equal to PDispatch(k).
@@ -72,21 +64,15 @@ class BBB_ISO(object):
             for b in bakeriesAndBatteries:
                 p = min(b.pMax, (b.eMax - b.e)/self.tS, pDispatch)
                 b.setP(p)
-                pDispatch = pDispatch - p
+                pDispatch -= p
 
-        # pBatteries = reduce(
-        #   lambda x,y: x+y, [b.p for b in unitGroups['Battery']]
-        # )
-        # pBakeries = reduce(
-        #   lambda x,y: x+y, [b.p for b in unitGroups['Bakery']]
-        # )
         pBatteries = 0.0
         for unit in unitGroups['Battery']:
-            pBatteriesForced += unit.p
+            pBatteries += unit.p
         
         pBakeries = 0.0
         for unit in unitGroups['Bakery']:
-            pBakeriesForced += unit.p
+            pBakeries += unit.p
         
         pDispatch = initialPDispatch - pBatteries - pBakeries
 
@@ -100,7 +86,7 @@ class BBB_ISO(object):
                 # send power to buckets for future use
                 p = min(b.pReserve(), pDispatch)
             b.setP(p)
-            pDispatch = pDispatch - p
+            pDispatch -= p
 
     def start(self):
         pass
@@ -133,6 +119,8 @@ class BBB_ISO(object):
         return data
 
     def generateStats(self,t,lastDispatch):
+        data = {}
+
         units = self.unitList
         unitGroups={
             'Bucket': [],
@@ -154,9 +142,9 @@ class BBB_ISO(object):
         for val in unitGroups['Bakery']:
             bakeP = bakeP + val.p
         
-        pResidual = lastDispatch-battP-buckP-bakeP
+        pResidual = lastDispatch - battP - buckP - bakeP
 
-        data = {}
+        
         data["t"] = t
         data["pDispatch"] = lastDispatch
         data["pResidual"] = pResidual
@@ -166,16 +154,16 @@ class BBB_ISO(object):
         data["units"] = {}
 
         for k,v in units.iteritems():
-            data["units"]["k"] = v.__dict__
+            data["units"][k] = v.__dict__.copy()
 
         return data
         
 
     @staticmethod
     def dictToUnit(client):
-        cmd='newUnit=BBB_ISO.dictTo'+client["type"]+'(client)'
+        cmd = 'newUnit=BBB_ISO.dictTo' + client["type"] + '(client)'
         exec(cmd)
-        newUnit.type=client["type"]
+        newUnit.type = client["type"]
         return newUnit
     
     @staticmethod
