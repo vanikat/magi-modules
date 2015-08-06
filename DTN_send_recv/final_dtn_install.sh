@@ -20,4 +20,4 @@ configfile="/proj/montage/magi-modules/DTN_send_recv/conf_files/"$short_hostname
 
 #instantiating DTN
 sudo dtnd -c $configfile --init-db
-sudo dtnd -c $configfile -o /home/user/dtn/dtnd.log -d
+sudo dtnd -c $configfile -o /home/user/dtn/dtnd.log -d 

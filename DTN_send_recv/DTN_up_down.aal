@@ -1,0 +1,177 @@
+## The agent implementation and addressing information 
+agents:
+  sender_agent:
+    group: send_group
+    path: /proj/montage/magi-modules/DTN_send_recv
+    execargs: []
+
+  recver_agent:
+    group: recv_group
+    path: /proj/montage/magi-modules/DTN_send_recv 
+    execargs: []
+  
+  updown_agent:
+    group: updown_group
+    path: /proj/montage/magi-modules/link_up_down 
+    execargs: []
+
+
+
+## The mapping from the AAL procedure to the experiment apparatus 
+groups:
+  send_group: [node-0, node-1, node-2, node-3]
+  recv_group: [hub]
+  updown_group: [MobileNode]
+
+streamstarts: [ recverstream, senderstream, cleanupstream, updownstream ]
+
+eventstreams:
+  recverstream: 
+      - type: event
+        agent: recver_agent 
+        method: start_recv
+        trigger: recverStarted 
+        args: {}
+
+      - type: trigger
+        triggers: [ {event: sendingCompleted} ]
+
+      - type: event
+        agent: recver_agent 
+        method: stop_recv
+        trigger: recverStopped 
+        args: {}
+
+
+  senderstream:      
+      - type: trigger
+        triggers: [ {event: recverStarted} ] 
+
+      - type: event
+        agent: sender_agent 
+        method: keep_sending
+        args: 
+          no_of_files: 10                   #no of files to send in one burst
+          final_dest: 'dtn://hub.dtn'
+          file_size: 500                    #size in kb
+          gap_min: 900                      #minimum gap in sec (15 min)
+          gap_max: 1200                     #maximum gap in sec (20 min)
+
+      - type: trigger
+        triggers: [ {timeout: 3600000} ]    #timeout of 1 hour
+
+      - type: event
+        agent: sender_agent 
+        method: stop_sending
+        trigger: sendingCompleted 
+        args: {}
+
+
+  cleanupstream:
+      - type: trigger
+        triggers: [ {event: recverStopped, target: exit} ]
+
+  updownstream:
+      - type: event
+        agent: updown_agent 
+        method: link_up
+        args:
+          linkName: LinkHub
+          timing: 0
+
+      - type: trigger
+        triggers: [ {timeout: 10000} ] #timeout of 10 sec
+
+      - type: event
+        agent: updown_agent 
+        method: link_down
+        args:
+          linkName: LinkHub
+          timing: 0
+
+      - type: trigger
+        triggers: [ {timeout: 300000} ] #timeout of 5 min
+
+      - type: event
+        agent: updown_agent 
+        method: link_up
+        args:
+          linkName: Link-0
+          timing: 0
+
+      - type: trigger
+        triggers: [ {timeout: 10000} ] #timeout of 10 sec
+
+      - type: event
+        agent: updown_agent 
+        method: link_down 
+        args:
+          linkName: Link-0
+          timing: 0
+
+      - type: trigger
+        triggers: [ {timeout: 300000} ] #timeout of 5 min
+
+      - type: event
+        agent: updown_agent 
+        method: link_up
+        args:
+          linkName: Link-1
+          timing: 0
+
+      - type: trigger
+        triggers: [ {timeout: 10000} ] #timeout of 10 sec
+
+      - type: event
+        agent: updown_agent 
+        method: link_down
+        args:
+          linkName: Link-1
+          timing: 0
+
+      - type: trigger
+        triggers: [ {timeout: 300000} ] #timeout of 5 min
+
+      - type: event
+        agent: updown_agent 
+        method: link_up
+        args:
+          linkName: Link-2
+          timing: 0
+
+      - type: trigger
+        triggers: [ {timeout: 10000} ] #timeout of 10 sec
+
+      - type: event
+        agent: updown_agent 
+        method: link_down 
+        args:
+          linkName: Link-2
+          timing: 0
+
+      - type: trigger
+        triggers: [ {timeout: 300000} ] #timeout of 5 min
+
+      - type: event
+        agent: updown_agent 
+        method: link_up 
+        args:
+          linkName: Link-3
+          timing: 0
+
+      - type: trigger
+        triggers: [ {timeout: 10000} ] #timeout of 10 sec
+
+      - type: event
+        agent: updown_agent 
+        method: link_down 
+        args:
+          linkName: Link-3
+          timing: 0
+
+      - type: trigger
+        triggers: [ {timeout: 300000, target: updownstream} ] #timeout of 5 min
+
+
+
+###########################################################

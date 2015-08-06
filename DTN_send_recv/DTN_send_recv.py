@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+#!/uSr/bin/env python
 
-from magi.util.agent import DispatchAgent, agentmethod
+from magi.util.agent import NonBlockingDispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
 from magi.testbed import testbed
 from subprocess import Popen, PIPE
@@ -13,16 +13,18 @@ log = logging.getLogger()
 from magi.util import database, config
 
 import time
+import random
 
 # The DTN_send_recv agent implementation, derived from DispatchAgent.
-class DTN_send_recv(DispatchAgent):
+class DTN_send_recv(NonBlockingDispatchAgent):
     def __init__(self):
-        DispatchAgent.__init__(self)
+        NonBlockingDispatchAgent.__init__(self)
         self.process_s_dtnd = None
         self.process_c_dtnd = None
         self.process_dtncpd = None
         self.process_dtncp = None
 	self.collection = database.getCollection(self.name)
+	self.flag = True
     
     def setup_server(self, msg):
         
@@ -43,7 +45,7 @@ class DTN_send_recv(DispatchAgent):
             log.error(stderr)
             log.error("Error initializing database. Returncode %d" %(returncode))
         
-        # this starts the DTN daemon
+        # this Starts the DTN daemon
         log.info("Starting daemon")
         self.process_s_dtnd = Popen(["sudo",  "dtnd", "-c", configFile, "-o", logFile], stdout=PIPE, stderr=PIPE)
         log.info("Daemon started")
@@ -89,8 +91,26 @@ class DTN_send_recv(DispatchAgent):
             filename = '/tmp/' + testbed.nodename + str(i) + '.txt'
             Popen(["sudo", "touch", filename])
             self.start_send(filename, final_dest)
-            #time.sleep(0.5)
         return True  
+
+    def random_send_withfilesize(self, msg, no_of_files, final_dest, file_size):
+        for i in range(0, no_of_files):
+            filename = '/tmp/' + testbed.nodename + str(i) + '.txt'
+            cmd = "sudo dd if=/dev/zero of="+filename+" bs=1K count="+str(file_size)
+            log.info("Running cmd: %s" %(cmd))    
+            process = Popen(cmd.split(), stdout=PIPE, stderr=PIPE)
+            returncode = process.wait()
+            out, err = process.communicate()
+            if returncode == 0:
+                    log.info(out)
+                    log.info("File "+filename+ " created.")
+                    self.start_send(filename, final_dest)
+            else:
+                    log.error("Error creating file " + filename + ". Returncode: %d" %(returncode))
+                    log.error(err)
+            
+        return True  
+
     
     def start_send(self, filename, dest_dtn_eid):
         log.info("Trying to send file %s to %s" %(filename, dest_dtn_eid))
@@ -164,7 +184,7 @@ class DTN_send_recv(DispatchAgent):
             self.process_dtncpd.terminate()
             out, err = self.process_dtncpd.communicate()
             returncode = self.process_dtncpd.poll()
-            if returncode == 143:#this is actually a returncode when the process is terminated using SIGTERM (it is infinaite loop program)
+            if returncode == 143:#this is actually a returncode when the process is terminated using SIGTERM (it is infinite loop program)
                 log.info("Receive process terminated")
                 log.info("Received Files:")
                 log.info(out)
@@ -178,19 +198,44 @@ class DTN_send_recv(DispatchAgent):
         log.info("All done!")
         return True
 
-    
-    def close_log(self, msg):
-        log.info("cleanup done")
-    #    logging.shutdown()
-        return True  
-        
+    def keep_sending(self, msg, no_of_files, final_dest, file_size, gap_min, gap_max):
+        j = 0
+	while(self.flag == True):
+                j = j + 1
+                for i in range(1, no_of_files+1):
+                    filename = '/tmp/' + testbed.nodename + "_Round"+ str(j)+ "_"+ str(i) + '.txt'
+                    cmd = "sudo dd if=/dev/zero of="+filename+" bs=1K count="+str(file_size)
+                    log.info("Running cmd: %s" %(cmd))    
+                    process = Popen(cmd.split(), stdout=PIPE, stderr=PIPE)
+                    returncode = process.wait()
+                    out, err = process.communicate()
+                    if returncode == 0:
+                        log.info(out)
+                        log.info("File "+filename+ " created.")
+                        self.start_send(filename, final_dest)
+                    else:
+                        log.error("Error creating file " + filename + ". Returncode: %d" %(returncode))
+                        log.error(err)
+                    random_interval = random.randint(gap_min, gap_max)
+                    log.info("waiting for %d seconds"%(random_interval))  
+                    time.sleep(random_interval) # delay in seconds
+                    log.info("Done Waiting")
+                    if(self.flag == False):
+                         break
+                                            
+       
+    def stop_sending(self, msg):
+        log.info("STOP THE SENDING")
+        self.flag = False
+        return True       
 
 # the getAgent() method must be defined somewhere for all agents.
 # The Magi daemon invokes this method to get a reference to an
 # agent. It uses this reference to run and interact with an agent
 # instance.
-def getAgent():
+def getAgent(**kwargs):
     agent = DTN_send_recv()
+    agent.setConfiguration(None, **kwargs)
     return agent
 
 # In case the agent is run as a separate process, we need to
