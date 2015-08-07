@@ -1,7 +1,7 @@
 name: DTN_send_recv
 display: DTN File send and receive agent
 description:  This agent opens the dtn daemon and sends a file and receives a file
-execute: socket 
+execute: thread 
 mainfile: DTN_send_recv.py
 inherits:
    - DispatchAgent 

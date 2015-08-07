@@ -18,7 +18,63 @@ class link_up_down(DispatchAgent):
 
     #there should be a delay node between the two nodes connected by the link for this up/down to work.
     # 'timing' is in seconds - 'timing' is relative to the time the event is called 
-    def link_up(self, msg, linkName, timing):
+    def link_up(self, msg, dest):
+        functionName = self.link_up.__name__
+        helpers.entrylog(log, functionName, locals())
+        
+        intf = self.node2Intf(dest)
+        
+        cmd = "ifconfig %s up" %(intf)
+        log.info("Running cmd: %s" %(cmd))
+        
+        process = Popen(cmd.split(), stdout=PIPE, stderr=PIPE)
+        returncode = process.wait()
+        stdout, stderr = process.communicate()
+        
+        if returncode == 0:
+            log.info(stdout)
+            log.info("Link to node '" + dest + "' brought up.")
+        else:
+            log.error(stderr)
+            log.error("Error in bringing link to node '" + dest + "' up. Error code %d" %(returncode))
+        
+        return True
+
+    def link_down(self, msg, dest):
+        functionName = self.link_down.__name__
+        helpers.entrylog(log, functionName, locals())
+        
+        intf = self.node2Intf(dest)
+        
+        cmd = "ifconfig %s down" %(intf)
+        log.info("Running cmd: %s" %(cmd))
+        
+        process = Popen(cmd.split(), stdout=PIPE, stderr=PIPE)
+        returncode = process.wait()
+        stdout, stderr = process.communicate()
+        
+        if returncode == 0:
+                log.info(stdout)
+                log.info("Link to node '" + dest + "' put down.")
+        else:
+                log.error(stderr)
+                log.error("Error in putting link to node '" + dest + "' down. Returncode %d" %(returncode))
+        
+        return True
+
+    def node2Intf(self, dest):
+        topoGraph = testbed.getTopoGraph()
+        src = testbed.getNodeName()
+        linkname = topoGraph[src][dest]['linkName']
+        srcLinks = topoGraph.node[src]['links']
+        try:
+            ip = srcLinks[linkname]['ip']
+            return testbed.getInterfaceInfo(ip).name
+        except Exception:
+            raise Exception("Invalid information. Mostly no direct link to destination '%s'." %(dest))
+                  
+        
+    def link_up_tevc(self, msg, linkName, timing):
         functionName = self.link_up.__name__
         helpers.entrylog(log, functionName, locals())
         
@@ -43,7 +99,7 @@ class link_up_down(DispatchAgent):
         
         return True
 
-    def link_down(self, msg, linkName, timing):
+    def link_down_tevc(self, msg, linkName, timing):
         functionName = self.link_down.__name__
         helpers.entrylog(log, functionName, locals())
         

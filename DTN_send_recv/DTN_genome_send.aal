@@ -1,0 +1,155 @@
+## The agent implementation and addressing information 
+agents:
+  sequence_sender_agent:
+    group: send_group
+    path: /proj/montage/magi-modules/DTN_send_recv
+    execargs: []
+
+  sequence_recver_agent:
+    group: recv_group
+    path: /proj/montage/magi-modules/DTN_send_recv 
+    execargs: []
+  
+  updown_agent:
+    group: updown_group
+    path: /proj/montage/magi-modules/link_up_down 
+    execargs: []
+
+
+
+## The mapping from the AAL procedure to the experiment apparatus 
+groups:
+  send_group: [node-0, node-1, node-2, node-3]
+  recv_group: [hub]
+  updown_group: [MobileNode]
+
+streamstarts: [ recverstream, senderstream, cleanupstream, updownstream ]
+
+eventstreams:
+  recverstream: 
+      - type: event
+        agent: sequence_recver_agent 
+        method: start_recv
+        trigger: recverStarted 
+        args: {}
+
+      - type: trigger
+        triggers: [ {event: updownCompleted} ]
+
+      - type: event
+        agent: sequence_recver_agent 
+        method: stop_recv
+        trigger: recverStopped 
+        args: {}
+
+
+  senderstream:      
+      - type: trigger
+        triggers: [ {event: recverStarted} ] 
+
+      - type: event
+        agent: sequence_sender_agent 
+        method: random_send_withfilesize
+        trigger: sendingCompleted
+        args: 
+          no_of_files: 10                  # no of files to send
+          final_dest: 'dtn://hub.dtn'
+          file_size: 20                    # size in kb
+          
+  cleanupstream:
+      - type: trigger
+        triggers: [ {event: recverStopped, target: exit} ]
+
+  updownstream:
+      - type: trigger
+        triggers: [ {event: sendingCompleted} ] 
+
+      - type: event
+        agent: updown_agent 
+        method: link_up
+        args:
+          dest: node-0 
+
+      - type: trigger
+        triggers: [ {timeout: 120000} ] #timeout of 2 min 
+
+      - type: event
+        agent: updown_agent 
+        method: link_down
+        args:
+          dest: node-0 
+
+      - type: trigger
+        triggers: [ {timeout: 300000} ] #timeout of 5 min 
+
+      - type: event
+        agent: updown_agent 
+        method: link_up
+        args:
+          dest: node-1 
+
+      - type: trigger
+        triggers: [ {timeout: 120000} ] #timeout of 2 min 
+
+      - type: event
+        agent: updown_agent 
+        method: link_down 
+        args:
+          dest: node-1 
+
+      - type: trigger
+        triggers: [ {timeout: 300000} ] #timeout of 5 min  
+
+      - type: event
+        agent: updown_agent 
+        method: link_up
+        args:
+          dest: node-2 
+
+      - type: trigger
+        triggers: [ {timeout: 120000} ] #timeout of 2 min 
+
+      - type: event
+        agent: updown_agent 
+        method: link_down
+        args:
+          dest: node-2 
+
+      - type: trigger
+        triggers: [ {timeout: 300000} ] #timeout of 5 min 
+
+      - type: event
+        agent: updown_agent 
+        method: link_up
+        args:
+          dest: node-3 
+
+      - type: trigger
+        triggers: [ {timeout: 120000} ] #timeout of 2 min 
+
+      - type: event
+        agent: updown_agent 
+        method: link_down 
+        args:
+          dest: node-3 
+
+      - type: trigger
+        triggers: [ {timeout: 300000} ] #timeout of 5 min 
+
+      - type: event
+        agent: updown_agent 
+        method: link_up 
+        args:
+          dest: hub 
+
+      - type: trigger
+        triggers: [ {timeout: 300000} ] #timeout of 5 min 
+
+      - type: event
+        agent: updown_agent 
+        method: link_down
+        trigger: updownCompleted  
+        args:
+          dest: hub 
+
+###########################################################
