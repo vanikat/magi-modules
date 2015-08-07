@@ -59,6 +59,7 @@ class CompareResults(object):
             'iso_server_agent', 
             # dbHost=getDBConfigHost(project=projectName, experiment=expName),
             dbHost=helpers.toControlPlaneNodeName(dbdl['configHost']),
+            # dbPort=27017
             dbPort=dbdl['configPort']
         )
         # print "ACTUAL RESULTS FROM MONGO:"

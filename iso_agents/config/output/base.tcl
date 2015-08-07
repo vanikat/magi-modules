@@ -1,8 +1,8 @@
 set ns [new Simulator]
 source tb_compat.tcl
 
-set magi_start "sudo python /share/magi/current/magi_bootstrap.py"
-
+# set magi_start "sudo python /share/magi/current/magi_bootstrap.py"
+set magi_start "sudo python /share/magi/test/magi_bootstrap.py -p /share/magi/test"
 set servernode [$ns node]
 tb-set-node-startcmd $servernode "$magi_start"
 tb-set-node-os $servernode Ubuntu1404-64-STD

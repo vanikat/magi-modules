@@ -10,7 +10,7 @@ class Battery(LocalUnit):
 
 	def updateAgility(self,k):
 		self.agility = (
-			self.tEnd - k - ((self.eMax - self.e) / (self.tS * self.pMax))
+			self.tEnd - (k-1) - ((self.eMax - self.e) / (self.tS * self.pMax))
 		)
 		return self.agility
 
