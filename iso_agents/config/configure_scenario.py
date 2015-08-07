@@ -1,6 +1,7 @@
 import csv
 import sys
 import json
+import os
 
 class ConfigureScenario(object):
     """
@@ -14,6 +15,9 @@ class ConfigureScenario(object):
         pass
 
     def configure(self, vppfn, unitsfn, tclfn, aalfn, configfn):
+        tclfn = os.path.abspath(tclfn)
+        aalfn = os.path.abspath(aalfn)
+        configfn = os.path.abspath(configfn)
         vpp, units = self.loadParams(vppfn, unitsfn)
         self.generateConfig(vpp, units, configfn)
         self.generateTCL(vpp, units, tclfn)
@@ -108,22 +112,6 @@ class ConfigureScenario(object):
             for i in range(len(units)):
                 customAal.append("clientnode-%s" % str(i+1))
             outputAalFile.write(aalText % (", ".join(customAal), configfn, configfn))
-
-
-
-# CLient / Server changes:
-    #  Agents fully parameterized through MAGI
-    #  data should be tagged with some exp #
-    #  Remove references to agileBalancing / BBB (should be able to use any algorithm)
-
-
-
-
-# Consume config file:
-#     - Read from CSV to get each agent
-#     - Read from CSV file to get VPP power function
-#         - Load the vpp power history into a list and wrap it with a pDispatch function
-
 
 if __name__ == "__main__":
     if len(sys.argv) == 6:
