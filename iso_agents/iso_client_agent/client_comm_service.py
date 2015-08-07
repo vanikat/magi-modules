@@ -31,7 +31,7 @@ class ClientCommService:
     
     def __init__(self):
         self.valueOutMap = {}
-        self.running =1
+        self.running = 1
         self.connected = False
         self.registered = False
     
@@ -41,11 +41,27 @@ class ClientCommService:
     
     def initAsClient(self, address, clientID, replyHandler):
         log.info("In initAsCLient")
+        
         self.slock = Semaphore(0);
         self.valueOutMap = 0;
+        
         self.s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.s.connect((address,PORT))
+        
+        retries = 0
+        while not self.connected and retries <= 4:
+            log.info("Trying to connect to server, attempt #%d..." % (retries+1))
+            try:
+                self.s.connect((address,PORT))
+                self.connected = True
+            except socket.timeout as e:
+                log.info("Socket timed out, exception: %s" % repr(e))
+                retries += 1
+
+        # if self.connected is False:
+        #     log.info("ERROR: Client could not connect to server")
+        #     raise Exception, "ERROR: Client could not connect to server"
+
         data = json.dumps({'id':clientID})
         self.s.send(data)
         nthread = Thread(name=clientID + "ClientComms", target=self.ClientHandler, args=(clientID, self.s, replyHandler))

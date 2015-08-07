@@ -24,8 +24,8 @@ class ISOClientAgent(DispatchAgent):
 
     def __init__(self):
         DispatchAgent.__init__(self)
-        self.server = None # must be configured by MAGI
-        self.configFileName = None # must be configured by MAGI
+        self.server = None # configured by MAGI
+        self.configFileName = None # configured by MAGI
 
     @agentmethod()
     def initClient(self, msg):
@@ -55,7 +55,7 @@ class ISOClientAgent(DispatchAgent):
         self.cthread = self.comms.initAsClient(self.server, self.CID, self.replyHandler)
         self.sendRegister()
         while self.comms.registered is False:
-            time.sleep(0.01)
+            time.sleep(0.05)
         return True
         
     @agentmethod()

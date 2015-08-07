@@ -25,6 +25,7 @@ class CompareResults(object):
         self.exportCSV(outFn, actualData)
 
     def loadTestData(self, testFn):
+        print "Loading reference files.."
         testData = []
 
         with open(testFn, 'r') as testFile:
@@ -45,11 +46,12 @@ class CompareResults(object):
                     datum["pDispatch"] = float(row[5])
                     testData.append(datum)
 
-        print "TEST DATA:\n%s" % repr(testData)
+        # print "TEST DATA:\n%s" % repr(testData)
         return testData
 
     def loadActualDataFromDeter(self, projectName, expName):
-        print "PROJECTNAME: %s, EXPNAME: %s" % (projectName, expName)
+        print "Loading experiment data..."
+        print "Project Name: %s, Experiment Name: %s" % (projectName, expName)
 
         experimentConfigFile = helpers.getExperimentConfigFile(projectName, expName)
         experimentConfig = yaml.load(open(experimentConfigFile, 'r'))
@@ -61,11 +63,12 @@ class CompareResults(object):
             dbHost=helpers.toControlPlaneNodeName(dbdl['configHost']),
             dbPort=ROUTER_SERVER_PORT
         )
-        print "ACTUAL RESULTS FROM MONGO:"
-        print repr(data)
+        # print "ACTUAL RESULTS FROM MONGO:"
+        # print repr(data)
         return data
 
     def exportCSV(self, outFn, data):
+        print "Exporting data to CSV with path: %s..." % outFn
         with open(outFn, 'w') as outFile:
             writer = csv.writer(outFile)
             keys = ['Timestep','Residual','Pbak','Pbat','PBkt','VppOut']
@@ -81,6 +84,7 @@ class CompareResults(object):
                 writer.writerow(d)
 
     def compareResults(self, testData, actualData):
+        print "Comparing experiment results to reference files..."
         successes = 0
         failures = 0
         for i in range(len(testData)):
@@ -88,7 +92,7 @@ class CompareResults(object):
             for k in sorted(testData[i].keys()):
                 testValue = testData[i][k]
                 if i >= len(actualData):
-                    print "Actual data not present for t = %d" % i
+                    print "Actual data not present for t = %d" % testData[i]["t"]
                     break
                 elif actualData[i][k] == testValue or (actualData[i][k] - testValue) < 0.00001:
                     # print "'%s' OK: actual: %s == test: %s" % (k, actualData[i][k], testValue)
