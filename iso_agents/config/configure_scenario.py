@@ -3,6 +3,8 @@ import sys
 import json
 import os
 
+TEMPLATE_DIR = os.path.dirname(os.path.realpath(__file__))
+
 class ConfigureScenario(object):
     """
         Loads configuration file
@@ -18,15 +20,17 @@ class ConfigureScenario(object):
         tclfn = os.path.abspath(tclfn)
         aalfn = os.path.abspath(aalfn)
         configfn = os.path.abspath(configfn)
-        vpp, units = self.loadParams(vppfn, unitsfn)
-        self.generateConfig(vpp, units, configfn)
-        self.generateTCL(vpp, units, tclfn)
-        self.generateAAL(vpp, units, aalfn, configfn)
+        params = self.loadParams(vppfn, unitsfn)
+        params["timeStep"] = 1.0
+        params["numIterations"] = len(params['vpp'])-1 # -1 for dummy vpp entry
+        self.generateConfig(params, configfn)
+        self.generateTCL(params, tclfn)
+        self.generateAAL(params, aalfn, configfn)
     
     def loadParams(self, vppfn, unitsfn):
         vpp = self.loadVPP(vppfn)
         units = self.loadUnits(unitsfn)
-        return vpp, units
+        return {"vpp": vpp, "units": units }
 
     def loadVPP(self, vppfn):
         vppPower = []
@@ -80,38 +84,47 @@ class ConfigureScenario(object):
         print "Units: %s" % repr(units)
         return units
 
-    def generateConfig(self, vpp, units, configfn):
+    def generateConfig(self, params, configfn):
         print "Generating config file..."
-        params = {}
-        params["vpp"] = vpp
-        params["units"] = units
-        params["timeStep"] = 1.0
-        params["numIterations"] = len(vpp)-1 # -1 for dummy vpp entry
         with open(configfn, 'w') as configFile:
             json.dump(params, configFile, sort_keys=True, indent=4, ensure_ascii=False)
+        return params
 
-    def generateTCL(self, vpp, units, tclfn):
+    def generateTCL(self, params, tclfn):
         print "Generating TCL file..."
-        numClients = len(units)
-        BASE_TCL_FN = "output/base.tcl"
-        tclText = ""
-        with open(BASE_TCL_FN) as baseTclFile:
-            tclText = baseTclFile.read()
+        templateData = {}
+        templateData['numClients'] = len(params['units'])
+        tclTemplateFileName = os.path.join(TEMPLATE_DIR, "output/base.tcl")
+        tclTemplateText = ""
+        with open(tclTemplateFileName) as baseTclFile:
+            tclTemplateText = baseTclFile.read()
         with open(tclfn, 'w') as outputTclFile:
-            outputTclFile.write(tclText % numClients)
+            outputTclFile.write(tclTemplateText % templateData)
 
-    def generateAAL(self, vpp, units, aalfn, configfn):
+    def generateAAL(self, params, aalfn, configfn):
         print "Generating AAL file..."
-        numClients = len(units)
-        BASE_AAL_FN = "output/base.aal"
-        aalText = ""
-        with open(BASE_AAL_FN) as baseAalFile:
-            aalText = baseAalFile.read()
+        numClients = len(params['units'])
+
+        templateData = {}
+        templateData['configFileName'] = configfn
+        templateData['clientNodesText'] = ""
+        # timeout based on simulation length multipled by some slack factor
+        templateData['timeout'] = params['timeStep'] * params['numIterations'] * 5
+
+        aalTemplateFileName = os.path.join(TEMPLATE_DIR, "output/base.aal")
+        aalTemplateText = ""
+        
+        with open(aalTemplateFileName) as baseAalFile:
+            aalTemplateText = baseAalFile.read()
+
         with open(aalfn, 'w') as outputAalFile:
-            customAal = []
-            for i in range(len(units)):
-                customAal.append("clientnode-%s" % str(i+1))
-            outputAalFile.write(aalText % (", ".join(customAal), configfn, configfn))
+            clientNodes = []
+            
+            for i in range(len(params['units'])):
+                clientNodes.append("clientnode-%s" % str(i+1))
+            templateData['clientNodesText'] = ", ".join(clientNodes)
+
+            outputAalFile.write(aalTemplateText % templateData)
 
 if __name__ == "__main__":
     if len(sys.argv) == 6:

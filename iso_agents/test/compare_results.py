@@ -7,8 +7,6 @@ from magi.util.helpers import getDBConfigHost
 from magi.util import helpers
 from magi.db.Server import ROUTER_SERVER_PORT
 
-ROUTER_SERVER_PORT = 27018 # remove this
-
 class CompareResults(object):
 
     def __init__(self):
@@ -61,7 +59,7 @@ class CompareResults(object):
             'iso_server_agent', 
             # dbHost=getDBConfigHost(project=projectName, experiment=expName),
             dbHost=helpers.toControlPlaneNodeName(dbdl['configHost']),
-            dbPort=ROUTER_SERVER_PORT
+            dbPort=dbdl['configPort']
         )
         # print "ACTUAL RESULTS FROM MONGO:"
         # print repr(data)

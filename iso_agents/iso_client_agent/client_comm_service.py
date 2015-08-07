@@ -48,6 +48,7 @@ class ClientCommService:
         self.s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         
+        #updated 8/7/15 at 1:28pm
         retries = 0
         while not self.connected and retries <= 4:
             log.info("Trying to connect to server, attempt #%d..." % (retries+1))

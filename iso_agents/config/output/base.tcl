@@ -8,7 +8,7 @@ tb-set-node-startcmd $servernode "$magi_start"
 tb-set-node-os $servernode Ubuntu1404-64-STD
 
 #Lightweight Consumer/Producers
-set numclients %s
+set numclients %(numClients)s
 
 set clanstr ""
 for {set i 1} {$i <= $numclients} {incr i} {

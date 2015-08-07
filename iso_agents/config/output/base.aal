@@ -1,7 +1,7 @@
 groups:
   scenario_creator_group: [servernode]
   iso_server_group: &serverlist [servernode]
-  iso_client_group: &clientlist [%s]
+  iso_client_group: &clientlist [%(clientNodesText)s]
 
 agents:
   scenario_creator_agent:
@@ -15,7 +15,7 @@ agents:
     group: iso_server_group
     path: /proj/montage/magi-modules/iso_agents/iso_server_agent
     execargs: {
-      configFileName: %s
+      configFileName: %(configFileName)s
     }
   
   iso_client_agent:
@@ -23,7 +23,7 @@ agents:
     path: /proj/montage/magi-modules/iso_agents/iso_client_agent
     execargs: {
       server: servernode,
-      configFileName: %s
+      configFileName: %(configFileName)s
     }
 
 streamstarts: [
@@ -94,6 +94,16 @@ eventstreams:
         trigger: clientStopped
         method: startClient
         args: {}
+
+  timer_stream:
+    - type: trigger
+      triggers: [
+        { 
+            timeout: %(timeout)s,
+            target: exit
+          } 
+      ]
+
 
   cleanup_stream:
       - type: trigger
