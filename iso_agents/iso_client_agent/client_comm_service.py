@@ -55,7 +55,7 @@ class ClientCommService:
             try:
                 self.s.connect((address,PORT))
                 self.connected = True
-            except socket.timeout as e:
+            except socket.error as e:
                 log.info("Socket timed out, exception: %s" % repr(e))
                 retries += 1
 
