@@ -63,7 +63,7 @@ class ISOServerAgent(DispatchAgent):
             log.info("ISO.unitList: %s" % repr(self.ISO.unitList))
             time.sleep(self.tS) # let all clients connect and get ready
 
-            for t in range(1, self.numIterations):
+            for t in range(1, self.numIterations + 1):
                 if self.simRunning:
                     log.info("Simulation Timestep %d..." % t)
                     time.sleep(self.tS/10.0)

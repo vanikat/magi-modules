@@ -7,6 +7,8 @@ from magi.util.helpers import getDBConfigHost
 from magi.util import helpers
 from magi.db.Server import ROUTER_SERVER_PORT
 
+ROUTER_SERVER_PORT = 27018 # remove this
+
 class CompareResults(object):
 
     def __init__(self):
@@ -68,7 +70,7 @@ class CompareResults(object):
             writer = csv.writer(outFile)
             keys = ['Timestep','Residual','Pbak','Pbat','PBkt','VppOut']
             writer.writerow(keys)
-            for record in data:
+            for record in sorted(data, key = lambda record: record['t']):
                 d = []
                 d.append(record['t'])
                 d.append(record['pResidual'])
@@ -79,26 +81,23 @@ class CompareResults(object):
                 writer.writerow(d)
 
     def compareResults(self, testData, actualData):
-        testTimeInterval = (testData[0]["t"], testData[-1]["t"])
-        filteredData = []
         successes = 0
         failures = 0
-        # assuming data is filtered
-        for i in range(1, len(testData)):
+        for i in range(len(testData)):
             print "Comparing data for timestep %d--------------------------" % testData[i]["t"]
             for k in sorted(testData[i].keys()):
                 testValue = testData[i][k]
                 if i >= len(actualData):
                     print "Actual data not present for t = %d" % i
                     break
-                elif actualData[i][k] == testValue:
-                    print "'%s' OK: actual: %s == test: %s" % (k, actualData[i][k], testValue)
+                elif actualData[i][k] == testValue or (actualData[i][k] - testValue) < 0.00001:
+                    # print "'%s' OK: actual: %s == test: %s" % (k, actualData[i][k], testValue)
                     successes += 1
                 else:
                     print "'%s' FAILED: actual: %s == test: %s" % (k, actualData[i][k], testValue)
                     failures += 1
         
-        print "REPORT CARD: %d failures, %d successes, Overall: %f" % (failures, successes, float(successes)/(len(testData)*6))
+        print "REPORT CARD: %d failures, %d successes, Test Cases Passed: %f" % (failures, successes, float(successes)/(len(testData)*6))
         
 
 
