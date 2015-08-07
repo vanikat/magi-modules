@@ -17,7 +17,7 @@ BUFF=1024
 FALSE=0
 TXTIMEOUT=1
 
-import simplejson as json
+import json
 import socket
 import thread
 import threading

@@ -91,6 +91,7 @@ eventstreams:
 
       - type: event
         agent: iso_client_agent
+        trigger: clientStopped
         method: startClient
         args: {}
 

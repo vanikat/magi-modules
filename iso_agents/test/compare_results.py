@@ -15,6 +15,7 @@ class CompareResults(object):
     def test(self, testFn, projectName, expName):
         testData = self.loadTestData(testFn)
         actualData = self.loadActualDataFromDeter(projectName, expName)
+        actualData.sort(key=lambda record: record['t'])
         self.compareResults(testData, actualData)
 
     def export(self, outFn, projectName, expName):
@@ -83,12 +84,13 @@ class CompareResults(object):
         successes = 0
         failures = 0
         # assuming data is filtered
-        for i in range(len(testData)):
+        for i in range(1, len(testData)):
             print "Comparing data for timestep %d--------------------------" % testData[i]["t"]
             for k in sorted(testData[i].keys()):
                 testValue = testData[i][k]
                 if i >= len(actualData):
                     print "Actual data not present for t = %d" % i
+                    break
                 elif actualData[i][k] == testValue:
                     print "'%s' OK: actual: %s == test: %s" % (k, actualData[i][k], testValue)
                     successes += 1

@@ -1,6 +1,6 @@
 import csv
 import sys
-import simplejson as json
+import json
 
 class ConfigureScenario(object):
     """

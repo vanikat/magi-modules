@@ -8,7 +8,7 @@ from threading import Thread
 import threading
 import random
 import logging
-import simplejson as json
+import json
 
 from client_comm_service import ClientCommService
 from bbb_iso import BBB_ISO

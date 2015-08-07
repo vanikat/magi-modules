@@ -4,7 +4,7 @@ from os.path import basename
 import threading
 import random
 import time
-import simplejson as json
+import json
 
 from server_comm_service import ServerCommService
 from bbb_iso import BBB_ISO
