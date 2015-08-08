@@ -1,7 +1,7 @@
 groups:
   scenario_creator_group: [servernode]
   iso_server_group: &serverlist [servernode]
-  iso_client_group: &clientlist [%(clientNodesText)s]
+  iso_client_group: &clientlist [clientnode-1, clientnode-2, clientnode-3]
 
 agents:
   scenario_creator_agent:
@@ -15,7 +15,7 @@ agents:
     group: iso_server_group
     path: /proj/montage/magi-modules/iso_agents/iso_server_agent
     execargs: {
-      configFileName: %(configFileName)s
+      configFileName: /Users/david/Dropbox/SchoolWork/2015-Summer/ISI/magi-modules/iso_agents/config/output/star3.json
     }
   
   iso_client_agent:
@@ -23,15 +23,14 @@ agents:
     path: /proj/montage/magi-modules/iso_agents/iso_client_agent
     execargs: {
       server: servernode,
-      configFileName: %(configFileName)s
+      configFileName: /Users/david/Dropbox/SchoolWork/2015-Summer/ISI/magi-modules/iso_agents/config/output/star3.json
     }
 
 streamstarts: [
   scenario_creator_stream,
   iso_server_stream,
   iso_client_stream,
-  cleanup_stream,
-  timer_stream
+  cleanup_stream
 ]
 
 eventstreams:
@@ -100,7 +99,7 @@ eventstreams:
     - type: trigger
       triggers: [
         { 
-            timeout: %(timeout)s,
+            timeout: 500.0,
             target: exit
           } 
       ]

@@ -120,7 +120,7 @@ class ServerCommService:
         log.info("%s Leaving ServerHandler" % threading.currentThread().name)
 
     def close(self):
-        self.running=0
+        self.running = 0
         for key,value in self.slock.iteritems():
             value.release()
         
