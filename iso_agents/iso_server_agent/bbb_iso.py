@@ -76,8 +76,12 @@ class BBB_ISO(object):
         
         pDispatch = initialPDispatch - pBatteries - pBakeries
 
-        # Distribute remaining pDispatch to the Buckets in decreasing agility factor order.
-        unitGroups['Bucket'].sort(key=lambda b: b.agility,reverse=True)
+        # Distribute remaining pDispatch to the Buckets in decreasing agility factor order if pDispatch is positive and increasing agility factor if pDispatch is positive
+        if pDispatch < 0:
+            unitGroups['Bucket'].sort(key=lambda b: b.agility)
+        else:
+            unitGroups['Bucket'].sort(key=lambda b: b.agility,reverse=True)
+        
         for b in unitGroups['Bucket']:
             if pDispatch < 0:
                 # must draw on buckets' power
@@ -151,10 +155,14 @@ class BBB_ISO(object):
         data["bucketP"] = buckP
         data["batteryP"] = battP
         data["bakeryP"] = bakeP
-        data["units"] = {}
+        data["units"] = []
 
         for k,v in units.iteritems():
-            data["units"][k] = v.__dict__.copy()
+            unit = v.__dict__.copy()
+            unit["CID"] = k
+            data["units"].append(unit)
+
+        data["units"].sort(key=lambda u: int(u["CID"].split("-")[1]))
 
         return data
         

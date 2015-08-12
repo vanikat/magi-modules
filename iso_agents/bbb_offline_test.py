@@ -17,7 +17,12 @@ def runTest():
         iso.agileBalancing(k, params["vpp"][k])
         data.append(iso.generateStats(k, params["vpp"][k]))
 
-    with open('offline-test-2.csv', 'w') as outFile:
+    # detailed stats to json
+    with open('offline-stats.json', 'w') as jsonFile:
+        json.dump(data, jsonFile, indent=4)
+
+    # basic stats to csv
+    with open('offline-stats.csv', 'w') as outFile:
         writer = csv.writer(outFile)
         
         keys = ['Timestep','Residual','Pbak','Pbat','PBkt','VppOut']

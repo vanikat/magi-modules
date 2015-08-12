@@ -86,6 +86,7 @@ class ConfigureScenario(object):
 
     def generateConfig(self, params, configfn):
         print "Generating config file..."
+        params["units"].sort(key=lambda u: int(u['CID'].split("-")[1]))
         with open(configfn, 'w') as configFile:
             json.dump(params, configFile, sort_keys=True, indent=4, ensure_ascii=False)
         return params
