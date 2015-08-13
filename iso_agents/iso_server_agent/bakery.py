@@ -22,30 +22,18 @@ class Bakery(LocalUnit):
 			self.v = True
 		return self.p
 
-	def updateAgility(self, k):
-		if self.v:
-			self.agility = 0.0
-		else:
-			self.agility = self.tEnd - self.tRun - (k-1)
+	def updateAgility(self, k):	
+
+		self.agility = self.tEnd - self.tRun - k
+		
 		return self.agility
 
 	def updatePForced(self):
 		if self.agility > 1:
 			self.pForced = 0.0
 		else:
-			# self.pForced = self.pMax
-			self.pForced = min(
-				self.pMax, 
-				max(
-					self.pMin,
-					(self.eMax - self.e) / self.tS
-				)
-			)
-
-		# if self.agility <= 0 and self.e < self.eMax:
-		# 	self.pForced = min(self.pMax, (self.eMax - self.e)/self.tS)
-		# else:
-		# 	self.pForced = 0.0
+			self.pForced = self.pMax
+		
 		return self.pForced
 
 if __name__=="__main__":

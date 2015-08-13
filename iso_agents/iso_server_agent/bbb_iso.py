@@ -12,7 +12,7 @@ class BBB_ISO(object):
     def __init__(self, timeStep = 1.0):
         self.unitList = {}
         self.tS = timeStep
-        self.UID = 0 #unique ID for assigning to clients
+        self.UID = 0 # unique ID for assigning to clients
         self.currentTime = 0
 
     def agileBalancing(self, k, pDispatch):
@@ -39,12 +39,7 @@ class BBB_ISO(object):
             pBakeriesForced += unit.pForced
         
         pForced = pBatteriesForced + pBakeriesForced
-        
-        # pBucketsAvailable = 0.0
-        # for unit in unitGroups['Bucket']:
-        #     pBucketsAvailable += unit.pAvailable()
 
-        # totalPAvailable = pDispatch + pBucketsAvailable
         pUsed = 0.0
         if pForced > pDispatch:
             # Just give all batts & bakes the power we're forced to
@@ -57,15 +52,26 @@ class BBB_ISO(object):
                 # p = min(unit.pForced, totalPAvailable)
                 # totalPAvailable -= p
         else:
-            # Sort Batteries and Bakeries according to increasing agility factor.
-            # Distribute PDispatch to Batteries and Bakeries in increasing agility factor order and such that PBatteries(k) + PBakeries(k) is as large as possible, but less than or equal to PDispatch(k).
+            # Distribute PDispatch to Batteries and Bakeries
+            # in increasing agility factor order 
+            # and such that PBatteries(k) + PBakeries(k) is as large as possible,
+            # but less than or equal to PDispatch(k).
             bakeriesAndBatteries = sorted(
                 unitGroups['Battery'] + unitGroups['Bakery'], 
                 key=lambda b: b.agility
             )
-            for b in bakeriesAndBatteries:
-                p = min(b.pMax, (b.eMax - b.e)/self.tS, pDispatch-pUsed)
-                b.setP(p)
+            for unit in bakeriesAndBatteries:
+                if isinstance(unit, Bakery):
+                    if (pDispatch - pUsed) >= unit.pMax:
+                        p = unit.pMax
+                    else:
+                        p = 0.0
+                elif isinstance(unit, Battery):
+                    p = min(unit.pMax, (unit.eMax - unit.e)/self.tS, pDispatch-pUsed)
+                else:
+                    raise Exception, "Unknown unit type!"
+
+                unit.setP(p)
                 pUsed += p
                 # pDispatch -= p
 
@@ -80,7 +86,9 @@ class BBB_ISO(object):
         # pDispatch = initialPDispatch - pBatteries - pBakeries
         pDispatch = initialPDispatch - pUsed
 
-        # Distribute remaining pDispatch to the Buckets in decreasing agility factor order if pDispatch is positive and increasing agility factor if pDispatch is positive
+        # Distribute remaining pDispatch to the Buckets 
+        # in decreasing agility factor order if pDispatch is positive 
+        # and increasing agility factor if pDispatch is positive
         if pDispatch < 0:
             unitGroups['Bucket'].sort(key=lambda b: b.agility)
         else:
@@ -151,7 +159,6 @@ class BBB_ISO(object):
             bakeP = bakeP + val.p
         
         pResidual = lastDispatch - battP - buckP - bakeP
-
         
         data["t"] = t
         data["pDispatch"] = lastDispatch
@@ -166,6 +173,7 @@ class BBB_ISO(object):
             unit["CID"] = k
             data["units"].append(unit)
 
+        # sort units by unit number (e.g. Bak-1, Bat-1, Bkt-1, Bak-2, Bkt-2, etc.)
         data["units"].sort(key=lambda u: int(u["CID"].split("-")[1]))
 
         return data
@@ -215,4 +223,9 @@ class BBB_ISO(object):
         return Bucket(eMin, eMax, pMin, pMax, e, p)
 
 
+        
+        # pBucketsAvailable = 0.0
+        # for unit in unitGroups['Bucket']:
+        #     pBucketsAvailable += unit.pAvailable()
 
+        # totalPAvailable = pDispatch + pBucketsAvailable
