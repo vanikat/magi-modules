@@ -7,8 +7,6 @@ class Bakery(LocalUnit):
 		self.tEnd = tEnd
 		self.tRun = tRun
 		self.v = False
-		self.updateAgility(0)
-		self.updatePForced()
 
 	def setP(self, newP):
 		self.p = newP
@@ -16,7 +14,10 @@ class Bakery(LocalUnit):
 			self.v = True
 
 	def updateAgility(self, k):	
-		self.agility = self.tEnd - self.tRun - k
+		unitNumber = float(self.CID.split("-")[1])
+		tieBreaker =  unitNumber/1e9
+
+		self.agility = self.tEnd - self.tRun - k - tieBreaker
 
 	def updatePForced(self):
 		if self.agility > 1 and self.v is False:

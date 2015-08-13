@@ -57,7 +57,9 @@ class BBB_ISO(object):
                 unitGroups['Battery'] + unitGroups['Bakery'], 
                 key=lambda b: b.agility
             )
-            for unit in bakeriesAndBatteries:
+            
+            for i,unit in enumerate(bakeriesAndBatteries):
+
                 if isinstance(unit, Bakery):
                     if (pDispatch - pUsed) >= unit.getConstrainedPMax():
                         p = max(unit.pForced, unit.getConstrainedPMax())
@@ -70,7 +72,15 @@ class BBB_ISO(object):
 
                 unit.setP(p)
                 pUsed += p
+
+                if i == 7 and k==1:
+                    print "Unit Of interest (7):"
+                    print repr(unit.__dict__)
                 # pDispatch -= p
+                
+            if k==1:
+                print "Agility List for t=%d:\n%s" % (k, repr([b.agility for b in bakeriesAndBatteries]))
+                print "P List for t=%d:\n%s" % (k, repr([b.p for b in bakeriesAndBatteries]))
 
         pBatteries = 0.0
         for unit in unitGroups['Battery']:
@@ -108,6 +118,7 @@ class BBB_ISO(object):
         UID = self.UID
         self.UID += 1
         newUnit = BBB_ISO.dictToUnit(clientParams)
+        newUnit.CID = CID
         newUnit.UID = UID
         self.unitList[CID] = newUnit
 

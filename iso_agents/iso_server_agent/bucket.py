@@ -4,8 +4,6 @@ class Bucket(LocalUnit):
 
 	def __init__(self, eMin, eMax, pMin, pMax, e, p):
 		super(Bucket, self).__init__(e, eMin, eMax, p, pMin, pMax)
-		self.updateAgility(0)
-		self.updatePForced()
 
 	def updateAgility(self,k):
 		self.agility = (self.eMax - self.e)/(self.tS * self.pMax)

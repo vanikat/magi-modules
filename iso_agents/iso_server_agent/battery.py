@@ -15,8 +15,6 @@ class Battery(LocalUnit):
 	def __init__(self, eMin, eMax, pMin, pMax, tEnd, e, p):
 		super(Battery, self).__init__(e, eMin, eMax, p, pMin, pMax)
 		self.tEnd = tEnd
-		self.updateAgility(0)
-		self.updatePForced()
 
 	def updateAgility(self,k):
 		self.agility = (
