@@ -28,8 +28,6 @@ class BBB_ISO(object):
             val.updateAgility(k)
             val.updatePForced()
             unitType = val.__class__.__name__
-            # if unitType not in unitGroups:
-            #   unitGroups[unitType]=[]
             unitGroups[unitType].append(val)
 
         pBatteriesForced = 0.0
@@ -42,18 +40,22 @@ class BBB_ISO(object):
         
         pForced = pBatteriesForced + pBakeriesForced
         
-        pBucketsAvailable = 0.0
-        for unit in unitGroups['Bucket']:
-            pBucketsAvailable += unit.pAvailable()
+        # pBucketsAvailable = 0.0
+        # for unit in unitGroups['Bucket']:
+        #     pBucketsAvailable += unit.pAvailable()
 
-        totalPAvailable = pDispatch + pBucketsAvailable
+        # totalPAvailable = pDispatch + pBucketsAvailable
+        pUsed = 0.0
         if pForced > pDispatch:
             # Just give all batts & bakes the power we're forced to
             # Draw on power from buckets if necessary
             for unit in (unitGroups['Battery'] + unitGroups['Bakery']):
-                p = min(unit.pForced, totalPAvailable)
+                p = unit.pForced
                 unit.setP(p)
-                totalPAvailable -= p
+                pUsed += p
+
+                # p = min(unit.pForced, totalPAvailable)
+                # totalPAvailable -= p
         else:
             # Sort Batteries and Bakeries according to increasing agility factor.
             # Distribute PDispatch to Batteries and Bakeries in increasing agility factor order and such that PBatteries(k) + PBakeries(k) is as large as possible, but less than or equal to PDispatch(k).
@@ -62,9 +64,10 @@ class BBB_ISO(object):
                 key=lambda b: b.agility
             )
             for b in bakeriesAndBatteries:
-                p = min(b.pMax, (b.eMax - b.e)/self.tS, pDispatch)
+                p = min(b.pMax, (b.eMax - b.e)/self.tS, pDispatch-pUsed)
                 b.setP(p)
-                pDispatch -= p
+                pUsed += p
+                # pDispatch -= p
 
         pBatteries = 0.0
         for unit in unitGroups['Battery']:
@@ -74,7 +77,8 @@ class BBB_ISO(object):
         for unit in unitGroups['Bakery']:
             pBakeries += unit.p
         
-        pDispatch = initialPDispatch - pBatteries - pBakeries
+        # pDispatch = initialPDispatch - pBatteries - pBakeries
+        pDispatch = initialPDispatch - pUsed
 
         # Distribute remaining pDispatch to the Buckets in decreasing agility factor order if pDispatch is positive and increasing agility factor if pDispatch is positive
         if pDispatch < 0:

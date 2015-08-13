@@ -40,6 +40,48 @@ def runTest():
 
             writer.writerow(output)
 
+    for unit in params["units"]:
+        with open('longlog/' + unit["CID"] + "-log.csv", 'w') as outFile:
+            writer = csv.writer(outFile)
+            writer.writerow(["Time", "E", "EMax", "P", "PMax", "PForced", "Agility"])
+            for d in data:
+                units = d["units"]
+                records = [record for record in units if record["CID"] == unit["CID"]]
+                assert(len(records)==1)
+                record = records[0]
+                row = []
+                row.append(d["t"])
+                row.append(record["e"])
+                row.append(record["eMax"])
+                row.append(record["p"])
+                row.append(record["pMax"])
+                row.append(record["pForced"])
+                row.append(record["agility"])
+
+                writer.writerow(row)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 if __name__ == "__main__":
     runTest()
