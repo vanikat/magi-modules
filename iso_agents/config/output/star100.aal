@@ -1,0 +1,105 @@
+groups:
+  scenario_creator_group: [servernode]
+  iso_server_group: &serverlist [servernode]
+  iso_client_group: &clientlist [clientnode-1, clientnode-2, clientnode-3, clientnode-4, clientnode-5, clientnode-6, clientnode-7, clientnode-8, clientnode-9, clientnode-10, clientnode-11, clientnode-12, clientnode-13, clientnode-14, clientnode-15, clientnode-16, clientnode-17, clientnode-18, clientnode-19, clientnode-20, clientnode-21, clientnode-22, clientnode-23, clientnode-24, clientnode-25, clientnode-26, clientnode-27, clientnode-28, clientnode-29, clientnode-30, clientnode-31, clientnode-32, clientnode-33, clientnode-34, clientnode-35, clientnode-36, clientnode-37, clientnode-38, clientnode-39, clientnode-40, clientnode-41, clientnode-42, clientnode-43, clientnode-44, clientnode-45, clientnode-46, clientnode-47, clientnode-48, clientnode-49, clientnode-50, clientnode-51, clientnode-52, clientnode-53, clientnode-54, clientnode-55, clientnode-56, clientnode-57, clientnode-58, clientnode-59, clientnode-60, clientnode-61, clientnode-62, clientnode-63, clientnode-64, clientnode-65, clientnode-66, clientnode-67, clientnode-68, clientnode-69, clientnode-70, clientnode-71, clientnode-72, clientnode-73, clientnode-74, clientnode-75, clientnode-76, clientnode-77, clientnode-78, clientnode-79, clientnode-80, clientnode-81, clientnode-82, clientnode-83, clientnode-84, clientnode-85, clientnode-86, clientnode-87, clientnode-88, clientnode-89, clientnode-90, clientnode-91, clientnode-92, clientnode-93, clientnode-94, clientnode-95, clientnode-96, clientnode-97, clientnode-98, clientnode-99, clientnode-100, clientnode-101, clientnode-102, clientnode-103, clientnode-104, clientnode-105]
+
+agents:
+  scenario_creator_agent:
+    group: scenario_creator_group
+    path: /proj/montage/magi-modules/iso_agents/scenario_creator_agent/
+    execargs: {
+      filename: /proj/montage/magi-modules/iso_agents/tmp/custom-scenario.json
+    }
+
+  iso_server_agent:
+    group: iso_server_group
+    path: /proj/montage/magi-modules/iso_agents/iso_server_agent
+    execargs: {
+      configFileName: output/star100.json
+    }
+  
+  iso_client_agent:
+    group: iso_client_group
+    path: /proj/montage/magi-modules/iso_agents/iso_client_agent
+    execargs: {
+      server: servernode,
+      configFileName: output/star100.json
+    }
+
+streamstarts: [
+  scenario_creator_stream,
+  iso_server_stream,
+  iso_client_stream,
+  cleanup_stream
+]
+
+eventstreams:
+  scenario_creator_stream: 
+      - type: event
+        agent: scenario_creator_agent 
+        trigger: scenarioCreated 
+        method: createScenario
+        args: {}
+
+      - type: trigger
+        triggers: [ { event: scenarioCreated, agent: scenario_creator_agent } ] 
+
+      - type: event
+        agent: scenario_creator_agent 
+        method: releaseScenario 
+        args: {}
+  
+  iso_server_stream:
+      - type: trigger
+        triggers: [ { event: scenarioCreated } ]
+      
+      - type: event
+        agent: iso_server_agent 
+        trigger: serverReady
+        method: initServer
+        args: {}
+
+      - type: trigger
+        triggers: [ { event: clientReady, agent: iso_client_agent} ] 
+
+      - type: event
+        agent: iso_server_agent 
+        method: startSimulation
+        trigger: simulationStarted 
+        args: {}
+
+      - type: trigger
+        triggers: [ { event: clientStopped, agent: iso_client_agent} ] 
+
+  iso_client_stream:      
+      - type: trigger
+        triggers: [ { event: serverReady } ] 
+
+      - type: event
+        agent: iso_client_agent 
+        method: initClient
+        args: {}
+
+      - type: event
+        agent: iso_client_agent 
+        method: registerWithServer
+        trigger: clientReady
+        args: {}
+
+      - type: trigger
+        triggers: [ { event: simulationStarted } ]
+
+      - type: event
+        agent: iso_client_agent
+        method: startClient
+        args: {}
+
+  cleanup_stream:
+      - type: trigger
+        triggers: [ 
+          { 
+            event: clientStopped, 
+            agent: iso_client_agent, 
+            target: exit
+          } 
+        ] 

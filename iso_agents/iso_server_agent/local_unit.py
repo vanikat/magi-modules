@@ -21,9 +21,14 @@ class LocalUnit(object):
 		self.e = e
 		self.p = p
 
+	def getConstrainedPMax(self):
+		return min(
+			self.pMax, 
+			(self.eMax - self.e) / self.tS
+		)
+
 	def updateE(self, k):
 		self.e += (self.p * self.tS)
-		return self.e
 
 	def updateAgility(self,k):
 		raise NotImplementedError
@@ -33,7 +38,6 @@ class LocalUnit(object):
 	
 	def setP(self, newP):
 		self.p = newP
-		return self.p
 		
 	def rehashParams(self,params):
 		for key,val in params.iteritems():
@@ -43,7 +47,6 @@ class LocalUnit(object):
 			else:
 				cmd=cmd+str(val)
 			exec(cmd)
-		pass
 	
 	def paramsToDict(self):
 		pdict={}

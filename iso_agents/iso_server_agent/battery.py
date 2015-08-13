@@ -1,5 +1,15 @@
 from local_unit import LocalUnit
 
+"""
+
+
+
+
+
+
+
+"""
+
 class Battery(LocalUnit):
 
 	def __init__(self, eMin, eMax, pMin, pMax, tEnd, e, p):

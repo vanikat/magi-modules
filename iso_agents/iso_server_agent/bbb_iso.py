@@ -48,9 +48,6 @@ class BBB_ISO(object):
                 p = unit.pForced
                 unit.setP(p)
                 pUsed += p
-
-                # p = min(unit.pForced, totalPAvailable)
-                # totalPAvailable -= p
         else:
             # Distribute PDispatch to Batteries and Bakeries
             # in increasing agility factor order 
@@ -62,12 +59,12 @@ class BBB_ISO(object):
             )
             for unit in bakeriesAndBatteries:
                 if isinstance(unit, Bakery):
-                    if (pDispatch - pUsed) >= unit.pMax:
-                        p = unit.pMax
+                    if (pDispatch - pUsed) >= unit.getConstrainedPMax():
+                        p = max(unit.pForced, unit.getConstrainedPMax())
                     else:
                         p = 0.0
                 elif isinstance(unit, Battery):
-                    p = min(unit.pMax, (unit.eMax - unit.e)/self.tS, pDispatch-pUsed)
+                    p = min(unit.getConstrainedPMax(), pDispatch - pUsed)
                 else:
                     raise Exception, "Unknown unit type!"
 
@@ -224,8 +221,10 @@ class BBB_ISO(object):
 
 
         
-        # pBucketsAvailable = 0.0
-        # for unit in unitGroups['Bucket']:
-        #     pBucketsAvailable += unit.pAvailable()
+# pBucketsAvailable = 0.0
+# for unit in unitGroups['Bucket']:
+#     pBucketsAvailable += unit.pAvailable()
 
-        # totalPAvailable = pDispatch + pBucketsAvailable
+# totalPAvailable = pDispatch + pBucketsAvailable
+# p = min(unit.pForced, totalPAvailable)
+# totalPAvailable -= p
