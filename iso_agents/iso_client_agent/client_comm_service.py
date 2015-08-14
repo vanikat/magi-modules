@@ -3,12 +3,14 @@ BUFF=1024
 FALSE=0
 TXTIMEOUT=1
 
+import random
 import json
 import socket
 import thread
 import threading
 from threading import Thread
 from threading import Semaphore
+import time
 
 import logging
 log = logging.getLogger(__name__)
@@ -34,21 +36,16 @@ class ClientCommService:
         self.s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         
-        #updated 8/7/15 at 1:28pm
-        retries = 0
+        retries = 0        
         while not self.connected:
             log.info("Trying to connect to server, attempt #%d..." % (retries+1))
             try:
                 self.s.connect((address,PORT))
                 self.connected = True
             except socket.error as e:
-                log.info("Socket timed out, exception: %s" % repr(e))
                 retries += 1
-                time.sleep(0.2)
-
-        # if self.connected is False:
-        #     log.info("ERROR: Client could not connect to server")
-        #     raise Exception, "ERROR: Client could not connect to server"
+                log.info("Socket timed out, exception: %s" % repr(e))
+                time.sleep(0.1 + (random.random()*0.3))
 
         data = json.dumps({'id':clientID})
         self.s.send(data)

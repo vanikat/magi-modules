@@ -17,6 +17,7 @@ from magi.util import database
 from magi.util.agent import DispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
 from magi.util.config import getNodeName
+from magi.util.helpers import toControlPlaneNodeName
 
 log = logging.getLogger(__name__)
 
@@ -52,10 +53,11 @@ class ISOClientAgent(DispatchAgent):
     def registerWithServer(self, msg):
         log.info("Connecting to server...")
         self.comms = ClientCommService()
-        self.cthread = self.comms.initAsClient(self.server, self.CID, self.replyHandler)
+        # self.cthread = self.comms.initAsClient(self.server, self.CID, self.replyHandler)
+        self.cthread = self.comms.initAsClient(toControlPlaneNodeName(self.server), self.CID, self.replyHandler)
         self.sendRegister()
         while self.comms.registered is False:
-            time.sleep(0.2)
+            time.sleep(0.1 + (random.random()*0.3))
         return True
         
     @agentmethod()
@@ -78,17 +80,23 @@ class ISOClientAgent(DispatchAgent):
 
     def runClient(self):
         try:
-            while self.running:
+            while self.running: 
                 log.info("%s Running" % threading.currentThread().name)
-                time.sleep(self.unit.tS/10.0)
+                
+                log.info("Unit updating itself...")
+                val.updateE(self.t)
+                val.updateAgility(self.t)
+                val.updatePForced()
+                
                 #Adapt to constraints (change P value when constrained despite no comms)
                 if self.unit.pForced > self.unit.p:
                     log.info("%s Unit forced to modify its own power, not dispatched enough" % threading.currentThread().name)
                     # TODO: need to notify server of this
-                    self.t += 1 # think about this...
                     self.updateUnit(self.t, self.unit.pForced)
 
-                self.logUnit()            
+                self.logUnit()
+                self.t += 1
+                time.sleep(self.unit.tS/10.0)
         except Exception, e:
             log.info("Thread %s threw an exception during main loop" % threading.currentThread().name)
             exc_type, exc_value, exc_tb = sys.exc_info()
