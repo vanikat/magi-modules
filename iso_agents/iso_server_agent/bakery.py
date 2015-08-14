@@ -25,12 +25,6 @@ class Bakery(LocalUnit):
 		else:
 			self.pForced = self.getConstrainedPMax()
 
-if __name__=="__main__":
-	# write new tests....
-	pass
-
-
-
 
 
 

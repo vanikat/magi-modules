@@ -83,8 +83,8 @@ eventstreams:
 
       - type: event
         agent: iso_client_agent 
-        method: registerWithServer
         trigger: clientReady
+        method: registerWithServer
         args: {}
 
       - type: trigger

@@ -54,7 +54,3 @@ class LocalUnit(object):
 		for key,val in params.iteritems():
 			pdict[key]=val
 		return params
-
-if __name__=="__main__":
-	# write new tests....
-	pass

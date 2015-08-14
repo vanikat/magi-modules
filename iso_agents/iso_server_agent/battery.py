@@ -1,15 +1,5 @@
 from local_unit import LocalUnit
 
-"""
-
-
-
-
-
-
-
-"""
-
 class Battery(LocalUnit):
 
 	def __init__(self, eMin, eMax, pMin, pMax, tEnd, e, p):
@@ -36,7 +26,3 @@ class Battery(LocalUnit):
 				)
 			)
 		return self.pForced
-
-if __name__=="__main__":
-	# write new tests....
-	pass

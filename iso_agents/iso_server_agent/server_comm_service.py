@@ -1,17 +1,3 @@
-"""
-
-This class defines both client and server communication
-    for sending and receiving data encoded in JSON format
-    
-Usage Guide:
-Client:
-call initAsClient(address, ID, replyHandler)
-handle data from the server as replyHandler(clientID,dispatch)
-    Must return a reply value
-initiate data sending to the server as clientSendValue(clientID,command)
-    Reply value will come as dispatch, this is a one-way communication structure
-"""
-
 PORT=10500
 BUFF=1024
 FALSE=0
@@ -74,7 +60,7 @@ class ServerCommService:
                 continue
 
             clientID = jdata["id"]
-            nthread = Thread(name=clientID + "Handler", target=self.ServerHandler, args=(clientID,clientsock,addr,replyHandler))
+            nthread = Thread(name="ServerHandler for " + clientID, target=self.ServerHandler, args=(clientID,clientsock,addr,replyHandler))
             self.threadMap[clientID] = nthread
             self.valueOutMap[clientID] = 123456789 #sentinel value
             self.slock[clientID] = Semaphore(0)

@@ -1,17 +1,3 @@
-"""
-
-This class defines both client and server communication
-    for sending and receiving data encoded in JSON format
-    
-Usage Guide:
-Client:
-call initAsClient(address, ID, replyHandler)
-handle data from the server as replyHandler(clientID,dispatch)
-    Must return a reply value
-initiate data sending to the server as clientSendValue(clientID,command)
-    Reply value will come as dispatch, this is a one-way communication structure
-"""
-
 PORT=10500
 BUFF=1024
 FALSE=0
@@ -50,7 +36,7 @@ class ClientCommService:
         
         #updated 8/7/15 at 1:28pm
         retries = 0
-        while not self.connected and retries <= 4:
+        while not self.connected:
             log.info("Trying to connect to server, attempt #%d..." % (retries+1))
             try:
                 self.s.connect((address,PORT))
@@ -58,6 +44,7 @@ class ClientCommService:
             except socket.error as e:
                 log.info("Socket timed out, exception: %s" % repr(e))
                 retries += 1
+                time.sleep(0.2)
 
         # if self.connected is False:
         #     log.info("ERROR: Client could not connect to server")

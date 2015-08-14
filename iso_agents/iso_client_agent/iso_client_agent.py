@@ -55,7 +55,7 @@ class ISOClientAgent(DispatchAgent):
         self.cthread = self.comms.initAsClient(self.server, self.CID, self.replyHandler)
         self.sendRegister()
         while self.comms.registered is False:
-            time.sleep(0.05)
+            time.sleep(0.2)
         return True
         
     @agentmethod()
@@ -173,11 +173,3 @@ def getAgent(**kwargs):
     agent = ISOClientAgent()
     agent.setConfiguration(None, **kwargs)
     return agent
-
-
-'''
-blankMsg={}
-blankMsg['type']='pass'
-blankMsg['payload']='none'
-return blankMsg
-'''

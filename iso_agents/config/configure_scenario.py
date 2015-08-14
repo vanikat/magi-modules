@@ -110,7 +110,7 @@ class ConfigureScenario(object):
         templateData['configFileName'] = configfn
         templateData['clientNodesText'] = ""
         # timeout based on simulation length multipled by some slack factor
-        templateData['timeout'] = params['timeStep'] * params['numIterations'] * 5 * 1000
+        templateData['timeout'] = params['timeStep'] * params['numIterations'] * 1000 * 100000
 
         aalTemplateFileName = os.path.join(TEMPLATE_DIR, "output/base.aal")
         aalTemplateText = ""
