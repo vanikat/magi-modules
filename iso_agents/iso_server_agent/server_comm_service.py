@@ -56,7 +56,7 @@ class ServerCommService:
             try:
                 jdata = json.loads(rxdata.strip())
             except json.JSONDecodeError:
-                log.info("Exception in thread_initAsServer while trying to parse JSON %s" % repr(rxdata))
+                # log.info("Exception in thread_initAsServer while trying to parse JSON %s" % repr(rxdata))
                 continue
 
             clientID = jdata["id"]
@@ -80,7 +80,7 @@ class ServerCommService:
                 rxdata = clientsock.recv(BUFF)
             except socket.timeout:
                 #If there's nothing to send, then keep waiting
-                log.info('Server RX Timeout, Checking Lock')
+                # log.info('Server RX Timeout, Checking Lock')
                 if self.slock[clientID].acquire(blocking=FALSE):
                     #Process a pending dispatch send
                     data = json.dumps({
@@ -95,7 +95,7 @@ class ServerCommService:
             try:
                 jdata = json.loads(rxdata.strip())
             except :
-                log.info("Exception in ServerHandler while trying to parse JSON string: %s" % repr(rxdata))
+                # log.info("Exception in ServerHandler while trying to parse JSON string: %s" % repr(rxdata))
                 continue
 
             log.info('ServerHandler RX data: %s' % repr(jdata["returnData"]))

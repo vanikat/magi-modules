@@ -2,6 +2,9 @@ import csv
 import json
 from iso_server_agent.bbb_iso import BBB_ISO
 
+import logging
+log = logging.getLogger(__name__)
+
 def runTest():
     params = {}
     with open('config/output/star105.json', 'r') as configFile:
@@ -16,6 +19,11 @@ def runTest():
     for k in range(1, params["numIterations"]+1):
         iso.agileBalancing(k, params["vpp"][k])
         data.append(iso.generateStats(k, params["vpp"][k]))
+        print "T = %d-----------------------------------------------------------------" % k
+        ag = iso.outputAgility()
+        for i, u in enumerate(ag["agility"]):
+            log.info("%d. %f, %s" % (i, u, ag["cid"][i]))
+            print "%d. %f, %s" % (i, u, ag["cid"][i])
 
     # detailed stats to json
     with open('offline-stats.json', 'w') as jsonFile:

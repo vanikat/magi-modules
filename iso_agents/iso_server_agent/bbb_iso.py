@@ -73,14 +73,14 @@ class BBB_ISO(object):
                 unit.setP(p)
                 pUsed += p
 
-                if i == 7 and k==1:
-                    print "Unit Of interest (7):"
-                    print repr(unit.__dict__)
-                # pDispatch -= p
+            #     if i == 7 and k==1:
+            #         print "Unit Of interest (7):"
+            #         print repr(unit.__dict__)
+            #     # pDispatch -= p
                 
-            if k==1:
-                print "Agility List for t=%d:\n%s" % (k, repr([b.agility for b in bakeriesAndBatteries]))
-                print "P List for t=%d:\n%s" % (k, repr([b.p for b in bakeriesAndBatteries]))
+            # if k==1:
+            #     print "Agility List for t=%d:\n%s" % (k, repr([b.agility for b in bakeriesAndBatteries]))
+            #     print "P List for t=%d:\n%s" % (k, repr([b.p for b in bakeriesAndBatteries]))
 
         pBatteries = 0.0
         for unit in unitGroups['Battery']:
@@ -185,7 +185,20 @@ class BBB_ISO(object):
         data["units"].sort(key=lambda u: int(u["CID"].split("-")[1]))
 
         return data
-        
+    
+    def outputAgility(self):
+        units = [v for k,v in self.unitList.iteritems() if v.type == "Bakery" or v.type == "Battery"]
+
+        try:
+            units.sort(key=lambda x: x.agility)
+        except AttributeError:
+            return {"agility": [], "cid": []}
+        agList= []
+        cidList = []
+        for u in units:
+            agList.append(u.agility)
+            cidList.append(u.CID)
+        return {"agility": agList, "cid": cidList}
 
     @staticmethod
     def dictToUnit(client):

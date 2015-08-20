@@ -15,6 +15,7 @@ class CompareResults(object):
     def test(self, testFn, projectName, expName):
         testData = self.loadTestData(testFn)
         actualData = self.loadActualDataFromDeter(projectName, expName)
+        actualData = [d for d in actualData if 't' in d]
         actualData.sort(key=lambda record: record['t'])
         self.compareResults(testData, actualData)
 
@@ -72,7 +73,8 @@ class CompareResults(object):
             writer = csv.writer(outFile)
             keys = ['Timestep','Residual','Pbak','Pbat','PBkt','VppOut']
             writer.writerow(keys)
-            for record in sorted(data, key = lambda record: record['t']):
+            filtered = [x for x in data if 't' in x]
+            for record in sorted(filtered, key = lambda record: record['t']):
                 d = []
                 d.append(record['t'])
                 d.append(record['pResidual'])

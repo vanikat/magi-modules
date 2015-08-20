@@ -36,7 +36,7 @@ class ISOServerAgent(DispatchAgent):
 
         self.tS = globalConfig["timeStep"]
         self.numIterations = globalConfig["numIterations"]
-        self.ISO = BBB_ISO(self.tS)
+        self.ISO = BBB_ISO()
         self.VPP = globalConfig["vpp"]
         self.CIDList = {}
         
@@ -56,11 +56,11 @@ class ISOServerAgent(DispatchAgent):
         return True
     
     def runServer(self):
-        log.info( "RunServer started...")
+        log.info( "RunServer started... ########")
 
         try:
-            log.info("CIDList: %s" % repr(self.CIDList))
-            log.info("ISO.unitList: %s" % repr(self.ISO.unitList))
+            log.info("CIDList len: %d" % len(self.CIDList))
+            log.info("ISO.unitList len: %s" % len(self.ISO.unitList))
             time.sleep(self.tS) # let all clients connect and get ready
 
             for t in range(1, self.numIterations + 1):
@@ -77,11 +77,15 @@ class ISOServerAgent(DispatchAgent):
                     log.info("Logging current state...")
                     stats = self.ISO.generateStats(t, pDispatch)
                     self.collection.insert(stats)
+                    ag = self.ISO.outputAgility()
+                    ag["statsType"] = "agility"
+                    self.collection.insert(ag)
+                    
                 else:
                     log.info( "Simulation has been told to exit, timestep = %d" % t)
                     break
         except Exception, e:
-            log.info("Thread %s threw an exception during main loop" % threading.currentThread().name)
+            log.info("RunServer threw an exception during main loop")
             exc_type, exc_value, exc_tb = sys.exc_info()
             log.error(''.join(traceback.format_exception(exc_type, exc_value, exc_tb)))
         finally:
@@ -104,7 +108,7 @@ class ISOServerAgent(DispatchAgent):
         #msg is dictionary from json extraction, dictionary must have type then payload (potentially another dictionary)
         mtype = msg["type"]
         mdata = msg["payload"]
-        if mtype == 'register':
+        if mtype == 'register': 
             self.ISO.registerClient(CID, mdata)
             self.CIDList[CID] = True
             log.info("Client %s registered." % str(CID))
@@ -119,8 +123,6 @@ class ISOServerAgent(DispatchAgent):
             log.error('Unkown MSG Type ('+CID+'): ' + mtype)
     
     def sendAllDispatch(self):
-        log.info("CID List: %s" % repr(self.CIDList))
-        log.info("ISO.unitList: %s" % repr(self.ISO.unitList))
         for CID in self.CIDList:
             self.sendDispatch(CID,self.ISO.getReply(CID))
     

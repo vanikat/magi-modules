@@ -1,16 +1,33 @@
+NOTIFYING SERVER WHEN CLIENT SELF-UPDATES:
+	clients connect
+	simulation starts as usual
+	server knows all initial stats of all units
+	simulation runs for a time
+	then comms to a unit get cut
+	the unit does not hear from the server
+		- does the server detect that comms have been cut?
+		- does it know the unit's fallback strategy?
+		- does it remove the unit from its agile balancing process?
+	whennc comms cut, the unit must act independently to address the following issues:
+		- pForced not met
+		- eMax reached, emin
+		- etc
+		- should this policy be encapsulated and configurable?
+	eventually comms are restored
+		- when is this first detected?
+	now the server and the unit are potentially out of sync
+		- the server doesn't know the unit's p, agility, e, etc.
+	how do they get resynced?
+		- if server can detect disconnect:
+			- server should send a 'resync' message where it asks the unit for its current stats before including the unit back in its AB process
+		- if server can't detect disconnect:
+			- if the server sends a new pdispatch and the unit has updated itself recently, 
+			  then the unit only accepts the new dispatch if the dispatch doesn't violate the unit's constraints
+			- the unit must also send the server its updated stats immediately
+			- or should the unit notify the server as soon as it updates its stats?
 
-Left Off:
-	- Just finished getting configurator running with new orch flow, and debugged threads
-	- Everything ' works' but need to confirm that it's actually doing what it's supposed to, so..
-		- Need to build tester/comparer code to read from mongo and compare with paul's export files
-		-- AKA DO THE V&V
-
-Notes:
-	- time step in client should be configured somewhere
 
 
-Issues:
-	- 
 
 Next Steps:
 	- V & V:
@@ -27,22 +44,6 @@ Next Steps:
 			- Strategies for handling latency
 				- NM, No-hold, etc.
 		- Export to MAGI graph
-
-
-
-Consume config file:
-	- Read from CSV to get each agent
-	- Read from CSV file to get VPP power function
-		- Load the vpp power history into a list and wrap it with a pDispatch function
-
-
-
-Consume testdata file:
-	- For UNIT: 
-		- Test each value (eMin, pForced, etc.) with each step unit history in testdata
-	- For ISO:
-		- Test each value of power Function at each timestep
-		- Test pDispatch for each unit, and all other parameters
 
 
 
@@ -73,30 +74,3 @@ Consume testdata file:
 Maybe:
 	- Change min log level in magi bootstrap
 	- Get common libraries in one place / add to python path?
-
-Remember:
-	- Confirm done, Wrap all threads in try/except to make sure exceptions are logged
-	- 
-	
-	
-
--------------- Older notes --------------------
-
-Corner Case List:
-	-Updating energy when multiple timesteps occur between last P-setting
-	-Update comes from client while dispatch is being calculated
-	-No update received from client, so handle fixed P's
-	-RX of Stale Energy values (which one to take, ISO's view or new E)
-
-Fault Tolerance:
-	-Force P dispatch when comms are lost
-		(If comm lost, P=constrained(last P) , i.e. assume client keeps doing what it was doing until it meets constraints on max E, etc.
-	-Predict forced P actions
-		(If client has forced P, it will consume power at that level regardless of dispatch control)
-	-Know when timeout occurs (i.e. keepalive)
-	-Historize, revert to pre-drop, validated commands
-
-3) Plot results as function of client's view 
-4) Run different scenarios (topology, latency, number of clients)
-	--Scale everything but network 
-5) Implement plugin electric vehicle algorithm (similar to Battery part of BBB)

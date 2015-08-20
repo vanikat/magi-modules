@@ -11,7 +11,7 @@ import logging
 import json
 
 from client_comm_service import ClientCommService
-from bbb_iso import BBB_ISO
+from bbb_iso_old import BBB_ISO
 
 from magi.util import database
 from magi.util.agent import DispatchAgent, agentmethod
@@ -53,8 +53,8 @@ class ISOClientAgent(DispatchAgent):
     def registerWithServer(self, msg):
         log.info("Connecting to server...")
         self.comms = ClientCommService()
-        # self.cthread = self.comms.initAsClient(self.server, self.CID, self.replyHandler)
-        self.cthread = self.comms.initAsClient(toControlPlaneNodeName(self.server), self.CID, self.replyHandler)
+        self.cthread = self.comms.initAsClient(self.server, self.CID, self.replyHandler)
+        # self.cthread = self.comms.initAsClient(toControlPlaneNodeName(self.server), self.CID, self.replyHandler)
         self.sendRegister()
         while self.comms.registered is False:
             time.sleep(0.1 + (random.random()*0.3))
@@ -80,19 +80,18 @@ class ISOClientAgent(DispatchAgent):
 
     def runClient(self):
         try:
-            while self.running: 
+            while self.running:
                 log.info("%s Running" % threading.currentThread().name)
                 
                 log.info("Unit updating itself...")
-                val.updateE(self.t)
-                val.updateAgility(self.t)
-                val.updatePForced()
+                self.unit.updateE(self.t)
+                self.unit.updateAgility(self.t)
+                self.unit.updatePForced()
                 
-                #Adapt to constraints (change P value when constrained despite no comms)
-                if self.unit.pForced > self.unit.p:
-                    log.info("%s Unit forced to modify its own power, not dispatched enough" % threading.currentThread().name)
-                    # TODO: need to notify server of this
-                    self.updateUnit(self.t, self.unit.pForced)
+                # #Adapt to constraints (change P value when constrained despite no comms)
+                # if self.unit.pForced > self.unit.p:
+                #     log.info("%s Unit forced to modify its own power, not dispatched enough" % threading.currentThread().name)         
+                #     self.unit.setP(self.unit.pForced)
 
                 self.logUnit()
                 self.t += 1
@@ -108,13 +107,13 @@ class ISOClientAgent(DispatchAgent):
         log.info("%s Logging/Saving unit stats to mongo" % threading.currentThread().name)
         stats = self.unit.__dict__.copy()
         if 'agent' in stats:
-            log.info("AGENT IN STATS")
+            log.info("key 'agent' removed from stats")
             del stats["agent"]
         if 'host' in stats:
-            log.info("HOST IN STATS")
+            log.info("key 'host' removed from stats")
             del stats["host"]
         if 'created' in stats:
-            log.info("'created' in stats:")
+            log.info("key 'created' removed from stats")
             del stats["created"]
         
         stats["CID"] = self.CID
