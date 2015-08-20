@@ -16,18 +16,22 @@ def runTest():
     for unit in params["units"]:
         iso.registerClient(unit["CID"], unit)
     
-    for k in range(1, params["numIterations"]+1):
-        iso.agileBalancing(k, params["vpp"][k])
-        data.append(iso.generateStats(k, params["vpp"][k]))
-        print "T = %d-----------------------------------------------------------------" % k
-        ag = iso.outputAgility()
-        for i, u in enumerate(ag["agility"]):
-            log.info("%d. %f, %s" % (i, u, ag["cid"][i]))
-            print "%d. %f, %s" % (i, u, ag["cid"][i])
+    for t in range(1, params["numIterations"]+1):
+        iso.agileBalancing(t, params["vpp"][t])
+        data.append(iso.generateStats(t, params["vpp"][t]))
+        print "T = %d-----------------------------------------------------------------" % t
+        
+        ag = iso.generateAgilityStats(t)
+        # for i, u in enumerate(ag["agility"]):
+        #     log.info("%d. %s, %s" % (i, u, repr(ag["cid"][i])))
+        #     print "%d. %s, %s" % (i, u, repr(ag["cid"][i]))
+        pStats = iso.generatePStats(t)
+        for i, u in enumerate(pStats["p"]):
+            print "%d. %s, %s" % (i, u, repr(pStats["cid"][i]))
 
-    # detailed stats to json
-    with open('offline-stats.json', 'w') as jsonFile:
-        json.dump(data, jsonFile, indent=4)
+    # # detailed stats to json
+    # with open('offline-stats.json', 'w') as jsonFile:
+    #     json.dump(data, jsonFile, indent=4)
 
     # basic stats to csv
     with open('offline-stats.csv', 'w') as outFile:

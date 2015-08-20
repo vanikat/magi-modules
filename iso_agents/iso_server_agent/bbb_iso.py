@@ -7,6 +7,8 @@ from bucket import Bucket
 from battery import Battery
 from bakery import Bakery
 
+import logging
+log = logging.getLogger(__name__)
 class BBB_ISO(object):
 
     def __init__(self, timeStep = 1.0):
@@ -115,11 +117,15 @@ class BBB_ISO(object):
         pass
 
     def registerClient(self, CID, clientParams):
+        if CID in self.unitList:
+            log.info("DENIED REGISTRATION TO DUPLICATE CID %s" % CID)
+            return
+
         UID = self.UID
         self.UID += 1
         newUnit = BBB_ISO.dictToUnit(clientParams)
         newUnit.CID = CID
-        newUnit.UID = UID
+        newUnit.UID = UID    
         self.unitList[CID] = newUnit
 
     def deregisterClient(self, CID):
@@ -175,6 +181,7 @@ class BBB_ISO(object):
         data["batteryP"] = battP
         data["bakeryP"] = bakeP
         data["units"] = []
+        data["statsType"] = "iso_stats"
 
         for k,v in units.iteritems():
             unit = v.__dict__.copy()
@@ -185,8 +192,23 @@ class BBB_ISO(object):
         data["units"].sort(key=lambda u: int(u["CID"].split("-")[1]))
 
         return data
+
+    def generatePStats(self, t):
+        stats = {}
+        stats['p'] = []
+        stats['cid'] = []
+        stats['t'] = t
+        stats['statsType'] = "p"
+
+        units = [x.__dict__.copy() for x in self.unitList.values()]
+
+        for unit in sorted(units, key=lambda x: x["p"]):
+            stats['p'].append(unit['p'])
+            stats['cid'].append(unit['CID'])
+
+        return stats
     
-    def outputAgility(self):
+    def generateAgilityStats(self, t):
         units = [v for k,v in self.unitList.iteritems() if v.type == "Bakery" or v.type == "Battery"]
 
         try:
@@ -198,7 +220,12 @@ class BBB_ISO(object):
         for u in units:
             agList.append(u.agility)
             cidList.append(u.CID)
-        return {"agility": agList, "cid": cidList}
+        return {
+            "agility": agList, 
+            "cid": cidList, 
+            "t": t, 
+            "statsType": "agility"
+        }
 
     @staticmethod
     def dictToUnit(client):

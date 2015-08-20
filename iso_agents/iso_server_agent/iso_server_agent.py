@@ -77,9 +77,12 @@ class ISOServerAgent(DispatchAgent):
                     log.info("Logging current state...")
                     stats = self.ISO.generateStats(t, pDispatch)
                     self.collection.insert(stats)
-                    ag = self.ISO.outputAgility()
-                    ag["statsType"] = "agility"
-                    self.collection.insert(ag)
+                    
+                    agilityStats = self.ISO.generateAgilityStats(t)
+                    self.collection.insert(agilityStats)
+
+                    pStats = self.ISO.generatePStats(t)
+                    self.collection.insert(pStats)
                     
                 else:
                     log.info( "Simulation has been told to exit, timestep = %d" % t)

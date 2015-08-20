@@ -63,6 +63,7 @@ class CompareResults(object):
             # dbPort=27017
             dbPort=dbdl['configPort']
         )
+        data = [d for d in data if d.get("statsType") == "iso_stats"]
         # print "ACTUAL RESULTS FROM MONGO:"
         # print repr(data)
         return data
@@ -73,8 +74,7 @@ class CompareResults(object):
             writer = csv.writer(outFile)
             keys = ['Timestep','Residual','Pbak','Pbat','PBkt','VppOut']
             writer.writerow(keys)
-            filtered = [x for x in data if 't' in x]
-            for record in sorted(filtered, key = lambda record: record['t']):
+            for record in sorted(data, key = lambda record: record['t']):
                 d = []
                 d.append(record['t'])
                 d.append(record['pResidual'])
@@ -95,7 +95,7 @@ class CompareResults(object):
                 if i >= len(actualData):
                     print "Actual data not present for t = %d" % testData[i]["t"]
                     break
-                elif actualData[i][k] == testValue or (actualData[i][k] - testValue) < 0.00001:
+                elif actualData[i][k] == testValue or (actualData[i][k] - float(testValue)) < 0.00001:
                     # print "'%s' OK: actual: %s == test: %s" % (k, actualData[i][k], testValue)
                     successes += 1
                 else:
