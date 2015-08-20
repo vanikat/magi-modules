@@ -74,3 +74,4 @@ Next Steps:
 Maybe:
 	- Change min log level in magi bootstrap
 	- Get common libraries in one place / add to python path?
+	- Buy a new car
