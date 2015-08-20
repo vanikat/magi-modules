@@ -23,8 +23,8 @@ class ClientCommService:
         self.connected = False
         self.registered = False
     
-    def clientSendValue(self, command):
-        self.valueOutMap = command;
+    def clientSendValue(self, msg):
+        self.valueOutMap = msg;
         self.slock.release();
     
     def initAsClient(self, address, clientID, replyHandler):
@@ -63,12 +63,9 @@ class ClientCommService:
                 rxdata = sock.recv(BUFF)
             except socket.timeout:
                 log.info("ClientHandler socket timed out")
-                #Possible to handle some faults here
-                #Otherwise see if client has anything to send
+
                 if self.slock.acquire(blocking=FALSE):
                     log.info("valueOutMap = %s" % repr(self.valueOutMap))
-                    if isinstance(self.valueOutMap, dict) and self.valueOutMap.get('type') == 'register':
-                        self.registered = True
 
                     #Process output command
                     cdata = json.dumps({
@@ -76,6 +73,13 @@ class ClientCommService:
                         'returnData': self.valueOutMap
                     });
                     sock.send(cdata);
+
+                    if isinstance(cdata['returnData'], dict) and cdata['returnData'].get('type') == 'register':
+                        self.registered = True
+
+                        # clear valueOutMap so doesn't send register again
+                        self.valueOutMap = {}
+
                 continue
 
             try:
