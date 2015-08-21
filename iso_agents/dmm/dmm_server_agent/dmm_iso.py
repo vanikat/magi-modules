@@ -109,8 +109,8 @@ class DMM_ISO:
         lambdahatState = np.arange(self.Nde+self.Ndc+self.Ndt+self.Ng+self.Nr,self.Nde+self.Ndc+self.Ndt+self.Ng+self.Nr+self.Nr).astype(int)
         PdkState = np.arange(self.Nde+self.Ndc+self.Ndt+self.Ng+self.Nr+self.Nr,self.Nde+self.Ndc+self.Ndt+self.Ng+self.Nr+self.Nr+self.Ndk).astype(int)
 
-        PgMaxk=np.zeros((self.Ng,1))
-        PgMaxf=np.zeros((self.Ng,1))
+        #PgMaxk=np.zeros((self.Ng,1))
+        #PgMaxf=np.zeros((self.Ng,1))
 
         #for i in range(0, self.Ng):
         #   PgMaxf[i]=self.PgMax[i][0]*(1+(self.deltag[i,i]/100.0))
