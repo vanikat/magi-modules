@@ -35,7 +35,7 @@ class ISOClientAgent(DispatchAgent):
         self.collection = database.getCollection(self.name)
         self.collection.remove()
         
-        # nodeName: "clietnode-3" --> nodeIndex: 3
+        # nodeName: "clientnode-3" --> nodeIndex: 3
         self.nodeIndex = int(getNodeName().split("-")[1]) 
 
         globalConfig = None
