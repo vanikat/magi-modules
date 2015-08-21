@@ -18,6 +18,7 @@ from magi.util.agent import DispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
 from magi.util.config import getNodeName
 from magi.util.helpers import toControlPlaneNodeName
+import numpy as np
 
 log = logging.getLogger(__name__)
 
@@ -28,6 +29,58 @@ class ISOClientAgent(DispatchAgent):
         self.server = None # configured by MAGI
         self.configFileName = None # configured by MAGI
 
+    ##########################################################################
+    @agentmethod()
+    def connectISO(self, msg):
+        
+        nstr=self.clientID
+        splitstr=nstr.split('-')
+        self.clientType=splitstr[0]
+        self.clientIdx=int(splitstr[1])
+        f=open(self.scenarioFile,'r')
+        jsonVals=json.loads(f.read())
+        
+        sidx=str(self.clientIdx)
+        stype=self.clientType
+        self.PMax=jsonVals[stype][sidx]["PMax"]
+        self.PMin=jsonVals[stype][sidx]["PMin"]
+        self.b=jsonVals[stype][sidx]["b"]
+        self.c=jsonVals[stype][sidx]["c"]
+        self.M=jsonVals[stype][sidx]["M"]
+        
+        if self.clientType=='G':
+            self.delta=jsonVals[stype][sidx]["delta"]
+            self.gamma=jsonVals[stype][sidx]["gamma"]
+        
+        self.dmc=DMM_COMM()
+        self.dmc.initAsClient(self.isoServer,self.clientID,self.clientReplyHandler)
+        return 
+    
+    def clientReplyHandler(self,clientID,powerLevel):
+        tPMax=self.PMax
+        tPMin=self.PMin
+        """
+        if self.clientType=='G':
+            PgMaxk=0
+            PgMaxf=0
+            PgMaxf=self.PMax*(1+(self.delta/100.0))
+            PgMaxk=PgMaxk-np.minimum((PgMaxk-powerLevel)*self.gamma,PgMaxk-PgMaxf)
+            tPMax=PgMaxk
+        """
+        
+        util = self.b+self.c*powerLevel
+        
+        util += self.M/((powerLevel-tPMax)**2)-self.M/((powerLevel-tPMin)**2)
+        #print clientID + ' b: ' + str(self.b) + ' c: ' + str(self.c) + ' PL: ' + str(powerLevel) + ' u: ' + str(util)
+        
+        
+        return util
+
+    @agentmethod()
+    def cleanup(self,msg):
+        self.dmc.close()
+        return
+    ##########################################
     @agentmethod()
     def initClient(self, msg):
         log.info("Initializing client...")

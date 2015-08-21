@@ -45,6 +45,22 @@ class ISOServerAgent(DispatchAgent):
         
         self.comms = ServerCommService()
         self.comms.initAsServer(self.replyHandler)
+
+
+        self.DISO=DMM_ISO(self.dmmCaseFile,self.caseNum,1,0.1,0.1,2,0.001)
+        self.clientList=self.DISO.getClientList()
+        
+        self.running=1
+        self.lastUpdate=0
+        self.lastUpdateList={}
+        for key,val in self.clientList.iteritems():
+            self.lastUpdateList[key]=self.lastUpdate
+        nthread=Thread(name='isoServerThread',target=self.serverThread)
+        #Block until all clients connected
+        while len(self.comms.slock) < len(self.clientList):
+            pass
+        nthread.start()
+        
         return True
 
     @agentmethod()
