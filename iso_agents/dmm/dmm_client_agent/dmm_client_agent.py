@@ -22,23 +22,40 @@ import numpy as np
 
 log = logging.getLogger(__name__)
 
-class ISOClientAgent(DispatchAgent):
+class DMMClientAgent(DispatchAgent):
 
     def __init__(self):
         DispatchAgent.__init__(self)
         self.server = None # configured by MAGI
         self.configFileName = None # configured by MAGI
+        self.clientID = None #########TODO
+        self.scenarioFile = None ##############TODOå
 
-    ##########################################################################
     @agentmethod()
-    def connectISO(self, msg):
+    def initClient(self, msg):
+        log.info("Initializing DMM client...")
+
+        self.collection = database.getCollection(self.name)
+        self.collection.remove()
+
+        # nodeName: "clietnode-3" --> nodeIndex: 3
+        # self.nodeIndex = int(getNodeName().split("-")[1]) 
+
+        globalConfig = None
+        with open(self.configFileName, 'r') as configFile:
+            globalConfig = json.load(configFile)
+
+
+        self.CID = unitConfig["CID"] #TODO should be merged
         
-        nstr=self.clientID
+        # unitConfig = globalConfig["units"][self.nodeIndex-1]
+        # self.unit = DMMUnit(unitConfig)
+
+        nstr=self.clientID #TODo
         splitstr=nstr.split('-')
         self.clientType=splitstr[0]
         self.clientIdx=int(splitstr[1])
-        f=open(self.scenarioFile,'r')
-        jsonVals=json.loads(f.read())
+        jsonVals=json.load(self.scenarioFile)
         
         sidx=str(self.clientIdx)
         stype=self.clientType
@@ -52,67 +69,25 @@ class ISOClientAgent(DispatchAgent):
             self.delta=jsonVals[stype][sidx]["delta"]
             self.gamma=jsonVals[stype][sidx]["gamma"]
         
-        self.dmc=DMM_COMM()
-        self.dmc.initAsClient(self.isoServer,self.clientID,self.clientReplyHandler)
-        return 
-    
-    def clientReplyHandler(self,clientID,powerLevel):
-        tPMax=self.PMax
-        tPMin=self.PMin
-        """
-        if self.clientType=='G':
-            PgMaxk=0
-            PgMaxf=0
-            PgMaxf=self.PMax*(1+(self.delta/100.0))
-            PgMaxk=PgMaxk-np.minimum((PgMaxk-powerLevel)*self.gamma,PgMaxk-PgMaxf)
-            tPMax=PgMaxk
-        """
-        
-        util = self.b+self.c*powerLevel
-        
-        util += self.M/((powerLevel-tPMax)**2)-self.M/((powerLevel-tPMin)**2)
-        #print clientID + ' b: ' + str(self.b) + ' c: ' + str(self.c) + ' PL: ' + str(powerLevel) + ' u: ' + str(util)
-        
-        
-        return util
-
-    @agentmethod()
-    def cleanup(self,msg):
-        self.dmc.close()
-        return
-    ##########################################
-    @agentmethod()
-    def initClient(self, msg):
-        log.info("Initializing client...")
-
-        self.collection = database.getCollection(self.name)
-        self.collection.remove()
-        
-        # nodeName: "clietnode-3" --> nodeIndex: 3
-        self.nodeIndex = int(getNodeName().split("-")[1]) 
-
-        globalConfig = None
-        with open(self.configFileName, 'r') as configFile:
-            globalConfig = json.load(configFile)
-
-        unitConfig = globalConfig["units"][self.nodeIndex-1]
-
-        self.CID = unitConfig["CID"]
-        self.unit = BBB_ISO.dictToUnit(unitConfig)
-        self.unit.tS = globalConfig["timeStep"]
-        self.t = 0
+        return True
 
     @agentmethod()
     def registerWithServer(self, msg):
         log.info("Connecting to server...")
+
         self.comms = ClientCommService()
         self.cthread = self.comms.initAsClient(self.server, self.CID, self.replyHandler)
         # self.cthread = self.comms.initAsClient(toControlPlaneNodeName(self.server), self.CID, self.replyHandler)
-        self.sendRegister()
+        
+        payload = self.unit.paramsToDict() #########TODO UNIT DOESN'T EXIST...
+        mtype = 'register'
+        self.sendMsg(mtype,payload)
+
         while self.comms.registered is False:
             time.sleep(0.1 + (random.random()*0.3))
         return True
         
+
     @agentmethod()
     def startClient(self, msg):
         log.info("Starting client's simulation...")
@@ -120,16 +95,6 @@ class ISOClientAgent(DispatchAgent):
         self.runClient()
         return True
 
-    @agentmethod()
-    def stopClient(self, msg):
-        """ No longer being used..."""
-        log.info("Shutting client down...")
-        # self.running = 0
-        # time.sleep(0.1) # wait for thread to stop
-        # self.deRegister()
-        # time.sleep(0.1)  # wait for thread to stop
-        # self.comms.running = 0
-        # return True
 
     def runClient(self):
         try:
@@ -185,13 +150,17 @@ class ISOClientAgent(DispatchAgent):
 
         mtype = msg["type"]
         payload = msg["payload"]
+
         if mtype == 'dispatch':
-            newTime = payload["currentTime"]
-            log.info("%s Updating Unit params based on dispatch" % threading.currentThread().name)
-            self.updateUnit(newTime, payload["p"])
-            self.t = newTime
-            # self.sendEnergy() 
-            # self.sendParams()
+            log.info("Received dispatch from server")
+            tPMax=self.PMax
+            tPMin=self.PMin
+            util = self.b+self.c*powerLevel
+            util += self.M/((powerLevel-tPMax)**2)-self.M/((powerLevel-tPMin)**2)
+            #print clientID + ' b: ' + str(self.b) + ' c: ' + str(self.c) + ' PL: ' + str(powerLevel) + ' u: ' + str(util)
+
+            return util
+
         elif mtype == 'exit':
             log.info("Exit message received from server")
             self.running = 0
@@ -211,23 +180,21 @@ class ISOClientAgent(DispatchAgent):
         mtype='setParam'
         self.sendMsg(mtype,payload)
         
-    def sendEnergy(self):
-        payload={}
-        payload["e"]=self.unit.e
-        mtype='setEnergy'
-        self.sendMsg(mtype,payload)
-
-    def sendRegister(self):
-        log.info("Registering with server!")
-        payload = self.unit.paramsToDict()
-        mtype = 'register'
-        self.sendMsg(mtype,payload)
-
     def deRegister(self):
         payload='null'
         mtype='deregister'
         self.sendMsg(mtype,payload)
         
+    @agentmethod()
+    def stopClient(self, msg):
+        """ No longer being used..."""
+        log.info("Shutting client down...")
+        # self.running = 0
+        # time.sleep(0.1) # wait for thread to stop
+        # self.deRegister()
+        # time.sleep(0.1)  # wait for thread to stop
+        # self.comms.running = 0
+        # return True
 
 def getAgent(**kwargs):
     agent = ISOClientAgent()

@@ -1,12 +1,15 @@
-name: ISOServerAgent
-display: ISO Server Agent
-description: This agent acts as the ISO in the simulation
+name: DMMServerAgent
+display: DMM Server Agent
+description: This agent acts as the DMM ISO in the simulation
 execute: thread
-mainfile: iso_server_agent.py
+mainfile: dmm_server_agent.py
 inherits:
   - DispatchAgent
 software:
-  - python-simplejson
+  - python-numpy
+  - python-scipy
+  - python-numpy
+  - python-h5py
 
 methods:
   - name: initServer
@@ -16,7 +19,7 @@ methods:
   - name: startSimulation
     help: Start the sim
     args: []
-  
+
   - name: stopSimulation
     help: End the sim
     args: []
