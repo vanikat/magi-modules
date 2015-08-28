@@ -1,14 +1,16 @@
 set ns [new Simulator]
 source tb_compat.tcl
 
-set magi_start "sudo python /share/magi/current/magi_bootstrap.py"
+# set magi_start "sudo python /share/magi/current/magi_bootstrap.py"
+# set magi_start "sudo python /share/magi/test/magi_bootstrap.py -p /share/magi/test"
+set magi_start "sudo python /share/magi/test/magi_bootstrap.py -p /share/magi/test --expconf /proj/montage/modules/exfiles/bbb_experiment.conf"
 
 set servernode [$ns node]
 tb-set-node-startcmd $servernode "$magi_start"
 tb-set-node-os $servernode Ubuntu1404-64-STD
 
 #Lightweight Consumer/Producers
-set numclients 105
+set numclients [[ 21.]]
 
 set clanstr ""
 for {set i 1} {$i <= $numclients} {incr i} {

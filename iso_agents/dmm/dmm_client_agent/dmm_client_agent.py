@@ -29,7 +29,7 @@ class DMMClientAgent(DispatchAgent):
         self.server = None # configured by MAGI
         self.configFileName = None # configured by MAGI
         self.clientID = None #########TODO
-        self.scenarioFile = None ##############TODOå
+        self.scenarioFile = None ##############TODO
 
     @agentmethod()
     def initClient(self, msg):

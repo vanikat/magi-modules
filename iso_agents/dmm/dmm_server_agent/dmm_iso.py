@@ -3,7 +3,6 @@ import scipy as sp
 import scipy.io as spio
 import scipy.linalg
 import h5py
-#For interactive keyboard breaks
 import code
 import json
 import csv
@@ -23,13 +22,22 @@ for i in range(0, 1000):
 
 """
 
-class DMM_ISO:
-    
-    # TODO
-    def registerClient(CID, params):
-        pass
+class DMM_ISO(object):
 
+    def __init__(self, params):
+        self.loadCase(params["path"])
+    
     def loadCase(self, path):
+
+        # todo: remove
+        self.caseNum = 30
+        self.c = 1
+        self.gamma = 0.1
+        self.M = 0.1
+        self.k = 2
+        self.alpha = 0.001
+        ###
+
         fName = path + '/case' + str(self.caseNum) + '.mat'
         inData=h5py.File(fName,'r')
         for name in inData:
@@ -133,7 +141,6 @@ class DMM_ISO:
         tmp=self.alpha*self.c*h
         self.state[lambdaState]=self.state[lambdahatState]-tmp
         
-        self.iterNum+=1
                 
     def getClientDispatch(self,clientName):
         PdcState = np.arange(self.Nde,self.Nde+self.Ndc).astype(int)
@@ -190,13 +197,4 @@ class DMM_ISO:
         for i in range(0,self.Ng):
             clientList['G-'+str(i)]=k
             k+=1
-        return clientList
-
-    def __init__(self, params):
-        self.caseNum = params['caseNum']
-        self.c = params['c']
-        self.gamma = params['gamma']
-        self.M = params['M']
-        self.k = params['k']
-        self.alpha = params['alpha']
-        self.loadCase(params["path"])
+        return clientL

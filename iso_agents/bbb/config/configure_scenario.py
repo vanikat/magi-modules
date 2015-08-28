@@ -23,7 +23,6 @@ class ConfigureScenario(object):
         params = self.loadParams(vppfn, unitsfn)
         params["timeStep"] = 1.0
         params["numIterations"] = len(params['vpp'])-1 # -1 for dummy vpp entry
-        self.generateConfig(params, configfn)
         self.generateTCL(params, tclfn)
         self.generateAAL(params, aalfn, configfn)
     
@@ -83,13 +82,6 @@ class ConfigureScenario(object):
 
         print "Units: %s" % repr(units)
         return units
-
-    def generateConfig(self, params, configfn):
-        print "Generating config file..."
-        params["units"].sort(key=lambda u: int(u['CID'].split("-")[1]))
-        with open(configfn, 'w') as configFile:
-            json.dump(params, configFile, sort_keys=True, indent=4, ensure_ascii=False)
-        return params
 
     def generateTCL(self, params, tclfn):
         print "Generating TCL file..."

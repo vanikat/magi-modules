@@ -23,6 +23,13 @@ class DMMServerAgent(DispatchAgent):
         self.simRunning = False
         self.configFileName = None # must be configured by MAGI
 
+    
+    # TODO
+    def registerClient(CID, params):
+        #needs to connect...
+        
+        pass
+
     @agentmethod()
     def initServer(self, msg):
         log.info("Initializing DMMServer...")
@@ -94,11 +101,12 @@ class DMMServerAgent(DispatchAgent):
 
                     # TODO: (FIND OUT) How is self.ISO.df getting updated??
                     self.ISO.UpdateState(self.ISO.df)
-                    state = self.ISO.getStateData()
-                    state["ltime"] = time.time() - startTime
+                    data = {}
+                    data["state"] = self.ISO.getStateData()
+                    data["ltime"] = time.time() - startTime
                     
                     if (self.lastUpdate) % 10 == 0:
-                        self.db.collection.insert(state)
+                        self.db.collection.insert(data)
 
                     log.info('Completed iteration ' + str(self.lastUpdate))
                     

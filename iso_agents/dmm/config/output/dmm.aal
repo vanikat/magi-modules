@@ -1,0 +1,90 @@
+groups:
+  iso_server_group: &serverlist [servernode]
+  iso_client_group: &clientlist [clientnode-1, clientnode-2, clientnode-3, clientnode-4, clientnode-5, clientnode-6, clientnode-7, clientnode-8, clientnode-9, clientnode-10, clientnode-11, clientnode-12, clientnode-13, clientnode-14, clientnode-15, clientnode-16, clientnode-17, clientnode-18, clientnode-19, clientnode-20, clientnode-21]
+
+agents:
+  iso_server_agent:
+    group: iso_server_group
+    path: /proj/montage/magi-modules/iso_agents/dmm/dmm_server_agent
+    execargs: {
+      configFileName: /Users/david/Dropbox/SchoolWork/2014-15-Summer/ISI/magi-modules/iso_agents/dmm/config/case_files/fullcase.json
+    }
+  
+  iso_client_agent:
+    group: iso_client_group
+    path: /proj/montage/magi-modules/iso_agents/dmm/dmm_client_agent
+    execargs: {
+      server: servernode,
+      configFileName: /Users/david/Dropbox/SchoolWork/2014-15-Summer/ISI/magi-modules/iso_agents/dmm/config/case_files/fullcase.json
+    }
+
+streamstarts: [
+  iso_server_stream,
+  iso_client_stream,
+  cleanup_stream,
+  timer_stream
+]
+
+eventstreams:
+  iso_server_stream:
+      - type: event
+        agent: iso_server_agent 
+        trigger: serverReady
+        method: initServer
+        args: {}
+
+      - type: trigger
+        triggers: [ { event: clientReady, agent: iso_client_agent} ]
+
+      - type: event
+        agent: iso_server_agent 
+        method: startSimulation
+        trigger: simulationStarted 
+        args: {}
+
+      - type: trigger
+        triggers: [ { event: clientStopped, agent: iso_client_agent} ]
+
+  iso_client_stream:      
+      - type: trigger
+        triggers: [ { event: serverReady } ]
+
+      - type: event
+        agent: iso_client_agent 
+        method: initClient
+        args: {}
+
+      - type: event
+        agent: iso_client_agent 
+        trigger: clientReady
+        method: registerWithServer
+        args: {}
+
+      - type: trigger
+        triggers: [ { event: simulationStarted } ]
+
+      - type: event
+        agent: iso_client_agent
+        trigger: clientStopped
+        method: startClient
+        args: {}
+
+  timer_stream:
+    - type: trigger
+      triggers: [
+        {
+            timeout: 100000,
+            target: exit
+        }
+      ]
+
+
+  cleanup_stream:
+      - type: trigger
+        triggers: [
+          {
+            event: clientStopped,
+            agent: iso_client_agent,
+            target: exit
+          }
+        ]
