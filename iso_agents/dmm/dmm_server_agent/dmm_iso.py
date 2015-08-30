@@ -162,7 +162,7 @@ class DMM_ISO(object):
         
         return dispatch[0]
     
-    def setClientUtil(self,clientName,utilVal):
+    def setClientUtil(self, clientName, utilVal):
         PdcUtil = np.arange(0,self.Ndc).astype(int)
         PdtUtil = np.arange(self.Ndc,self.Ndc+self.Ndt).astype(int)
         PgUtil = np.arange(self.Ndc+self.Ndt,self.Ndc+self.Ndt+self.Ng).astype(int)

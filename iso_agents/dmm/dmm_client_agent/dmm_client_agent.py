@@ -25,7 +25,7 @@ class DMMClientAgent(DispatchAgent):
         DispatchAgent.__init__(self)
         self.server = None # configured by MAGI
         self.configPath = None # configured by MAGI
-        self.clientID = None #########TODO
+        self.clientID = None
 
     @agentmethod()
     def initClient(self, msg):
@@ -41,32 +41,32 @@ class DMMClientAgent(DispatchAgent):
         # nodeName: "clietnode-3" --> nodeIndex: 3
         self.nodeIndex = int(getNodeName().split("-")[1]) 
         # clientId ==> maps int nodeIndex to string like "DC-8"
-        self.clientID = nodeAssignment[nodeIndex]
         
-        nstr = self.clientID
-        splitstr = nstr.split('-')
+        splitstr = self.clientID.split('-')
         self.clientType = splitstr[0]
         self.clientIdx = int(splitstr[1])
 
-        jsonVals = json.load(os.path.join(self.configPath, "fullcase.json"))
+        jsonVals = json.load(
+            os.path.join(self.configPath, "fullcase.json")
+        )
         
-        sidx = str(self.clientIdx)
-        stype = self.clientType
-        self.PMax = jsonVals[stype][sidx]["PMax"]
-        self.PMin = jsonVals[stype][sidx]["PMin"]
-        self.b = jsonVals[stype][sidx]["b"]
-        self.c = jsonVals[stype][sidx]["c"]
-        self.M = jsonVals[stype][sidx]["M"]
+        clientIdxStr = str(self.clientIdx)
+
+        self.PMax = jsonVals[self.clientType][clientIdxStr]["PMax"]
+        self.PMin = jsonVals[self.clientType][clientIdxStr]["PMin"]
+        self.b = jsonVals[self.clientType][clientIdxStr]["b"]
+        self.c = jsonVals[self.clientType][clientIdxStr]["c"]
+        self.M = jsonVals[self.clientType][clientIdxStr]["M"]
         
         if self.clientType=='G':
-            self.delta=jsonVals[stype][sidx]["delta"]
-            self.gamma=jsonVals[stype][sidx]["gamma"]
+            self.delta=jsonVals[stype][clientIdxStr]["delta"]
+            self.gamma=jsonVals[stype][clientIdxStr]["gamma"]
         
         return True
 
     # no longer explicity registers with server, just connects
     @agentmethod() 
-    def registerWithServer(self, msg):
+    def connectToServer(self, msg):
         log.info("Connecting to server...")
 
         self.commService = ClientCommService()
@@ -74,6 +74,7 @@ class DMMClientAgent(DispatchAgent):
         
         while self.commService.connected is False:
             time.sleep(0.1 + (random.random()*0.3))
+
         return True
     
     def replyHandler(self, clientID, msg):
@@ -87,7 +88,7 @@ class DMMClientAgent(DispatchAgent):
         if mtype == 'dispatch':
             log.info("Thread %s: Received dispatch from server" % threadName)
             
-            powerLevel = payload["powerLevel"] #confirm todo
+            powerLevel = payload
             
             tPMax = self.PMax
             tPMin = self.PMin
@@ -136,21 +137,16 @@ class DMMClientAgent(DispatchAgent):
         }
         self.collection.insert(stats)
 
-    def sendMsg(self, mtype, payload):
-        msg = {}
-        msg["type"] = mtype
-        msg["payload"] = payload
-        self.commService.sendValue(msg)
+    # def sendMsg(self, mtype, payload):
+    #     msg = {}
+    #     msg["type"] = mtype
+    #     msg["payload"] = payload
+    #     self.commService.sendValue(msg)
 
-    def sendParams(self):
-        payload=self.unit.paramsToDict()
-        mtype='setParam'
-        self.sendMsg(mtype,payload)
-        
-    def deRegister(self):
-        payload='null'
-        mtype='deregister'
-        self.sendMsg(mtype,payload)
+    # def sendParams(self):
+    #     payload=self.unit.paramsToDict()
+    #     mtype='setParam'
+    #     self.sendMsg(mtype,payload)
         
     @agentmethod()
     def stopClient(self, msg):

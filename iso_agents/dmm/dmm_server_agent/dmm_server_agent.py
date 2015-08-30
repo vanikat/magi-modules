@@ -127,36 +127,18 @@ class DMMServerAgent(DispatchAgent):
         self.simRunning = False
         self.commService.stop()
         return True
-
+    
     def replyHandler(self, CID, msg):
         # log.info("REPLYHANDLER: CID: %s, msg: %s" % (CID, msg))
-        #Messages from clients 
-        #msg is dictionary from json extraction, dictionary must have type then payload (potentially another dictionary)
         mtype = msg["type"]
         mdata = msg["payload"]
-        if mtype == 'register': 
-            # check if ISO is expecting given CID
-            if self.ISO.getClientDispatch(CID) != -99999:
-                self.CIDList[CID] = True
-                log.info("Client %s registered." % str(CID))
-            else:
-                raise Exception, "Unknown CID trying to register"
-        elif mtype == 'setUtil':
-            self.ISO.setClientUtil(CID, msg)
+        
+        if mtype == 'setUtil':
+            log.info("Trying to setUtil for client %s, util = %s." % (str(CID), repr(mdata)))
+            self.ISO.setClientUtil(CID,  msg["payload"])
             self.lastUpdateList[CID] = self.lastUpdate
-            log.info("Client %s setUtil %s." % (str(CID), repr(mdata)))
         else:
             log.error('Unkown MSG Type ('+CID+'): ' + mtype)
-    
-    def sendAllDispatch(self):
-        for CID in self.CIDList:
-            self.sendDispatch(CID, self.ISO.getReply(CID))
-    
-    def sendDispatch(self, CID, dispatch):
-        msg = {}
-        msg["type"] = 'dispatch'
-        msg["payload"] = dispatch
-        self.commService.sendValue(CID,msg)
 
     def sendAllExitMsg(self):
         log.info("Sending exit message to all clients")
@@ -164,7 +146,7 @@ class DMMServerAgent(DispatchAgent):
         msg["type"] = 'exit'
         msg["payload"] = {}
         for CID in self.CIDList:
-            self.commService.sendValue(CID,msg)    
+            self.commService.sendValue(CID, msg)    
 
 def getAgent(**kwargs):
     agent = ISOServerAgent()

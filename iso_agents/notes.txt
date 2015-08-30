@@ -1,3 +1,21 @@
+DMM Tasks:
+	X sync up client comms and server comms
+	X sync up replyHandler in client & server
+	- deploy to deter
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 NOTIFYING SERVER WHEN CLIENT SELF-UPDATES:
 	clients connect
 	simulation starts as usual

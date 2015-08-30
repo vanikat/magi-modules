@@ -58,6 +58,7 @@ class ServerCommService:
                 continue
 
             try:
+                # receive registration message
                 jdata = json.loads(rxdata.strip())
             except json.JSONDecodeError:
                 log.info("Thread %s: Did not receive expected message from client, ignoring" % threadName)
@@ -65,8 +66,8 @@ class ServerCommService:
 
             clientID = jdata["id"]
             newThread = Thread(
-                name = "clientHandlerThread for " + clientID, 
-                target = self.clientHandlerThread, 
+                name = "serverCommThread for " + clientID, 
+                target = self.serverCommThread, 
                 args = (clientID, clientsock, addr, replyHandler)
             )
             self.threadMap[clientID] = newThread
@@ -80,60 +81,61 @@ class ServerCommService:
         log.info("%s Leaving listenForConnections" % threadName)
         self.s.close()
     
-    # for reference...
-    def ServerHandler(self,clientID,clientsock,addr,replyHandler):
-        #Now block thread until dispatched with new output level
-        t = threading.currentThread()
-        while self.running:
-            self.slock[clientID].acquire()
-            if self.running == 0:
-                break
-            data=json.dumps({'id' : clientID, 'dispatch':self.valueOutMap[clientID]})
-            #print 'Sending data ' + data
-            clientsock.send(data)
-            #print 'Waiting to RX...'
-            data=clientsock.recv(BUFF)
-            jdata = json.loads(data.strip())
-            #print 'RX data ' + str(jdata["utility"])
-            replyHandler(clientID,jdata["utility"])
-        #Cleanup
-        clientsock.close()
+    # # for reference...
+    # def ServerHandler(self,clientID,clientsock,addr,replyHandler):
+    #     #Now block thread until dispatched with new output level
+    #     t = threading.currentThread()
+    #     while self.running:
+    #         self.slock[clientID].acquire()
+    #         if self.running == 0:
+    #             break
+    #         data=json.dumps({'id' : clientID, 'dispatch':self.valueOutMap[clientID]})
+    #         #print 'Sending data ' + data
+    #         clientsock.send(data)
+    #         #print 'Waiting to RX...'
+    #         data=clientsock.recv(BUFF)
+    #         jdata = json.loads(data.strip())
+    #         #print 'RX data ' + str(jdata["utility"])
+    #         replyHandler(clientID,jdata["utility"])
+    #     #Cleanup
+    #     clientsock.close()
 
     # One thread is run per client on the servers's side
-    def clientHandlerThread(self, clientID, clientsock, addr, replyHandler):
-
+    def serverCommThread(self, clientID, clientsock, addr, replyHandler):
+        threadName = threading.currentThread().name
         # Now block thread until dispatched with new output level
         clientsock.settimeout(TXTIMEOUT);
         while self.running:
-            log.info("clientHandlerThread Running -- %s" % threading.currentThread().name)
+            log.info("serverCommThread Running -- %s" % threadName)
+            
+            # when would their be contention for this lock?
+            self.slock[clientID].acquire()
+            if not self.running:
+                break
+            
+            data = json.dumps({
+                'type' : 'dispatch', 
+                'payload': self.valueOutMap[clientID]
+            })
+            clientsock.send(data)
+            
             try:
                 rxdata = clientsock.recv(BUFF)
             except socket.timeout:
-                # If there's nothing to send, then keep waiting
-                # log.info('Server RX Timeout, Checking Lock')
-                if self.slock[clientID].acquire(blocking=FALSE):
-                    #Process a pending dispatch send
-                    data = json.dumps({
-                        'id' : clientID, 
-                        'dispatch': self.valueOutMap[clientID]
-                    })
-                    
-                    clientsock.send(data)
                 continue
             
-            #Handle rxdata
             try:
                 jdata = json.loads(rxdata.strip())
             except :
-                log.info("Exception in clientHandlerThread while trying to parse JSON string: %s" % repr(rxdata))
+                log.info("Exception in serverCommThread while trying to parse JSON string: %s" % repr(rxdata))
                 continue
 
-            log.info('clientHandlerThread RX data: %s' % repr(jdata["returnData"]))
-            replyHandler(clientID, jdata["returnData"])
+            log.info('serverCommThread RX data: %s' % repr(jdata["utility"]))
+            replyHandler(clientID, jdata["utility"])
 
         #Cleanup
         clientsock.close()
-        log.info("%s Leaving clientHandlerThread" % threading.currentThread().name)
+        log.info("%s Leaving serverCommThread" % threadName)
 
     def close(self):
         self.running = 0

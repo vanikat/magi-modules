@@ -14,8 +14,8 @@ methods:
     help: sets up the client's initial configuration
     args: []
 
-  - name: registerWithServer
-    help: client connects and registers itself with the server
+  - name: connectToServer
+    help: client connects to server
     args: []
 
   - name: startClient

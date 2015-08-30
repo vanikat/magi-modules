@@ -56,7 +56,7 @@ eventstreams:
       - type: event
         agent: iso_client_agent 
         trigger: clientReady
-        method: registerWithServer
+        method: connectToServer
         args: {}
 
       - type: trigger
