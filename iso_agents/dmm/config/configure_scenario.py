@@ -24,15 +24,15 @@ class ConfigureScenario(object):
         tclfn = os.path.abspath(tclfn)
         aalfn = os.path.abspath(aalfn)
        
+        #TODO read these in from file
+        self.timeStep = 1.0        
+        self.numIterations = 10000 
+
         self.loadCase(configPath) #sets instance vars
         self.createClientFiles(configPath)
         
         self.numClients = self.Ndc + self.Ndt + self.Ng
 
-        #TODO read these in from file
-        self.timeStep = 1.0        
-        self.numIterations = 10000 
-        
         self.generateTCL(tclfn)
         self.generateAAL(aalfn, configPath)
 
@@ -52,7 +52,6 @@ class ConfigureScenario(object):
         for name in inData:
             cmd='self.' + name + '=np.transpose(np.array(inData.get(\''+name+'\')))'
             exec(cmd)
-        
         
         state = np.vstack((np.zeros((self.Nde,1)),np.ones((self.Ndc,1)) ,  np.ones((self.Ndt,1)),  np.ones((self.Ng,1)),  np.zeros((self.Nr,1)),  np.zeros((self.Nr,1))))
         
@@ -104,10 +103,24 @@ class ConfigureScenario(object):
         with open(fstr, 'w') as outFile:
             json.dump(jsonVals, outFile)
         
-        # cl=self.getClientList()
-        # fstr = os.path.join(path, 'clist.txt')
-        # with open(fstr, 'w') as outFile:
-        #     json.dump(cl, outFile)
+        nodeAssignment = self.assignNodesToUnits()
+        fstr = os.path.join(path, 'nodeAssignment.json')
+        with open(fstr, 'w') as outFile:
+            json.dump(nodeAssignment, outFile)
+
+    def assignNodesToUnits(self):
+        assignment = []
+
+        for i in range(0,self.Ndc):
+            assigment.append('DC-'+str(i))
+
+        for i in range(0,self.Ndt):
+            assigment.append('DT-'+str(i))
+
+        for i in range(0,self.Ng):
+            assigment.append('G-'+str(i))
+
+        return assignment
 
     def generateTCL(self, tclfn):
         print "Generating TCL file..."
@@ -124,7 +137,7 @@ class ConfigureScenario(object):
         print "Generating AAL file..."
 
         templateData = {}
-        templateData['configFileName'] = os.path.join(configPath, 'fullcase.json')
+        templateData['configPath'] = configPath
         templateData['clientNodesText'] = ""
         # timeout based on simulation length multipled by some slack factor
         # templateData['timeout'] = self.timeStep * self.numIterations * 1000 * 100000

@@ -2,6 +2,7 @@ PORT=10500
 BUFF=1024
 FALSE=0
 TXTIMEOUT=1
+HOST=''
 
 import json
 import socket
@@ -21,7 +22,7 @@ class ServerCommService:
         self.slock = {}
         self.running = 1
     
-    def serverSendValue(self, clientID, dispatch):
+    def sendValue(self, clientID, dispatch):
         #Unblock the client thread waiting to send
         if clientID in self.slock:
             self.valueOutMap[clientID] = dispatch
@@ -32,78 +33,107 @@ class ServerCommService:
             pass
         pass
         
-    def initAsServer(self,replyHandler):
-        thread = Thread(target=self.thread_initAsServer,args=(replyHandler,))
-        thread.start()
-        return thread
-    
-    #Blocking, never returns
-    def thread_initAsServer(self, replyHandler):
+    def startServer(self, replyHandler):
         self.s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.s.settimeout(TXTIMEOUT)
-        self.s.bind(('',PORT))
+        self.s.bind((HOST,PORT))
         self.s.listen(5)
+
+        serverThread = Thread(target=self.listenForConnections,args=(replyHandler,))
+        serverThread.start()
+
+        return serverThread
+    
+    #Blocking, only returns if self.running set to False/0
+    def listenForConnections(self, replyHandler):
+        threadName = threading.currentThread().name
         while self.running:
-            log.info("%s Running thread_initAsServer on" % threading.currentThread().name)
+            log.info("Thread: %s listenForConnections()" % threadName)
             try:
                 clientsock, addr = self.s.accept()
                 rxdata = clientsock.recv(BUFF)
             except socket.timeout:
-                log.info("Thread_initAsServer, socket timed out")
+                log.info("Thread: %s No connections received before time out" % threadName)
                 continue
 
             try:
                 jdata = json.loads(rxdata.strip())
             except json.JSONDecodeError:
-                # log.info("Exception in thread_initAsServer while trying to parse JSON %s" % repr(rxdata))
+                log.info("Thread %s: Did not receive expected message from client, ignoring" % threadName)
                 continue
 
             clientID = jdata["id"]
-            nthread = Thread(name="ServerHandler for " + clientID, target=self.ServerHandler, args=(clientID,clientsock,addr,replyHandler))
-            self.threadMap[clientID] = nthread
+            newThread = Thread(
+                name = "clientHandlerThread for " + clientID, 
+                target = self.clientHandlerThread, 
+                args = (clientID, clientsock, addr, replyHandler)
+            )
+            self.threadMap[clientID] = newThread
             self.valueOutMap[clientID] = 123456789 #sentinel value
             self.slock[clientID] = Semaphore(0)
-            nthread.start()
+            
+            newThread.start()
+            
             log.info('Client ' + clientID + ' connected.')
-        log.info("%s Leaving thread__initAsServer" % threading.currentThread().name)
+
+        log.info("%s Leaving listenForConnections" % threadName)
         self.s.close()
-        
-    #One thread is run per client on the servers's side
-    def ServerHandler(self, clientID, clientsock, addr, replyHandler):
+    
+    # for reference...
+    def ServerHandler(self,clientID,clientsock,addr,replyHandler):
         #Now block thread until dispatched with new output level
-        # t = threading.currentThread()
+        t = threading.currentThread()
+        while self.running:
+            self.slock[clientID].acquire()
+            if self.running == 0:
+                break
+            data=json.dumps({'id' : clientID, 'dispatch':self.valueOutMap[clientID]})
+            #print 'Sending data ' + data
+            clientsock.send(data)
+            #print 'Waiting to RX...'
+            data=clientsock.recv(BUFF)
+            jdata = json.loads(data.strip())
+            #print 'RX data ' + str(jdata["utility"])
+            replyHandler(clientID,jdata["utility"])
+        #Cleanup
+        clientsock.close()
+
+    # One thread is run per client on the servers's side
+    def clientHandlerThread(self, clientID, clientsock, addr, replyHandler):
+
+        # Now block thread until dispatched with new output level
         clientsock.settimeout(TXTIMEOUT);
         while self.running:
-            log.info("ServerHandler Running -- %s" % threading.currentThread().name)
+            log.info("clientHandlerThread Running -- %s" % threading.currentThread().name)
             try:
                 rxdata = clientsock.recv(BUFF)
             except socket.timeout:
-                #If there's nothing to send, then keep waiting
+                # If there's nothing to send, then keep waiting
                 # log.info('Server RX Timeout, Checking Lock')
                 if self.slock[clientID].acquire(blocking=FALSE):
                     #Process a pending dispatch send
                     data = json.dumps({
                         'id' : clientID, 
-                        'dispatch':self.valueOutMap[clientID]
+                        'dispatch': self.valueOutMap[clientID]
                     })
-                    #print 'Sending data ' + data
+                    
                     clientsock.send(data)
                 continue
             
-            #Handle rxdata, should be json with "commandData" field
+            #Handle rxdata
             try:
                 jdata = json.loads(rxdata.strip())
             except :
-                # log.info("Exception in ServerHandler while trying to parse JSON string: %s" % repr(rxdata))
+                log.info("Exception in clientHandlerThread while trying to parse JSON string: %s" % repr(rxdata))
                 continue
 
-            log.info('ServerHandler RX data: %s' % repr(jdata["returnData"]))
+            log.info('clientHandlerThread RX data: %s' % repr(jdata["returnData"]))
             replyHandler(clientID, jdata["returnData"])
 
         #Cleanup
         clientsock.close()
-        log.info("%s Leaving ServerHandler" % threading.currentThread().name)
+        log.info("%s Leaving clientHandlerThread" % threading.currentThread().name)
 
     def close(self):
         self.running = 0

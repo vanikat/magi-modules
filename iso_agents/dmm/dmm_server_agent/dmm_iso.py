@@ -24,8 +24,8 @@ for i in range(0, 1000):
 
 class DMM_ISO(object):
 
-    def __init__(self, params):
-        self.loadCase(params["path"])
+    def __init__(self, path):
+        self.loadCase(path)
     
     def loadCase(self, path):
 
