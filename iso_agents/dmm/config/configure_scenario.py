@@ -31,7 +31,7 @@ class ConfigureScenario(object):
         self.loadCase(configPath) #sets instance vars
         self.createClientFiles(configPath)
         
-        self.numClients = self.Ndc + self.Ndt + self.Ng
+        self.numClients = len(self.PdcMax) + len(self.PdtMax) + len(self.PgMax)
 
         self.generateTCL(tclfn)
         self.generateAAL(aalfn, configPath)
@@ -112,13 +112,13 @@ class ConfigureScenario(object):
         assignment = []
 
         for i in range(0,self.Ndc):
-            assigment.append('DC-'+str(i))
+            assignment.append('DC-'+str(i))
 
         for i in range(0,self.Ndt):
-            assigment.append('DT-'+str(i))
+            assignment.append('DT-'+str(i))
 
         for i in range(0,self.Ng):
-            assigment.append('G-'+str(i))
+            assignment.append('G-'+str(i))
 
         return assignment
 

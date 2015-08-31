@@ -1,13 +1,16 @@
-name: ISOClientAgent
-display: ISO Client Agent
-description: Acts as the client of an ISO
+name: DMMClientAgent
+display: DMM Client Agent
+description: Acts as the client of a DMM ISO
 execute: thread
-mainfile: iso_client_agent.py
+mainfile: dmm_client_agent.py
 inherits:
   - DispatchAgent
 
 software:
-  - python-simplejson
+  - python-numpy
+  - python-scipy
+  - python-numpy
+  - python-h5py
 
 methods:
   - name: initClient
