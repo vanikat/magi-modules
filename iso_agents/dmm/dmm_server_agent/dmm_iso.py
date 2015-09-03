@@ -183,6 +183,8 @@ class DMM_ISO(object):
         
     def getStateData(self):
         statelist = self.state.tolist()
+		#The statelist as a list may be saved as python lists instead of floating values i.e. [1.4412] instead of 1.4412
+		#May need to statelist[i][1] index
         return statelist
     
     def getClientList(self):

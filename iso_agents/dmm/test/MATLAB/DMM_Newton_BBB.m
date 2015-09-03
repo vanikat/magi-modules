@@ -202,7 +202,7 @@ grid on
 %stateplot contains the log of entire state history, equivalent of what
 %goes into mongo DB in python code minus the Pdk entry:
 matchingStateLog=stateplot(1:end-1,2:end);
-
+csvwrite('state_log_case_30.csv',matchingStateLog');
 
 %Compare to DETER
 stateMATLAB=stateplot(1:end-1,end)';
@@ -232,5 +232,7 @@ end
 %}
 figure;
 plot(dispatch_dc1);
+
+
 
 
