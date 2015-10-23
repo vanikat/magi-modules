@@ -1,0 +1,25 @@
+name: DMMServerAgent
+display: DMM Server Agent
+description: This agent acts as the DMM ISO in the simulation
+execute: thread
+mainfile: dmm_server_agent.py
+inherits:
+  - DispatchAgent
+software:
+  - python-numpy
+  - python-scipy
+  - python-numpy
+  - python-h5py
+
+methods:
+  - name: initServer
+    help: Initialize the server
+    args: []
+
+  - name: startSimulation
+    help: Start the sim
+    args: []
+
+  - name: stopSimulation
+    help: End the sim
+    args: []

@@ -1,0 +1,95 @@
+DMM Tasks:
+	X sync up client comms and server comms
+	X sync up replyHandler in client & server
+	- deploy to deter
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NOTIFYING SERVER WHEN CLIENT SELF-UPDATES:
+	clients connect
+	simulation starts as usual
+	server knows all initial stats of all units
+	simulation runs for a time
+	then comms to a unit get cut
+	the unit does not hear from the server
+		- does the server detect that comms have been cut?
+		- does it know the unit's fallback strategy?
+		- does it remove the unit from its agile balancing process?
+	whennc comms cut, the unit must act independently to address the following issues:
+		- pForced not met
+		- eMax reached, emin
+		- etc
+		- should this policy be encapsulated and configurable?
+	eventually comms are restored
+		- when is this first detected?
+	now the server and the unit are potentially out of sync
+		- the server doesn't know the unit's p, agility, e, etc.
+	how do they get resynced?
+		- if server can detect disconnect:
+			- server should send a 'resync' message where it asks the unit for its current stats before including the unit back in its AB process
+		- if server can't detect disconnect:
+			- if the server sends a new pdispatch and the unit has updated itself recently, 
+			  then the unit only accepts the new dispatch if the dispatch doesn't violate the unit's constraints
+			- the unit must also send the server its updated stats immediately
+			- or should the unit notify the server as soon as it updates its stats?
+
+
+
+
+Next Steps:
+	- V & V:
+		- Phase 1: (Deterministic, no latency)
+			- Consume output from Matlab code
+				- 1: Toy scenario with 3 units
+				- 2: BBB Paper Scenario w/ 105 units
+			- Agents fully parameterized through MAGI
+			- Read from config file and export TCL/AAL
+		- Remove references to agileBalancing / BBB (should be able to use any algorithm)
+
+		- Phase 2: (Stochastic, no latency)
+		- Phase 3: (Stochastic, with latency)
+			- Strategies for handling latency
+				- NM, No-hold, etc.
+		- Export to MAGI graph
+
+
+
+
+	- Verification and Validation of system using Paul's Matlab code for comparison
+		- Implement mechanism to export / visualize the data generated easily
+		- Issues to look out for:
+			- (PW) Corner Case List:
+				-Updating energy when multiple timesteps occur between last P-setting
+				-Update comes from client while dispatch is being calculated
+				-No update received from client, so handle fixed P's
+				-RX of Stale Energy values (which one to take, ISO's view or new E)
+			- (PW) Fault Tolerance:
+				-Force P dispatch when comms are lost
+					(If comm lost, P=constrained(last P) , i.e. assume client keeps doing what it was doing until it meets constraints on max E, etc.
+				-Predict forced P actions
+					(If client has forced P, it will consume power at that level regardless of dispatch control)
+				-Know when timeout occurs (i.e. keepalive)
+				-Historize, revert to pre-drop, validated commands
+	- Scenario Configurator
+		- Generate AAL & TCL automatically with user-friendly front-end (e.g. yaml, python, json, etc.)
+		- Use stochastic functions, etc.
+	- Design realistic / interesting scenarios
+	- Scale to 1000's of nodes
+		- Switch to containerized agents
+
+
+Maybe:
+	- Change min log level in magi bootstrap
+	- Get common libraries in one place / add to python path?
+	- Buy a new car

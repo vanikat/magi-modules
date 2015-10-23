@@ -1,0 +1,89 @@
+groups:
+  iso_server_group: &serverlist [servernode]
+  iso_client_group: &clientlist [%(clientNodesText)s]
+
+agents:
+  iso_server_agent:
+    group: iso_server_group
+    path: /proj/montage/magi-modules/iso_agents/dmm/dmm_server_agent
+    execargs: {
+      configPath: %(configPath)s
+    }
+  iso_client_agent:
+    group: iso_client_group
+    path: /proj/montage/magi-modules/iso_agents/dmm/dmm_client_agent
+    execargs: {
+      server: servernode,
+      configPath: %(configPath)s
+    }
+
+streamstarts: [
+  iso_server_stream,
+  iso_client_stream,
+  cleanup_stream,
+  timer_stream
+]
+
+eventstreams:
+  iso_server_stream:
+      - type: event
+        agent: iso_server_agent 
+        trigger: serverReady
+        method: initServer
+        args: {}
+
+      - type: trigger
+        triggers: [ { event: clientReady, agent: iso_client_agent} ]
+
+      - type: event
+        agent: iso_server_agent 
+        method: startSimulation
+        trigger: simulationStarted 
+        args: {}
+
+      - type: trigger
+        triggers: [ { event: clientStopped, agent: iso_client_agent} ]
+
+  iso_client_stream:      
+      - type: trigger
+        triggers: [ { event: serverReady } ]
+
+      - type: event
+        agent: iso_client_agent 
+        method: initClient
+        args: {}
+
+      - type: event
+        agent: iso_client_agent 
+        trigger: clientReady
+        method: connectToServer
+        args: {}
+
+      - type: trigger
+        triggers: [ { event: simulationStarted } ]
+
+      - type: event
+        agent: iso_client_agent
+        trigger: clientStopped
+        method: startClient
+        args: {}
+
+  timer_stream:
+    - type: trigger
+      triggers: [
+        {
+            timeout: %(timeout)s,
+            target: exit
+        }
+      ]
+
+
+  cleanup_stream:
+      - type: trigger
+        triggers: [
+          {
+            event: clientStopped,
+            agent: iso_client_agent,
+            target: exit
+          }
+        ]

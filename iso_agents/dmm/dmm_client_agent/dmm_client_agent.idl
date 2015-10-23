@@ -1,0 +1,31 @@
+name: DMMClientAgent
+display: DMM Client Agent
+description: Acts as the client of a DMM ISO
+execute: thread
+mainfile: dmm_client_agent.py
+inherits:
+  - DispatchAgent
+
+software:
+  - python-numpy
+  - python-scipy
+  - python-numpy
+  - python-h5py
+
+methods:
+  - name: initClient
+    help: sets up the client's initial configuration
+    args: []
+
+  - name: connectToServer
+    help: client connects to server
+    args: []
+
+  - name: startClient
+    help: starts the client's event loop
+    args: []
+
+  - name: stopClient
+    help: shuts down the client
+    args: []
+
