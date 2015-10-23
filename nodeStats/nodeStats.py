@@ -122,6 +122,9 @@ class NodeStatsReporter(ReportingDispatchAgent):
                     log.critical('This platform is not supported for gather runtime stats')
                     return False
                 
+                log.info('Adding exp info: {}/{} container: {}'.format(
+                    testbed.getExperiment(), testbed.getProject(), testbed.amAVirtualNode()))
+                
                 self.collection.insert({"type" : "nodeinfo",
                                         "experiment" : testbed.getExperiment(), 
                                         "project" : testbed.getProject(), 
@@ -129,7 +132,8 @@ class NodeStatsReporter(ReportingDispatchAgent):
 
             if self.truncate:
                 log.debug('truncating old records')
-                self.collection.remove()
+                self.collection.remove({"type": { "$ne": "nodeinfo" }})
+                
             log.info('runtime stats collection started')
             
             self.active = True
