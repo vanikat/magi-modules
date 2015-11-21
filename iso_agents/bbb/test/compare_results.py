@@ -3,9 +3,7 @@ import sys
 import yaml
 
 from magi.util.database import getData
-from magi.util.helpers import getDBConfigHost
 from magi.util import helpers
-from magi.db.Server import ROUTER_SERVER_PORT
 
 class CompareResults(object):
 
@@ -52,16 +50,14 @@ class CompareResults(object):
         print "Loading experiment data..."
         print "Project Name: %s, Experiment Name: %s" % (projectName, expName)
 
-        experimentConfigFile = helpers.getExperimentConfigFile(projectName, expName)
-        experimentConfig = yaml.load(open(experimentConfigFile, 'r'))
-        dbdl = experimentConfig['dbdl']
+        (dbHost, dbPort) = helpers.getExperimentDBHost(project=projectName, experiment=expName)
+        
+        print "DB Host: %s, DB Port: %d" % (dbHost, dbPort)
 
         data = getData(
             'iso_server_agent', 
-            # dbHost=getDBConfigHost(project=projectName, experiment=expName),
-            dbHost=helpers.toControlPlaneNodeName(dbdl['configHost']),
-            # dbPort=27017
-            dbPort=dbdl['configPort']
+            dbHost=dbHost,
+            dbPort=dbPort
         )
         data = [d for d in data if d.get("statsType") == "iso_stats"]
         # print "ACTUAL RESULTS FROM MONGO:"
