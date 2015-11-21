@@ -6,24 +6,24 @@ groups:
 agents:
   scenario_creator_agent:
     group: scenario_creator_group
-    path: /proj/montage/magi-modules/iso_agents/scenario_creator_agent/
+    path: /proj/montage/magi-modules/iso_agents/bbb/scenario_creator_agent/
     execargs: {
       filename: /proj/montage/magi-modules/iso_agents/tmp/custom-scenario.json
     }
 
   iso_server_agent:
     group: iso_server_group
-    path: /proj/montage/magi-modules/iso_agents/iso_server_agent
+    path: /proj/montage/magi-modules/iso_agents/bbb/bbb_server_agent
     execargs: {
-      configFileName: /Users/david/Dropbox/SchoolWork/2015-Summer/ISI/magi-modules/iso_agents/config/output/star105.json
+      configFileName: /proj/montage/magi-modules/iso_agents/bbb/config/output/star105.json
     }
   
   iso_client_agent:
     group: iso_client_group
-    path: /proj/montage/magi-modules/iso_agents/iso_client_agent
+    path: /proj/montage/magi-modules/iso_agents/bbb/bbb_client_agent
     execargs: {
       server: servernode,
-      configFileName: /Users/david/Dropbox/SchoolWork/2015-Summer/ISI/magi-modules/iso_agents/config/output/star105.json
+      configFileName: /proj/montage/magi-modules/iso_agents/bbb/config/output/star105.json
     }
 
 streamstarts: [
@@ -83,8 +83,8 @@ eventstreams:
 
       - type: event
         agent: iso_client_agent 
-        method: registerWithServer
         trigger: clientReady
+        method: registerWithServer
         args: {}
 
       - type: trigger
@@ -100,7 +100,7 @@ eventstreams:
     - type: trigger
       triggers: [
         { 
-            timeout: 500000.0,
+            timeout: 10000000000.0,
             target: exit
           } 
       ]

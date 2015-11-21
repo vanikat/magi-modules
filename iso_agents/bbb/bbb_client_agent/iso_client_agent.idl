@@ -2,7 +2,7 @@ name: ISOClientAgent
 display: ISO Client Agent
 description: Acts as the client of an ISO
 execute: thread
-mainfile: iso_client_agent.py
+mainfile: bbb_client_agent.py 
 inherits:
   - DispatchAgent
 

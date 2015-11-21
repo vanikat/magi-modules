@@ -2,7 +2,7 @@ name: ISOServerAgent
 display: ISO Server Agent
 description: This agent acts as the ISO in the simulation
 execute: thread
-mainfile: iso_server_agent.py
+mainfile: bbb_server_agent.py 
 inherits:
   - DispatchAgent
 software:
