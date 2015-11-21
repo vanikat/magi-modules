@@ -74,7 +74,7 @@ class ClientCommService:
                     });
                     sock.send(cdata);
 
-                    if isinstance(cdata['returnData'], dict) and cdata['returnData'].get('type') == 'register':
+                    if isinstance(self.valueOutMap, dict) and self.valueOutMap.get('type') == 'register':
                         self.registered = True
 
                         # clear valueOutMap so doesn't send register again
