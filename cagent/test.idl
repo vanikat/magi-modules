@@ -1,0 +1,3 @@
+execute: socket
+mainfile: test
+compileCmd: make all

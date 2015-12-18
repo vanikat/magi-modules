@@ -1,0 +1,38 @@
+
+groups:
+  agent_group: [control]
+    
+agents:
+  c_agent:
+    group: agent_group
+    path: /proj/montage/magi-modules/cagent/ 
+    execargs: {}
+
+streamstarts: [ integerAddStream ]
+
+eventstreams:
+
+  integerAddStream:         
+      - type: event
+        agent: c_agent
+        method: addInteger
+        trigger: addDone
+        args:
+          a: 25
+          b: 50
+
+      - type: trigger
+        triggers: [ {event: addDone, retVal: 75, target: 'integerSubtractStream'} ]
+
+  integerSubtractStream:
+      - type: event
+        agent: c_agent
+        method: subtractInteger
+        trigger: subDone
+        args:
+          a: 50
+          b: 25
+
+      - type: trigger
+        triggers: [ {event: subDone, retVal: 25, target: 'exit'} ]
+
