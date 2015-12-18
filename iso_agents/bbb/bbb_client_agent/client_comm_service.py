@@ -3,16 +3,16 @@ BUFF=1024
 FALSE=0
 TXTIMEOUT=1
 
-import random
 import json
+import logging
+import random
 import socket
-import thread
-import threading
-from threading import Thread
 from threading import Semaphore
+from threading import Thread
+import threading
 import time
 
-import logging
+
 log = logging.getLogger(__name__)
 
 class ClientCommService:

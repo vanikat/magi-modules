@@ -1,6 +1,6 @@
 class LocalUnit(object):
 
-	def __init__(self, e, eMin, eMax, p, pMin, pMax):
+	def __init__(self, e, eMin, eMax, p, pMin, pMax, unitType, cid):
 
 		# parameters
 		self.eMin = eMin
@@ -10,12 +10,12 @@ class LocalUnit(object):
 		self.tS = 1.0
 		self.pForced = 0
 		self.UID = -1
-		self.type = ''
+		self.type = unitType
 		
 		#To capture latency events
 		self.lastUpdateTime=0
 		
-		self.CID = ''
+		self.CID = cid
 
 		# current values
 		self.e = e

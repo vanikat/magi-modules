@@ -1,23 +1,18 @@
-import os
-import sys
-import traceback
-from os.path import basename
-import time
-
-from threading import Thread
-import threading
-import random
-import logging
 import json
-
-from client_comm_service import ClientCommService
-from bbb_iso_old import BBB_ISO
+import logging
+import random
+import sys
+import threading
+import time
+import traceback
 
 from magi.util import database
 from magi.util.agent import DispatchAgent, agentmethod
-from magi.util.processAgent import initializeProcessAgent
 from magi.util.config import getNodeName
-from magi.util.helpers import toControlPlaneNodeName
+
+from bbb_iso_old import BBB_ISO
+from client_comm_service import ClientCommService
+
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +33,6 @@ class ISOClientAgent(DispatchAgent):
         # nodeName: "clientnode-3" --> nodeIndex: 3
         self.nodeIndex = int(getNodeName().split("-")[1]) 
 
-        globalConfig = None
         with open(self.configFileName, 'r') as configFile:
             globalConfig = json.load(configFile)
 
@@ -96,7 +90,7 @@ class ISOClientAgent(DispatchAgent):
                 self.logUnit()
                 self.t += 1
                 time.sleep(self.unit.tS/10.0)
-        except Exception, e:
+        except Exception:
             log.info("Thread %s threw an exception during main loop" % threading.currentThread().name)
             exc_type, exc_value, exc_tb = sys.exc_info()
             log.error(''.join(traceback.format_exception(exc_type, exc_value, exc_tb)))

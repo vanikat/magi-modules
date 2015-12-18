@@ -2,8 +2,9 @@ from local_unit import LocalUnit
 
 class Bakery(LocalUnit):
 
-	def __init__(self, eMin, eMax, pMin, pMax, tEnd, tRun, e, p):
-		super(Bakery, self).__init__(e, eMin, eMax, p, pMin, pMax)
+	def __init__(self, eMin, eMax, pMin, pMax, tEnd, tRun, e, p, cid):
+		super(Bakery, self).__init__(e, eMin, eMax, p, pMin, pMax, 
+									'Bakery', cid)
 		self.tEnd = tEnd
 		self.tRun = tRun
 		self.v = False

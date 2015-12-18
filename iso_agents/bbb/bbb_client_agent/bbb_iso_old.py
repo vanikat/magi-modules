@@ -1,8 +1,3 @@
-import code
-import random
-import time
-
-from local_unit import LocalUnit
 from bucket import Bucket
 from battery import Battery
 from bakery import Bakery
@@ -205,7 +200,7 @@ class BBB_ISO(object):
         p=client["p"]
         tRun=client["tRun"]
         CID=client["CID"]
-        return Bakery(eMin, eMax, pMin, pMax, tEnd, tRun, e, p)
+        return Bakery(eMin, eMax, pMin, pMax, tEnd, tRun, e, p, CID)
     
     @staticmethod
     def dictToBattery(client):
@@ -217,7 +212,7 @@ class BBB_ISO(object):
         e=client["e"]
         p=client["p"]
         CID=client["CID"]
-        return Battery(eMin, eMax, pMin, pMax, tEnd, e, p)
+        return Battery(eMin, eMax, pMin, pMax, tEnd, e, p, CID)
     
     @staticmethod
     def dictToBucket(client):
@@ -228,7 +223,7 @@ class BBB_ISO(object):
         e=client["e"]
         p=client["p"]
         CID=client["CID"]
-        return Bucket(eMin, eMax, pMin, pMax, e, p)
+        return Bucket(eMin, eMax, pMin, pMax, e, p, CID)
 
 
         

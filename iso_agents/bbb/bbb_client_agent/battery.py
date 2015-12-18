@@ -2,8 +2,9 @@ from local_unit import LocalUnit
 
 class Battery(LocalUnit):
 
-	def __init__(self, eMin, eMax, pMin, pMax, tEnd, e, p):
-		super(Battery, self).__init__(e, eMin, eMax, p, pMin, pMax)
+	def __init__(self, eMin, eMax, pMin, pMax, tEnd, e, p, cid):
+		super(Battery, self).__init__(e, eMin, eMax, p, pMin, pMax, 
+									'Battery', cid)
 		self.tEnd = tEnd
 
 	def updateAgility(self,k):

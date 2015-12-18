@@ -2,8 +2,9 @@ from local_unit import LocalUnit
 
 class Bucket(LocalUnit):
 
-	def __init__(self, eMin, eMax, pMin, pMax, e, p):
-		super(Bucket, self).__init__(e, eMin, eMax, p, pMin, pMax)
+	def __init__(self, eMin, eMax, pMin, pMax, e, p, cid):
+		super(Bucket, self).__init__(e, eMin, eMax, p, pMin, pMax, 
+									'Bucket', cid)
 
 	def updateAgility(self,k):
 		self.agility = (self.eMax - self.e)/(self.tS * self.pMax)
