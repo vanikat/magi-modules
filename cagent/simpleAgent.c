@@ -1,16 +1,8 @@
-#include <arpa/inet.h>
-#include <errno.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 #include "magiCLib/Agent.h"
 #include "magiCLib/AgentRequest.h"
@@ -24,30 +16,30 @@ dList_t* list;
 extern Logger* logger;
 
 char* testChar(char* a, char* b){
-	log_debug(logger, "ENTRY testChar\n");
+	entrylog(logger, __func__, __FILE__, __LINE__);
 	log_debug(logger, "a: %s", a);
 	log_debug(logger, "b: %s", b);
 	char* result = malloc(strlen(a) + strlen(b) + 1);
 	strcpy(result, a);
 	strcat(result, b);
 	log_debug(logger, "result: %s", result);
-	log_debug(logger, "EXIT testChar\n");
+	exitlog(logger, __func__, __FILE__, __LINE__);
 	return result;
 }
 
 int* testInt(int a, int b){
-	log_debug(logger, "ENTRY testInt\n");
+	entrylog(logger, __func__, __FILE__, __LINE__);
 	log_debug(logger, "a: %d", a);
 	log_debug(logger, "b: %d", b);
 	int* result = (int*) malloc(sizeof(int));
 	*result = a + b;
 	log_debug(logger, "result: %d", result);
-	log_debug(logger, "EXIT testInt\n");
+	exitlog(logger, __func__, __FILE__, __LINE__);
 	return result;
 }
 
 void testVoid() {
-	log_debug(logger, "ENTRY testVoid\n");
+	entrylog(logger, __func__, __FILE__, __LINE__);
 	keyValueNode_t node1 = (keyValueNode_t) malloc(sizeof(struct keyValueNode));
 	node1->key = "function";
 	node1->value = "testVoid";
@@ -55,12 +47,12 @@ void testVoid() {
 	node1->next = NULL;
 	mongoDBExecute(OPER_INSERT, node1);
 	free(node1);
-	log_debug(logger, "EXIT testVoid\n");
+	exitlog(logger, __func__, __FILE__, __LINE__);
 }
 
 int* addInteger(int a, int b) {
+	entrylog(logger, __func__, __FILE__, __LINE__);
 	int* result1 = (int*) malloc(sizeof(int));
-	log_debug(logger, "Inside addInteger\n");
 	*result1 = a + b;
 	keyValueNode_t node1 = (keyValueNode_t) malloc(sizeof(struct keyValueNode));
 	node1->key = "addResult";
@@ -69,12 +61,12 @@ int* addInteger(int a, int b) {
 	node1->next = NULL;
 	mongoDBExecute(OPER_INSERT, node1);
 	free(node1);
-	log_debug(logger, "Going out of the addInterger function\n");
+	exitlog(logger, __func__, __FILE__, __LINE__);
 	return result1;
 }
 
 int* subtractInteger(int a, int b) {
-	log_debug(logger, "Inside subtractInteger\n");
+	entrylog(logger, __func__, __FILE__, __LINE__);
 	int* result2 = (int*) malloc(sizeof(int));
 	*result2 = a - b;
 	keyValueNode_t node1 = (keyValueNode_t) malloc(sizeof(struct keyValueNode));
@@ -84,9 +76,7 @@ int* subtractInteger(int a, int b) {
 	node1->next = NULL;
 	mongoDBExecute(OPER_INSERT, node1);
 	free(node1);
-	log_debug(logger,
-			"Going out of the subtractInterger function with value %d\n",
-			*result2);
+	exitlog(logger, __func__, __FILE__, __LINE__);
 	return result2;
 }
 
