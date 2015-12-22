@@ -1,0 +1,7 @@
+execute: socket
+mainfile: test
+compileCmd: make all
+software:
+    - libarmadillo-dev
+    - libboost-dev
+    - libboost-all-dev
