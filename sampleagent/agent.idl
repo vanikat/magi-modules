@@ -1,0 +1,8 @@
+name: sampleagent
+display: Sample Python Agent
+description: A sample agent
+execute: socket 
+mainfile: agent.py
+inherits:
+   - DispatchAgent  
+

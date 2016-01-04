@@ -1,0 +1,48 @@
+
+groups:
+  agent_group: [control]
+    
+agents:
+  sample_agent:
+    group: agent_group
+    path: /Users/jaipuria/playground/deter/magi-modules/sampleagent/ 
+    execargs: {}
+
+streamstarts: [ charStream ]
+
+eventstreams:
+
+  charStream:         
+      - type: event
+        agent: sample_agent
+        method: testChar
+        trigger: charDone
+        args:
+          a: hello
+          b: world
+
+      - type: trigger
+        triggers: [ {event: charDone, retVal: helloworld, target: 'intStream'} ]
+
+  intStream:
+      - type: event
+        agent: sample_agent
+        method: testInt
+        trigger: intDone
+        args:
+          a: 50
+          b: 25
+
+      - type: trigger
+        triggers: [ {event: intDone, retVal: 75, target: 'voidStream'} ]
+
+  voidStream:
+      - type: event
+        agent: sample_agent
+        method: testVoid
+        trigger: voidDone
+        args: {}
+
+      - type: trigger
+        triggers: [ {event: voidDone, target: 'exit'} ]
+
