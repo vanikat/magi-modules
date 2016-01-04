@@ -5,7 +5,7 @@ groups:
 agents:
   sample_agent:
     group: agent_group
-    path: /Users/jaipuria/playground/deter/magi-modules/sampleagent/ 
+    path: /proj/montage/magi-modules/sampleagent/ 
     execargs: {}
 
 streamstarts: [ charStream ]

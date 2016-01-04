@@ -2,7 +2,7 @@
 #include "magiCLib/AgentRequest.h"
 #include "magiCLib/Database.h"
 #include "magiCLib/MAGIMessage.h"
-#include "magiCLib/logger.h"
+#include "magiCLib/Logger.h"
 #include "magiCLib/Util.h"
 #include "centralized/PMU_src.h"
 

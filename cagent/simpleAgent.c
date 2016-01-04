@@ -8,7 +8,7 @@
 #include "magiCLib/AgentRequest.h"
 #include "magiCLib/Database.h"
 #include "magiCLib/MAGIMessage.h"
-#include "magiCLib/logger.h"
+#include "magiCLib/Logger.h"
 #include "magiCLib/Util.h"
 
 dList_t* list;
@@ -33,7 +33,7 @@ int* testInt(int a, int b){
 	log_debug(logger, "b: %d", b);
 	int* result = (int*) malloc(sizeof(int));
 	*result = a + b;
-	log_debug(logger, "result: %d", result);
+	log_debug(logger, "result: %d", *result);
 	exitlog(logger, __func__, __FILE__, __LINE__);
 	return result;
 }
