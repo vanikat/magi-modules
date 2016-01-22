@@ -1,0 +1,4 @@
+execute: thread
+mainfile: gridDynamics.py
+software:
+  - python-scipy

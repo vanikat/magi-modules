@@ -1,0 +1,4 @@
+execute: thread
+mainfile: iso.py
+software:
+  - python-scipy

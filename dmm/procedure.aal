@@ -1,0 +1,65 @@
+
+groups:
+  iso_group: [iso]
+  grid_group: [grid]
+  dr_group: [dr-0, dr-1, dr-2, dr-3, dr-4, dr-5, dr-6, dr-7, dr-8, dr-9,
+             dr-10, dr-11, dr-12, dr-13, dr-14, dr-15, dr-16, dr-17, dr-18, dr-19,
+             dr-20, dr-21, dr-22, dr-23, dr-24, dr-25, dr-26, dr-27, dr-28, dr-29]
+  gen_group: [gen-0, gen-1, gen-2, gen-3, gen-4, gen-5, gen-6, gen-7, gen-8, gen-9,
+              gen-10, gen-11, gen-12, gen-13, gen-14, gen-15, gen-16, gen-17, gen-18, gen-19,
+              gen-20, gen-21, gen-22, gen-23, gen-24, gen-25, gen-26, gen-27, gen-28, gen-29,
+              gen-30, gen-31, gen-32, gen-33, gen-34, gen-35, gen-36, gen-37, gen-38, gen-39,
+              gen-40, gen-41, gen-42, gen-43, gen-44, gen-45, gen-46, gen-47, gen-48, gen-49,
+              gen-50, gen-51, gen-52, gen-53]
+    
+agents:
+  iso_agent:
+    group: iso_group
+    path: /proj/montage/magi-modules/dmm/iso/ 
+    dock: iso_dock
+    execargs: {configFileName: /proj/montage/magi-modules/dmm/AGCDR_agent.mat}
+
+  grid_agent:
+    group: grid_group
+    path: /proj/montage/magi-modules/dmm/gridDynamics/ 
+    dock: grid_dock
+    execargs: {configFileName: /proj/montage/magi-modules/dmm/AGCDR_agent.mat}
+    
+  dr_agent:
+    group: dr_group
+    path: /proj/montage/magi-modules/dmm/demandResponse 
+    dock: loadGen_dock
+    execargs: {configFileName: /proj/montage/magi-modules/dmm/AGCDR_agent.mat}
+    
+  gen_agent:
+    group: gen_group
+    path: /proj/montage/magi-modules/dmm/generator 
+    dock: loadGen_dock
+    execargs: {configFileName: /proj/montage/magi-modules/dmm/AGCDR_agent.mat}
+    
+streamstarts: [ grid_stream ]
+
+eventstreams:
+
+  grid_stream:         
+      - type: event
+        agent: iso_agent
+        method: runAgent
+        args: {}
+        trigger: agentRunning
+
+      - type: trigger
+        triggers: [ {event: agentRunning} ]
+
+      - type: trigger
+        triggers: [ {timeout: 200000} ]
+        
+      - type: event
+        agent: iso_agent
+        method: stopAgent
+        args: {}
+        trigger: agentStopped
+
+      - type: trigger
+        triggers: [ {event: agentStopped, target: 'exit'} ]
+

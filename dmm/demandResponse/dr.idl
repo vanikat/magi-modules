@@ -1,0 +1,4 @@
+execute: thread
+mainfile: demandResponse.py
+software:
+  - python-scipy

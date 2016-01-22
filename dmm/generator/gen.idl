@@ -1,0 +1,4 @@
+execute: thread
+mainfile: generator.py
+software:
+  - python-scipy
