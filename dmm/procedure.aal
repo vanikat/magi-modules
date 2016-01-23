@@ -11,31 +11,37 @@ groups:
               gen-30, gen-31, gen-32, gen-33, gen-34, gen-35, gen-36, gen-37, gen-38, gen-39,
               gen-40, gen-41, gen-42, gen-43, gen-44, gen-45, gen-46, gen-47, gen-48, gen-49,
               gen-50, gen-51, gen-52, gen-53]
-    
+
+# Base case config file    
+configFileName: &config /proj/montage/magi-modules/dmm/AGCDR_agent.mat
+
+# Variable wind case config file
+#configFileName: &config /proj/montage/magi-modules/dmm/AGCDR_agent_wind.mat
+
 agents:
   iso_agent:
     group: iso_group
     path: /proj/montage/magi-modules/dmm/iso/ 
     dock: iso_dock
-    execargs: {configFileName: /proj/montage/magi-modules/dmm/AGCDR_agent.mat}
+    execargs: {configFileName: *config}
 
   grid_agent:
     group: grid_group
     path: /proj/montage/magi-modules/dmm/gridDynamics/ 
     dock: grid_dock
-    execargs: {configFileName: /proj/montage/magi-modules/dmm/AGCDR_agent.mat}
+    execargs: {configFileName: *config}
     
   dr_agent:
     group: dr_group
     path: /proj/montage/magi-modules/dmm/demandResponse 
     dock: loadGen_dock
-    execargs: {configFileName: /proj/montage/magi-modules/dmm/AGCDR_agent.mat}
+    execargs: {configFileName: *config}
     
   gen_agent:
     group: gen_group
     path: /proj/montage/magi-modules/dmm/generator 
     dock: loadGen_dock
-    execargs: {configFileName: /proj/montage/magi-modules/dmm/AGCDR_agent.mat}
+    execargs: {configFileName: *config}
     
 streamstarts: [ grid_stream ]
 

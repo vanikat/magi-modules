@@ -30,7 +30,13 @@ def plot(collection, agent, col, val, colRange=None):
     
 if __name__ == "__main__":
     
-    config = scipy.io.loadmat('AGCDR_agent.mat', mat_dtype=True)
+    # Base case config file    
+    configFileName = "AGCDR_agent.mat"
+
+    # Variable wind case config file
+    #configFileName = "AGCDR_agent_wind.mat"
+
+    config = scipy.io.loadmat(configFileName, mat_dtype=True)
     
     localDbPort = 27020
     dbHost = "control.dmmcont.montage"
