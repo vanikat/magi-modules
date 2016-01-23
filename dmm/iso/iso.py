@@ -29,12 +29,11 @@ class ISO(DispatchAgent):
         self.gridDynamicsGroup = "grid_group"
         self.gridDynamicsDock = "grid_dock"
         
-        self.thread = None
-        self.active = True
-        
         self.configFileName = 'AGCDR_agent.mat'
         self.N_iter = 100
         
+        self.thread = None
+        self.active = True
         
     def setConfiguration(self, msg, **kwargs):
         DispatchAgent.setConfiguration(self, msg, **kwargs)

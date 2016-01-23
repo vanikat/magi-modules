@@ -79,12 +79,6 @@ class GridDynamics(DispatchAgent):
         self.compute(k)
         
     def compute(self, k):
-        # DETERMINE LOADS FOR THIS TIME INTERVAL
-        log.info("Determing loads for this time interval")
-        self.Pdc[:, k] = self.Pdc[:, 0]
-        self.Delta[:, k] = np.zeros(self.Ndc)
-        self.d[:, k] = np.concatenate((self.Pdc[:, k], self.Delta[:, k]))
-            
         # UPDATE GRID DYNAMICS (centralized)
         log.info("Upgrading grid dynamics")
         
