@@ -181,10 +181,14 @@ GnuTLSCache dbm /var/cache/apache2/mod_gnutls_cache
 </VirtualHost>
 
 """
-def getAgent():
-	return ApacheAgent()
+
+def getAgent(**kwargs):
+	agent = ApacheAgent()
+	agent.setConfiguration(None, **kwargs)
+	return agent
 
 if __name__ == "__main__":
 	agent = ApacheAgent()
 	kwargs = initializeProcessAgent(agent, sys.argv)
+	agent.setConfiguration(None, **kwargs)
 	agent.run()

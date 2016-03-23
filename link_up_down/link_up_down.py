@@ -128,8 +128,9 @@ class link_up_down(DispatchAgent):
 # The Magi daemon invokes this method to get a reference to an
 # agent. It uses this reference to run and interact with an agent
 # instance.
-def getAgent():
+def getAgent(**kwargs):
     agent = link_up_down()
+    agent.setConfiguration(None, **kwargs)
     return agent
 
 # In case the agent is run as a separate process, we need to
