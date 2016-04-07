@@ -81,14 +81,22 @@ class ISO(DispatchAgent):
         self.grad_f_current = np.zeros((self.Nx))
         
         self.x = np.zeros((self.Nde+self.Ndr+self.Ngc, self.N_iter+1));
-        self.theta = np.zeros((self.Nde, self.N_iter+1));
-        self.Pdr = np.zeros((self.Ndr, self.N_iter+1));
-        self.Pg = np.zeros((self.Ngc, self.N_iter+1));
         
         self.mu5 = np.zeros((self.Nt, self.N_iter+1));
         self.mu6 = np.zeros((self.Nt, self.N_iter+1));
         
         self.rho = np.zeros((self.N_iter+1, 1));
+        
+        # Loading stabilized values
+        self.x[:, 0] = self.config['x'][:, -1]
+        self.mu5[:, 0] = self.config['mu5'][:, -1]
+        self.mu6[:, 0] = self.config['mu6'][:, -1]
+        self.rho[0] = self.config['rho']
+        
+        # Splitting components of x
+        self.theta = self.x[0:self.Nde,]
+        self.Pdr = self.x[(self.Nde):(self.Nde+self.Ndr),];
+        self.Pg = self.x[(self.Nde+self.Ndr):(self.Nde+self.Ndr+self.Ngc),];
         
         self.collection = database.getCollection("iso_agent")
         self.collection.remove({})
@@ -115,17 +123,29 @@ class ISO(DispatchAgent):
                 
             lastItrTS = time.time()
             
+            # break apart components of x to send to agents
+            log.info("Splitting x")
+            self.theta[:, k] = self.x[0:self.Nde, k]
+            self.Pdr[:, k] = self.x[(self.Nde):(self.Nde+self.Ndr), k];
+            self.Pg[:, k] = self.x[(self.Nde+self.Ndr):(self.Nde+self.Ndr+self.Ngc), k];
+            
+            self.collection.insert({'k' : k, 'pdr' : self.Pdr[:, k].tolist()})
+            self.collection.insert({'k' : k, 'pg' : self.Pg[:, k].tolist()})
+            
+            log.info("Sending theta to grid dynamics")
+            self.sendTheta(k)
+            
+            log.info("Sending Pdr to demand response agents")
+            self.sendPdr(k)
+            
+            log.info("Sending Pg to generator agents")
+            self.sendPg(k)
+            
             # voltage angles (computed by ISO)
             log.info("Computing voltage angles")
             self.grad_f_current[0:self.Nde] = self.B_lineR.conj().transpose().dot(self.mu6[:, k] - self.mu5[:, k])
             
-            # demand response (computed by agents)
-            # generators (computed by agents)
-            log.info("Requesting gradient of f")
-            self.requestGradF(k)
-            #self.requestRho(k)
-            
-            #TODO: Wait to receive grad_fs
+            #TODO: Wait to receive grad_fs and rho
             time.sleep(1) 
             
             self.grad_f[:, k] = self.grad_f_current[:]
@@ -148,24 +168,6 @@ class ISO(DispatchAgent):
             log.info("Logging x (k=%d)", k+1)
             log.info(self.x[:, k+1])
             
-            log.info("Sending x to grid dynamics")
-            self.sendX(k)
-            
-            # break apart components of x to send to agents
-            log.info("Splitting x")
-            self.theta[:, k+1] = self.x[0:self.Nde, k+1]
-            self.Pdr[:, k+1] = self.x[(self.Nde):(self.Nde+self.Ndr), k+1];
-            self.Pg[:, k+1] = self.x[(self.Nde+self.Ndr):(self.Nde+self.Ndr+self.Ngc), k+1];
-            
-            self.collection.insert({'k' : k+1, 'pdr' : self.Pdr[:, k+1].tolist()})
-            self.collection.insert({'k' : k+1, 'pg' : self.Pg[:, k+1].tolist()})
-            
-            log.info("Sending Pdr to demand response agents")
-            self.sendPdr(k+1)
-            
-            log.info("Sending Pg to generator agents")
-            self.sendPg(k+1)
-            
             # line capacity limits (computed at ISO)
             log.info("Computing line capacity limits")
             self.mu5[:, k+1] = np.maximum(0, self.mu5[:, k] + self.Kmu5.dot(-self.B_lineR.dot(self.theta[:, k]) - self.Pmax) )
@@ -175,15 +177,6 @@ class ISO(DispatchAgent):
             
         helpers.exitlog(log, functionName, level=logging.INFO)
             
-    def requestGradF(self, k):
-        functionName = self.requestGradF.__name__
-        helpers.entrylog(log, functionName, locals())
-        kwargs = {'method' : 'sendGradF', 'args' : {'k' : k}, 'version' : 1.0}
-        msg = MAGIMessage(groups=self.loadGenGroup, docks=self.loadGenDock, data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
-        log.debug("Sending msg: %s", msg)
-        self.messenger.send(msg)
-        helpers.exitlog(log, functionName)
-        
     def receiveGradF(self, msg, k, grad_f):
         #log.info("Received X, Source: %s, k:%d, grad_f:%f", msg.src, k, grad_f)
         agentType, agentIndex = msg.src.split("-")
@@ -195,15 +188,6 @@ class ISO(DispatchAgent):
         else:
             log.error("Invalid Agent: %s", msg.src)
         
-#     def requestRho(self, k):
-#         functionName = self.requestRho.__name__
-#         helpers.entrylog(log, functionName, locals(), level=logging.INFO)
-#         kwargs = {'method' : 'sendRho', 'args' : {'k' : k}, 'version' : 1.0}
-#         msg = MAGIMessage(groups=self.gridDynamicsGroup, docks=self.gridDynamicsDock, data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
-#         log.debug("Sending msg: %s", msg)
-#         self.messenger.send(msg)
-#         helpers.exitlog(log, functionName, level=logging.INFO)
-    
     def receiveRho(self, msg, k, rho):
         functionName = self.receiveRho.__name__
         helpers.entrylog(log, functionName)
@@ -240,15 +224,15 @@ class ISO(DispatchAgent):
 
         helpers.exitlog(log, functionName)
         
-    def sendX(self, k):
-        functionName = self.sendX.__name__
+    def sendTheta(self, k):
+        functionName = self.sendTheta.__name__
         helpers.entrylog(log, functionName)
-        x = self.x[:, k]
-        kwargs = {'method' : 'receiveX', 'args' : {'k' : k, 'x' : x}, 'version' : 1.0}
-        msg = MAGIMessage(groups=self.gridDynamicsGroup, docks=self.gridDynamicsDock, data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
+        theta = self.theta[:, k]
+        kwargs = {'method' : 'receiveTheta', 'args' : {'k' : k, 'theta' : theta}, 'version' : 1.0}
+        msg = MAGIMessage(nodes="grid", docks=self.gridDynamicsDock, data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
         self.messenger.send(msg)
         helpers.exitlog(log, functionName)
-        
+            
     def stopAgent(self, msg):
         functionName = self.stopAgent.__name__
         helpers.entrylog(log, functionName, level=logging.INFO)
