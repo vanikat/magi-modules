@@ -1,4 +1,0 @@
-magi-modules
-============
-
-MAGI Modules
