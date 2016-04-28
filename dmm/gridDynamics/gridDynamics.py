@@ -3,10 +3,11 @@
 import logging
 import scipy.io
 import sys
+import time
 
 from magi.messaging.magimessage import MAGIMessage
 from magi.util import helpers, database
-from magi.util.agent import DispatchAgent
+from magi.util.agent import NonBlockingDispatchAgent
 from magi.util.processAgent import initializeProcessAgent
 import yaml
 
@@ -16,10 +17,10 @@ import numpy as np
 log = logging.getLogger(__name__)
 
 
-class GridDynamics(DispatchAgent):
+class GridDynamics(NonBlockingDispatchAgent):
     
     def __init__(self):
-        DispatchAgent.__init__(self)
+        NonBlockingDispatchAgent.__init__(self)
         
         self.isoGroup = "iso_group"
         self.isoDock = "iso_dock"
@@ -29,7 +30,7 @@ class GridDynamics(DispatchAgent):
         self.N_iter = 100
         
     def setConfiguration(self, msg, **kwargs):
-        DispatchAgent.setConfiguration(self, msg, **kwargs)
+        NonBlockingDispatchAgent.setConfiguration(self, msg, **kwargs)
         self.config = scipy.io.loadmat(self.configFileName, mat_dtype=True)
         
         self.Ndc = int(self.config['Ndc'])
@@ -64,23 +65,50 @@ class GridDynamics(DispatchAgent):
         self.d = np.concatenate((self.Pdc, self.Delta))
         
         self.x = np.zeros((self.Nde+self.Ndr+self.Ngc, self.N_iter+1));
+        self.x_current = np.zeros((self.Nde+self.Ndr+self.Ngc));
         
         self.y = np.zeros((len(Agrid), self.N_iter+1));
         self.Edr = np.zeros((self.Ndr, self.N_iter+1));
         self.rho = np.zeros((self.N_iter+1, 1));
         
+        # Loading stabilized values
+        self.x[:, 0] = self.config['x'][:, -1]
+        self.y[:, 0] = self.config['y'][:, -1]
+        self.rho[0] = self.config['rho']
+        self.Edr[:, 0] = self.config['Edr'][:, -1]
+        
         self.collection = database.getCollection("grid_agent")
         self.collection.remove({})
-          
-    def receiveX(self, msg, k, x):
-        log.info("Received x for k=%d", k)
-        self.x[:, k] = x
         
+        self.collection.insert({'k' : 0, 'y' : self.y[:, 0].tolist()})
+        self.collection.insert({'k' : 0, 'rho' : self.rho[0].tolist()})
+        self.collection.insert({'k' : 0, 'edr' : self.Edr[:, 0].tolist()})
+          
+    def receiveTheta(self, msg, k, theta):
+        log.info("Received theta for k=%d", k)
+        self.x_current[0:self.Nde] = theta
+        
+        time.sleep(1)
         self.compute(k)
+        
+    def receivePdr(self, msg, k, pdr):
+        log.info("Received pdr from %s for k=%d: %f", msg.src, k, pdr)
+        index = int(msg.src.split("-")[-1])
+        self.x_current[self.Nde + index] = pdr
+    
+    def receivePg(self, msg, k, pg):
+        log.info("Received pg from %s for k=%d: %f", msg.src, k, pg)
+        index = int(msg.src.split("-")[-1])
+        self.x_current[self.Nde + self.Ndr + index] = pg
         
     def compute(self, k):
         # UPDATE GRID DYNAMICS (centralized)
         log.info("Upgrading grid dynamics")
+        
+        self.x[:, k] = self.x_current
+        
+        log.info("Logging x (k=%d)", k)
+        log.info(self.x[:, k])
         
         self.y[:, k+1] = self.Phi.dot(self.y[:, k]) + self.Gamma_d.dot(self.d[:, k]) + self.Gamma_x.dot(self.x[:, k])
         log.info("Logging y (k=%d)", k+1)
