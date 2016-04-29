@@ -84,17 +84,16 @@ eventstreams:
         
       - type: event
         agent: gen_agent
-        method: deactivate
+        method: startDeception
         args: 
+            deception: 5
             nodes: *attack_nodes
-        trigger: deactivated
         
       - type: trigger
         triggers: [ {timeout: 180000} ]
 
       - type: event
         agent: gen_agent
-        method: activate
+        method: stopDeception
         args: 
             nodes: *attack_nodes
-        trigger: activated

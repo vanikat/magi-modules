@@ -19,8 +19,6 @@ class DemandResponse(DispatchAgent):
     
     def __init__(self):
         DispatchAgent.__init__(self)
-        self.isoDock = "iso_dock"
-        self.gridDynamicsDock = "grid_dock"
         self.configFileName = 'AGCDR_agent.mat'
         self.N_iter = 100
         self.active = True
@@ -36,34 +34,37 @@ class DemandResponse(DispatchAgent):
         
         self.index = int(self.hostname.split("-")[-1])
         
-        self.Ndr = np.squeeze(self.config['Ndr'])
+        self.N_dem = np.squeeze(self.config['N_dem'])
+        self.K_E = 0 # energy payback (turned off for now)
         
-        self.cdr = self.config['cdr'][self.index, self.index]
-        self.bdr = self.config['bdr'][self.index]
+        self.c_D = self.config['c_D'][self.index, self.index]
+        self.b_D = self.config['b_D'][self.index]
         
-        self.Kmu3 = 0.08;
-        self.Kmu4 = 0.08;
+        self.Kmu5 = 0.05;
+        self.Kmu6 = 0.05;
         
-        self.Pdr = np.zeros(self.N_iter+1);
-        self.Edr = np.zeros(self.N_iter+1);
+        self.P_D = np.zeros(self.N_iter+1);
+        self.P_Dmax = np.squeeze(self.config['P_Dmax'][self.index])
+        self.P_Dmin = np.squeeze(self.config['P_Dmin'][self.index])
+        self.E_D = np.zeros(self.N_iter+1);
         self.grad_f = np.zeros(self.N_iter+1);
         
-        self.mu3 = np.zeros(self.N_iter+1);
-        self.mu4 = np.zeros(self.N_iter+1);
+        self.mu5 = np.zeros(self.N_iter+1);
+        self.mu6 = np.zeros(self.N_iter+1);
         
         # Loading stabilized values
-        self.Edr[0] = self.config['Edr'][self.index]
-        self.mu3[0] = self.config['mu3'][self.index]
-        self.mu4[0] = self.config['mu4'][self.index]
+        self.E_D[0] = self.config['E_D'][self.index]
+        self.mu5[0] = self.config['mu5'][self.index]
+        self.mu6[0] = self.config['mu6'][self.index]
         
     def receivePdr(self, msg, k, pdr):
-        log.info("Received Pdr: %f(k=%d)", pdr, k)
+        log.info("Received P_D: %f(k=%d)", pdr, k)
         
         if self.active:
-            self.Pdr[k] = pdr
+            self.P_D[k] = pdr
         else:
             log.info("Agent is inactive")
-            self.Pdr[k] = self.Pdr[k-1]
+            self.P_D[k] = self.P_D[k-1]
             
         self.sendPdr(k)
         
@@ -71,23 +72,21 @@ class DemandResponse(DispatchAgent):
         self.sendGradF(k)
         
         self.computeMu(k)
-        
-    def receiveEdr(self, msg, k, edr):
-        log.info("Received Edr: %f(k=%d)", edr, k)
-        self.Edr[k] = edr
-        
-    def computeMu(self, k):
-        functionName = self.computeMu.__name__
+    
+    def sendPdr(self, k):
+        functionName = self.sendPdr.__name__
         helpers.entrylog(log, functionName)
-        self.mu3[k+1] = max(0, self.mu3[k] + self.Kmu3*(-self.Edr[k]-self.Pdr[k]))
-        self.mu4[k+1] = max(0, self.mu4[k] + self.Kmu4*(self.Pdr[k]+ self.Edr[k]))
-        log.info("Computed Mu. k=%d, mu3:%f, mu4:%f", k+1, self.mu3[k+1], self.mu4[k+1])
+        pdr = self.P_D[k]
+        log.info("Sending P_D: %f (k=%d)", pdr, k)
+        kwargs = {'method' : 'receivePdr', 'args' : {'k' : k, 'pdr' : pdr}, 'version' : 1.0}
+        msg = MAGIMessage(nodes="grid", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
+        self.messenger.send(msg)
         helpers.exitlog(log, functionName)
-        
+    
     def computeGradF(self, k):
         functionName = self.computeGradF.__name__
         helpers.entrylog(log, functionName)
-        self.grad_f[k] = -self.cdr*(self.Pdr[k]) - self.mu3[k] + self.mu4[k] - self.bdr
+        self.grad_f[k] = -self.c_D*(self.P_D[k]) - self.mu5[k] + self.mu6[k] - self.b_D
         helpers.exitlog(log, functionName)
     
     def sendGradF(self, k):
@@ -97,22 +96,24 @@ class DemandResponse(DispatchAgent):
             grad_f = self.grad_f[k]
             log.info("Sending grad_f: %f (k=%d)", grad_f, k)
             kwargs = {'method' : 'receiveGradF', 'args' : {'k' : k, 'grad_f' : grad_f}, 'version' : 1.0}
-            msg = MAGIMessage(nodes="iso", docks=self.isoDock, data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
+            msg = MAGIMessage(nodes="iso", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
             self.messenger.send(msg)
         else:
             log.info("Agent is inactive")
         helpers.exitlog(log, functionName)
     
-    def sendPdr(self, k):
-        functionName = self.sendPdr.__name__
+    def receiveEdr(self, msg, k, edr):
+        log.info("Received E_D: %f(k=%d)", edr, k)
+        self.E_D[k] = edr
+    
+    def computeMu(self, k):
+        functionName = self.computeMu.__name__
         helpers.entrylog(log, functionName)
-        pdr = self.Pdr[k]
-        log.info("Sending Pdr: %f (k=%d)", pdr, k)
-        kwargs = {'method' : 'receivePdr', 'args' : {'k' : k, 'pdr' : pdr}, 'version' : 1.0}
-        msg = MAGIMessage(nodes="grid", docks=self.gridDynamicsDock, data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
-        self.messenger.send(msg)
+        self.mu5[k+1] = max(0, self.mu5[k] + self.Kmu5*(-self.P_D[k] - self.K_E*self.E_D[k] + self.P_Dmin))
+        self.mu6[k+1] = max(0, self.mu6[k] + self.Kmu6*(self.P_D[k] + self.K_E*self.E_D[k] - self.P_Dmax))
+        log.info("Computed Mu. k=%d, mu5:%f, mu6:%f", k+1, self.mu5[k+1], self.mu6[k+1])
         helpers.exitlog(log, functionName)
-        
+    
     def deactivate(self, msg, nodes):
         log.info("Nodes to deactivate: %s", nodes)
         if self.hostname in nodes:

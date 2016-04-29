@@ -19,8 +19,6 @@ class Generator(DispatchAgent):
     
     def __init__(self):
         DispatchAgent.__init__(self)
-        self.isoDock = "iso_dock"
-        self.gridDynamicsDock = "grid_dock"
         self.configFileName = 'AGCDR_agent.mat'
         self.N_iter = 100
         self.active = True
@@ -38,39 +36,43 @@ class Generator(DispatchAgent):
         
         self.index = int(self.hostname.split("-")[-1])
         
-        self.Ngc = np.squeeze(self.config['Ngc'])
+        self.N_gen = np.squeeze(self.config['N_gen'])
         
-        self.cgc = self.config['cgc'][self.index, self.index]
-        self.bgc = self.config['bgc'][self.index]
+        self.c_G = self.config['c_G'][self.index, self.index]
+        self.b_G = self.config['b_G'][self.index]
         
-        self.Kmu1 = 0.02;
-        self.Kmu2 = 0.02;
+        self.Kmu3 = 0.01;
+        self.Kmu4 = 0.01;
         
-        self.Pg = np.zeros(self.N_iter+1);
-        self.Pgcmax = np.squeeze(self.config['Pgcmax'][self.index])
-        self.Pgcmin = np.squeeze(self.config['Pgcmin'][self.index])
+        self.P_G = np.zeros(self.N_iter+1);
+        self.P_Gmax = np.squeeze(self.config['P_Gmax'][self.index])
+        self.P_Gmin = np.squeeze(self.config['P_Gmin'][self.index])
         self.grad_f = np.zeros(self.N_iter+1);
         
-        self.mu1 = np.zeros(self.N_iter+1);
-        self.mu2 = np.zeros(self.N_iter+1);
+        self.mu3 = np.zeros(self.N_iter+1);
+        self.mu4 = np.zeros(self.N_iter+1);
         
         # Loading stabilized values
-        self.mu1[0] = self.config['mu1'][self.index]
-        self.mu2[0] = self.config['mu2'][self.index]
+        self.mu3[0] = self.config['mu3'][self.index]
+        self.mu4[0] = self.config['mu4'][self.index]
+        
+        #Attack
+        self.deception = 0
+        self.gradFDeception = 0
         
     def receivePg(self, msg, k, pg):
-        log.info("Received Pg: %f(k=%d)", pg, k)
+        log.info("Received P_G: %f(k=%d)", pg, k)
         
         if self.active:
-            self.Pg[k] = pg
+            self.P_G[k] = pg + self.deception
         else:
             log.info("Agent is inactive")
-            self.Pg[k] = self.Pg[k-1]
+            self.P_G[k] = self.P_G[k-1]
             
-        if self.Pg[k] < self.Pgcmin:
-            self.Pg[k] = self.Pgcmin
-        elif self.Pg[k] > self.Pgcmax:
-            self.Pg[k] = self.Pgcmax
+        if self.P_G[k] < self.P_Gmin:
+            self.P_G[k] = self.P_Gmin
+        elif self.P_G[k] > self.P_Gmax:
+            self.P_G[k] = self.P_Gmax
             
         self.sendPg(k)
         
@@ -78,45 +80,50 @@ class Generator(DispatchAgent):
         self.sendGradF(k)
         
         self.computeMu(k)
-        
-    def computeMu(self, k):
-        functionName = self.computeMu.__name__
+    
+    def sendPg(self, k):
+        functionName = self.sendPg.__name__
         helpers.entrylog(log, functionName)
-        self.mu1[k+1] = max(0, self.mu1[k] + self.Kmu1*(self.Pgcmin-self.Pg[k]))
-        self.mu2[k+1] = max(0, self.mu2[k] + self.Kmu2*(self.Pg[k]-self.Pgcmax))
-        log.info("Computed Mu. k=%d, mu1:%f, mu2:%f", k+1, self.mu1[k+1], self.mu2[k+1])
+        pg = self.P_G[k]
+        log.info("Sending P_G: %f (k=%d)", pg, k)
+        kwargs = {'method' : 'receivePg', 'args' : {'k' : k, 'pg' : pg}, 'version' : 1.0}
+        msg = MAGIMessage(nodes="grid", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
+        self.messenger.send(msg)
+        if self.active:
+            msg = MAGIMessage(nodes="iso", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
+            self.messenger.send(msg)
+        else:
+            log.info("Agent is inactive. No P_G reply sent to ISO.")
         helpers.exitlog(log, functionName)
-        
+    
     def computeGradF(self, k):
         functionName = self.computeGradF.__name__
         helpers.entrylog(log, functionName)
-        self.grad_f[k] = self.cgc*(self.Pg[k]) - self.mu1[k] + self.mu2[k] + self.bgc
+        self.grad_f[k] = self.c_G*(self.P_G[k]) - self.mu3[k] + self.mu4[k] + self.b_G
         helpers.exitlog(log, functionName)
         
     def sendGradF(self, k):
         functionName = self.sendGradF.__name__
         helpers.entrylog(log, functionName, locals())
         if self.active:
-            grad_f = self.grad_f[k]
+            grad_f = self.grad_f[k] + self.gradFDeception
             log.info("Sending grad_f: %f (k=%d)", grad_f, k)
             kwargs = {'method' : 'receiveGradF', 'args' : {'k' : k, 'grad_f' : grad_f}, 'version' : 1.0}
-            log.info("Sending reply: %s", kwargs['args'])
-            msg = MAGIMessage(nodes="iso", docks=self.isoDock, data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
+            #log.info("Sending reply: %s", kwargs['args'])
+            msg = MAGIMessage(nodes="iso", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
             self.messenger.send(msg)
         else:
             log.info("Agent is inactive")
         helpers.exitlog(log, functionName)
         
-    def sendPg(self, k):
-        functionName = self.sendPg.__name__
+    def computeMu(self, k):
+        functionName = self.computeMu.__name__
         helpers.entrylog(log, functionName)
-        pg = self.Pg[k]
-        log.info("Sending Pg: %f (k=%d)", pg, k)
-        kwargs = {'method' : 'receivePg', 'args' : {'k' : k, 'pg' : pg}, 'version' : 1.0}
-        msg = MAGIMessage(nodes="grid", docks=self.gridDynamicsDock, data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
-        self.messenger.send(msg)
+        self.mu3[k+1] = max(0, self.mu3[k] + self.Kmu3*(self.P_Gmin-self.P_G[k]))
+        self.mu4[k+1] = max(0, self.mu4[k] + self.Kmu4*(self.P_G[k]-self.P_Gmax))
+        log.info("Computed Mu. k=%d, mu3:%f, mu4:%f", k+1, self.mu3[k+1], self.mu4[k+1])
         helpers.exitlog(log, functionName)
-        
+    
     def deactivate(self, msg, nodes):
         log.info("Nodes to deactivate: %s", nodes)
         if self.hostname in nodes:
@@ -129,7 +136,25 @@ class Generator(DispatchAgent):
             log.info("Activating")
             self.active = True
     
+    def startDeception(self, msg, deception, nodes):
+        log.info("Attacked nodes: %s", nodes)
+        if self.hostname in nodes:
+            log.info("Activated deception %d", deception)
+            self.deception = deception
+        
+    def stopDeception(self, msg, nodes):
+        self.deception = 0
 
+    def startGradFDeception(self, msg, deception, nodes):
+        log.info("Attacked nodes: %s", nodes)
+        if self.hostname in nodes:
+            self.gradFDeception = deception
+            log.info("Activated grad_f deception %d", deception)
+    
+    def stopGradFDeception(self, msg, nodes):
+        self.gradFDeception = 0        
+            
+            
 def getAgent(**kwargs):
     agent = Generator()
     agent.setConfiguration(None, **kwargs)
