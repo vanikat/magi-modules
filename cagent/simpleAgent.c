@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
 	registerFunction("testVoid", "void", &testVoid, 0);
 	registerFunction("addInteger", "int*", &addInteger, 2, "int", "int");
 	registerFunction("subtractInteger", "int*", &subtractInteger, 2, "int", "int");
-	list = ArgParser(argc, argv);
+	//list = ArgParser(argc, argv);
 	agentStart(argc, argv);
 	log_debug(logger, "Going out of the main\n");
 }
