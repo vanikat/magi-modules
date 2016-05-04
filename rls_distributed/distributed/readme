@@ -1,0 +1,94 @@
+Implementation of Prony Algorithm with Resiliency Mechanism
+Author: Jianhua Zhang Mar,23th,2014
+Update1: April,27th,2014 for Realtime PMU data stream
+Update2: May,4th,2014 for Real_time PMU data stream
+Update3: May,20th,2014  Fix bug1 namely the ctrl_c of the server source code, the clients will find new server and continue the algorithm.
+Update4: May,21th,2014  Modify the code to generate the output files.
+Update5: May,27th,2014  Now the errorfile have the append function.
+Update6: May,28th,2014  More attacks happened to server of t1&2
+Update7: May,31th,2014  More attacks happened to server of t3&4, attacks continue happening on client 2&3
+
+
+Description of Resiliency Mechanism of Distributed Prony Algorithm:
+
+Once the prony algorithm software of Server Machine is terminated due to Malware attack, malfunction of server machine itself, we have two resiliency strategies:
+Strategy0: All clients connect to the standby backup server;
+Strategy1: Run a server source code of prony alogrithm on a seperate terminal at one predefined client, such that the such client can continue to do local estimation.  All clients connect to this new server program of the predefined client.
+
+Requirements: a) Linux enviroment
+	      b) Install all packages for armadillo-related library:
+1) libblas-dev
+2) liblapack-dev
+3) libatlas-dev
+4) libarmadillo-dev
+5) libboost-dev
+
+
+To run the PronyADMM_resiliency source code, you need open 
+Strategy0: 6 Virtual Machines, where 1 regular Server VM, 1 standby backup Server, 4 clients where they are connect to each other.
+Strategy1: 5 Virtual Machines, where 1 Server VM, 4 clients where they are connect to each other.
+
+Before running the code, please type 'make' to compile all source code at each VM. 
+
+Strategy0:
+
+1. At regular Server VM/terminal, run 
+	./ADMMServer 2 65041
+2. At backup Server VM/terminal, run 
+	./ADMMServer 4 65001
+3. At each client VM/terminal, run
+	./PronyADMM 127.0.0.1 65041 65043 0 127.0.0.1 65042 2
+	./PronyADMM 127.0.0.1 65041 65044 0 127.0.0.1 65042 
+	./PronyADMM 127.0.0.1 65071 65075 0 127.0.0.1 65072
+	./PronyADMM 127.0.0.1 65071 65076 0 127.0.0.1 65072
+4. At each PMU_prony source machine, run
+	./PMU 127.0.0.1 65043 Y1_3581.txt
+	./PMU 127.0.0.1 65044 Y2_test.txt
+	./PMU 127.0.0.1 65075 Y3_test.txt
+	./PMU 127.0.0.1 65076 Y4_test.txt
+
+
+Note1: the first set of IP and port is for regular Server, and the second set of IP and port is for backup Server. The fourth argument "0" means we apply Strategy0. 
+
+Strategy1 with only one attack
+1. At regular Server VM/terminal, run 
+	./ADMMServer 4 65000
+2. At each client VM/terminal, run
+	./PronyADMM 127.0.0.1 65000 65002 1 127.0.0.1 65001
+	./PronyADMM 127.0.0.1 65000 65003 1 127.0.0.1 65001 4
+	./PronyADMM 127.0.0.1 65000 65004 1 127.0.0.1 65001
+	./PronyADMM 127.0.0.1 65000 65005 1 127.0.0.1 65001
+4. At each PMU_prony source machine, run
+	./PMU 127.0.0.1 65002 Y1_3581.txt
+	./PMU 127.0.0.1 65003 Y2_3581.txt
+	./PMU 127.0.0.1 65004 Y3_3581.txt
+	./PMU 127.0.0.1 65005 Y4_3581.txt
+
+Note2: the second set of IP and port is for the server side running at the predefined client VM. The fourth argument "1" means we apply Strategy1.
+
+Strategy1 with only multiple attacks
+1. At regular Server VM/terminal, run 
+	./ADMMServer 4 65070
+2. At each client VM/terminal, run
+	./PronyADMM 127.0.0.1 65070 65075 1 127.0.0.1 65071 127.0.0.1 65072 127.0.0.1 65073 127.0.0.1 65074 1 4
+	./PronyADMM 127.0.0.1 65070 65076 1 127.0.0.1 65071 127.0.0.1 65072 127.0.0.1 65073 127.0.0.1 65074 2 4
+	./PronyADMM 127.0.0.1 65070 65077 1 127.0.0.1 65071 127.0.0.1 65072 127.0.0.1 65073 127.0.0.1 65074 3 4
+	./PronyADMM 127.0.0.1 65070 65078 1 127.0.0.1 65071 127.0.0.1 65072 127.0.0.1 65073 127.0.0.1 65074 4 4
+4. At each PMU_prony source machine, run
+	./PMU 127.0.0.1 65075 Y1_3581.txt
+	./PMU 127.0.0.1 65076 Y2_3581.txt
+	./PMU 127.0.0.1 65077 Y3_3581.txt
+	./PMU 127.0.0.1 65078 Y4_3581.txt
+
+Note4: In the case of multiple attacks, there are two backup serers's IP and port. The ninth argument indicates the number of attacks, as well as the predefined backup server.
+
+Check Result:
+
+Note3: After the successful close of prony algorithm, the result file "PronyResult.txt" is produced.
+
+
+Thanks for help.
+
+Note4: If you could not execute 'make' successfully, you can run g++ commands in Make file directely in terminal.  The reason is that my code is complied in 64bit system, if your system is 32bit, you need complie code without Make file for the first time.
+
+Note5: If you run this source code in 5 seperate VMs, and do remember that you give Server's IP instead of 127.0.0.1 at each client VM.

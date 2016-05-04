@@ -1,0 +1,207 @@
+
+groups:
+  server_group: [node-0]
+  prony_group: [node-1, node-2, node-3, node-4]
+  client_group1: [node-5]
+  client_group2: [node-6]
+  client_group3: [node-7]
+  client_group4: [node-8]
+  sensor_group: [control]
+  nclient_group: [node-1, node-2, node-3, node-4]  
+  nserver_group: &slist [control]
+    
+agents:
+  server_agent:
+    group: server_group
+    path: /proj/montage/magi-modules/rls_distributed/ 
+    execargs: {}
+
+  prony_agent:
+    group: prony_group
+    path: /proj/montage/magi-modules/rls_distributed/ 
+    execargs: {}
+
+  client_agent1:
+    group: client_group1
+    path: /proj/montage/magi-modules/rls_distributed/ 
+    execargs: {}
+
+  client_agent2:
+    group: client_group2
+    path: /proj/montage/magi-modules/rls_distributed/ 
+    execargs: {}
+
+  client_agent3:
+    group: client_group3
+    path: /proj/montage/magi-modules/rls_distributed/ 
+    execargs: {}
+
+  client_agent4:
+    group: client_group4
+    path: /proj/montage/magi-modules/rls_distributed/ 
+    execargs: {}
+
+  intfsensor_agent:
+    group: sensor_group
+    path: /share/magi/modules/pktcounters/
+    execargs: {}
+
+  nclient_agent:
+    group: nclient_group
+    path: /share/magi/modules/http_client/
+    execargs: {servers: *slist, interval: '1', sizes: 'minmax(100000,500000)'}
+
+  nserver_agent:
+    group: nserver_group
+    path: /share/magi/modules/apache/ 
+    execargs: []
+            
+streamstarts: [ nserverstream, nclientstream, sensorstream, experimentstream, cleanupstream ]
+
+eventstreams:
+
+  nserverstream:         
+      - type: event
+        agent: nserver_agent 
+        method: startServer
+        trigger: nserverStarted 
+        args: {}
+
+      - type: trigger
+        triggers: [ { event: nclientStopped} ] 
+
+      - type: event
+        agent: nserver_agent 
+        method: stopServer 
+        trigger: nserverStopped 
+        args: {} 
+
+  nclientstream:      
+      - type: trigger
+        triggers: [ { event: nserverStarted } ] 
+
+      - type: event
+        agent: nclient_agent
+        method: startClient
+        trigger: nclientStarted
+        args: {}
+
+      - type: trigger
+        triggers: [ { event: serverDone} ]
+        
+      - type: event
+        agent: nclient_agent
+        method: stopClient
+        trigger: nclientStopped
+        args: {}
+
+  sensorstream:
+      - type: trigger
+        triggers: [ { event: nclientStarted } ] 
+
+      - type: event
+        agent: intfsensor_agent
+        method: startCollection
+        args: {}
+        trigger: monitorStarted
+
+      - type: trigger
+        triggers: [ { event: serverDone} ]
+
+      - type: event
+        agent: intfsensor_agent
+        method: stopCollection
+        trigger: monitorStopped 
+        args: {} 
+                
+  experimentstream: 
+      - type: trigger
+        triggers: [ { event: monitorStarted } ] 
+
+      - type: event
+        agent: server_agent 
+        method: startADDMServer
+        trigger: serverStarted 
+        args:
+          anum_of_pmus: 4
+          bdata_port: 65000
+        
+      - type: trigger
+        triggers: [ {event: serverStarted} ]
+
+      - type: trigger
+        triggers: [{timeout: 1000}]
+
+      - type: event
+        agent: prony_agent
+        method: startADDMClient
+        trigger: pronyStarted
+        args:
+          anum_of_pmus: 65000
+          bdata_port: 65002
+
+      - type: trigger
+        triggers: [ {event: pronyStarted, retVal: 20} ]
+
+      - type: trigger
+        triggers: [{timeout: 1000}]
+
+      - type: event
+        agent: client_agent1 
+        method: startPMU
+        args:
+          rls_host: node-1
+          rls_port: 65002
+          source_file: /proj/montage/exp/rDistributedExp/experiment_files/test_files/small/Y1_3581.txt
+
+      - type: trigger
+        triggers: [{timeout: 250}]
+        
+      - type: event
+        agent: client_agent2 
+        method: startPMU
+        args:
+          rls_host: node-2
+          rls_port: 65002
+          source_file: /proj/montage/exp/rDistributedExp/experiment_files/test_files/small/Y2_3581.txt
+
+      - type: trigger
+        triggers: [{timeout: 250}]          
+
+      - type: event
+        agent: client_agent3 
+        method: startPMU
+        args:
+          rls_host: node-3
+          rls_port: 65002
+          source_file: /proj/montage/exp/rDistributedExp/experiment_files/test_files/small/Y3_3581.txt
+
+      - type: trigger
+        triggers: [{timeout: 250}]
+                  
+      - type: event
+        agent: client_agent4 
+        method: startPMU
+        trigger: pmuStarted
+        args:
+          rls_host: node-4
+          rls_port: 65002
+          source_file: /proj/montage/exp/rDistributedExp/experiment_files/test_files/small/Y4_3581.txt
+
+      - type: trigger
+        triggers: [ { event: pmuStarted} ] 
+                  
+      - type: event
+        agent: server_agent 
+        method: returnWhenServerDone
+        trigger: serverDone
+        args: {}
+          
+
+  cleanupstream:
+      - type: trigger
+        triggers: [ { event: nserverStopped } ] 
+          
+      - type: trigger
+        triggers: [ { event: monitorStopped, target: exit } ] 
+
