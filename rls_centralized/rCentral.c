@@ -1,10 +1,11 @@
+#include "centralized/PMU_src.h"
+
 #include "Agent.h"
 #include "AgentRequest.h"
 #include "Database.h"
 #include "MAGIMessage.h"
 #include "Logger.h"
 #include "Util.h"
-#include "centralized/PMU_src.h"
 
 #include <arpa/inet.h>
 #include <errno.h>

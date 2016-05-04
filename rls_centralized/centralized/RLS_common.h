@@ -1,32 +1,40 @@
+#include "rpoly.h"
+#include "armadillo"
+
 #include <cstring>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <cstdio>
 #include <cstdlib>
 #include <csignal>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <stdbool.h>
+#include <complex>
 #include <ctime>
 #include <cmath>
 #include <cfloat>
 #include <fstream>
-#include <iostream>
-#include <pthread.h>
-#include <complex>
-#include "armadillo"
-#include "rpoly.h"
-#include <fcntl.h>
-#include <vector>
-#include <errno.h>
 #include <iomanip>
+#include <iostream>
+#include <vector>
+
+#include <arpa/inet.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <pthread.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 
 extern "C" {
+
 using namespace arma;
 using namespace std;
 
@@ -46,8 +54,8 @@ using namespace std;
 
 
 struct serverParm {
-           int Client_sockfd ;
-       };
+	int Client_sockfd ;
+};
 
 struct TCP_header
 {
@@ -66,8 +74,8 @@ struct PMU_measure
 
 static volatile int Exit_Flag = 0;
 
-
 int timer_sub(const struct timeval *start_time, const struct timeval *end_time, struct timeval *result);
 int cal_timer(const struct timeval * sending_time, const struct timeval * current_time, const struct timeval * timeout, struct timeval * timer);
 void *RLS_Server_handle(void * parmPtr);
+
 }

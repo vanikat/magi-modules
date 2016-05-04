@@ -1,4 +1,6 @@
 #include "RLS_common.h"
+
+
 extern "C" {
 
 int timer_sub(const struct timeval *start_time, const struct timeval *end_time, struct timeval *result){

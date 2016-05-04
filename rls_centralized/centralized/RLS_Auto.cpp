@@ -10,10 +10,12 @@
 */
 
 #include "RLS_common.h"
-#include <string>
-#include <iostream>
+
 #include "AgentRequest.h"
 #include "AgentMessenger.h"
+
+#include <string>
+#include <iostream>
 
 #include <arpa/inet.h>
 #include <errno.h>

@@ -1,14 +1,14 @@
-
-#include <ctime>
-#include <cstdio>
-#include <iostream>
-#include <fstream>
-#include <sstream>
 #include <cctype>
-#include <cmath>
 #include <cfloat>
-extern "C" {
+#include <cmath>
+#include <cstdio>
+#include <ctime>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 
+
+extern "C" {
 
 //**********************************rpoly_ak1 algorithm***************************************//
 

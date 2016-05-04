@@ -1,9 +1,9 @@
 #include "rpoly.h"
 
-using namespace std;
+
 extern "C" {
 
-
+using namespace std;
 
 void rpoly_ak1(double op[MDP1], int* Degree, double zeror[MAXDEGREE], double zeroi[MAXDEGREE]){
 
