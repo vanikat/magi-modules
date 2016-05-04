@@ -10,8 +10,8 @@
 */
 
 #include "RLS_common.h"
-#include "../magiCLib/AgentRequest.h"
-#include "../magiCLib/AgentMessenger.h"
+#include "AgentRequest.h"
+#include "AgentMessenger.h"
 
 #include <arpa/inet.h>
 #include <errno.h>

@@ -12,8 +12,8 @@
 #include "RLS_common.h"
 #include <string>
 #include <iostream>
-#include "../magiCLib/AgentRequest.h"
-#include "../magiCLib/AgentMessenger.h"
+#include "AgentRequest.h"
+#include "AgentMessenger.h"
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -32,7 +32,7 @@
 
 extern "C" {
 
-#include "../magiCLib/Database.h"
+#include "Database.h"
 
 #define InitError 1.1
 #define ErrorMessage "Failed!!!"

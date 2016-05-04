@@ -4,12 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "magiCLib/Agent.h"
-#include "magiCLib/AgentRequest.h"
-#include "magiCLib/Database.h"
-#include "magiCLib/MAGIMessage.h"
-#include "magiCLib/Logger.h"
-#include "magiCLib/Util.h"
+#include "Agent.h"
+#include "AgentRequest.h"
+#include "Database.h"
+#include "MAGIMessage.h"
+#include "Logger.h"
+#include "Util.h"
 
 dList_t* list;
 
