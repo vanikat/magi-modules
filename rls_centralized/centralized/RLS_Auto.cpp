@@ -46,7 +46,7 @@ void signal_callback_handler(int signum) {
     cout<<"Caught signal "<<signum<<endl; 
 }
 
-int RLS(char* pmuNUM, char* portNum, char* inFile) {
+int RLS(char* num_of_pmus, char* data_port, char* file_of_initials) {
     //Register siganl and signal handler
     signal(SIGPIPE, signal_callback_handler);
 
@@ -160,7 +160,7 @@ int RLS(char* pmuNUM, char* portNum, char* inFile) {
     // =============================== Routine1: Setup TCP server side for several PMUs at RLS algorithm VM ================== //
     // Read out the initial PMU numbers
     int PMU_Num = 0;
-    PMU_Num = atoi(pmuNUM);
+    PMU_Num = atoi(num_of_pmus);
     int PMU_Failure_Flag[PMU_Num];
     vector<int> LivePMU; // Store all live PMU number
     LivePMU.clear();
@@ -177,7 +177,7 @@ int RLS(char* pmuNUM, char* portNum, char* inFile) {
     // Initiate local TCP server socket
     LocalAddr.sin_family = AF_INET;
     LocalAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    LocalAddr.sin_port = htons(atoi(portNum));
+    LocalAddr.sin_port = htons(atoi(data_port));
 
     // Create, bind and listen the TCP_socket 
     Server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -246,7 +246,7 @@ int RLS(char* pmuNUM, char* portNum, char* inFile) {
 
     //Initial guess
     //ifstream inputFile(argv[3]);
-    ifstream inputFile(inFile);
+    ifstream inputFile(file_of_initials);
     string line;
     i = 0;
     while (getline(inputFile, line) && i<Index){

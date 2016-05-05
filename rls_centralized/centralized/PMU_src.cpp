@@ -31,7 +31,7 @@
 
 extern "C" {
 
-int PMU(char * hostName, char *portNum, char* inFile)
+int PMU(char* rls_host, char* rls_port, char* source_file)
 {
     FILE *fp;
     sockaddr_in RLS_VM;
@@ -40,7 +40,7 @@ int PMU(char * hostName, char *portNum, char* inFile)
     struct in_addr **addr_list;
     char* ip;
 
-    if ((he = gethostbyname(hostName)) == NULL) {  // get the host info
+    if ((he = gethostbyname(rls_host)) == NULL) {  // get the host info
        exit(1);
     }
 
@@ -51,14 +51,14 @@ int PMU(char * hostName, char *portNum, char* inFile)
     }
 
     RLS_VM.sin_family = AF_INET;
-    RLS_VM.sin_port = htons(atoi(portNum));
+    RLS_VM.sin_port = htons(atoi(rls_port));
     if(inet_pton(AF_INET, ip, &RLS_VM.sin_addr)<=0) {
         printf("\n inet_pton error occured\n");
         exit(1);
     } 
 
     bzero(&(RLS_VM.sin_zero),8); 
-    if((fp = fopen(inFile, "rb"))==NULL) {
+    if((fp = fopen(source_file, "rb"))==NULL) {
         exit(1);
     }
 

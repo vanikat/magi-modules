@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-	int PMU(char* a, char* b, char* c);
+	int PMU(char* rls_host, char* rls_port, char* source_file);
 
 #ifdef __cplusplus
 }

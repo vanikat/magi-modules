@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-	int RLS(char* a, char* b, char* c);
+	int RLS(char* num_of_pmus, char* data_port, char* file_of_initials);
 
 #ifdef __cplusplus
 }
