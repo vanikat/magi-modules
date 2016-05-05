@@ -184,9 +184,9 @@ eventstreams:
           bstrategy: 1
           cbackupserver1_host: node-1-link1
           #backupserver1_port: 65001
-          dbackupserver2_host: node-2-link2b
+          dbackupserver2_host: node-2-link2
           #backupserver2_port: 65001
-          ebackupserver3_host: node-3-link3b
+          ebackupserver3_host: node-3-link3
           #backupserver3_port: 65001
           fbackupserver4_host: node-4-link4b
           #backupserver4_port: 65001
@@ -204,9 +204,9 @@ eventstreams:
           bstrategy: 1
           cbackupserver1_host: node-1-link1
           #backupserver1_port: 65001
-          dbackupserver2_host: node-2-link2b
+          dbackupserver2_host: node-2-link2
           #backupserver2_port: 65001
-          ebackupserver3_host: node-3-link3b
+          ebackupserver3_host: node-3-link3
           #backupserver3_port: 65001
           fbackupserver4_host: node-4-link4b
           #backupserver4_port: 65001
@@ -224,9 +224,9 @@ eventstreams:
           bstrategy: 1
           cbackupserver1_host: node-1-link1
           #backupserver1_port: 65001
-          dbackupserver2_host: node-2-link2b
+          dbackupserver2_host: node-2-link2
           #backupserver2_port: 65001
-          ebackupserver3_host: node-3-link3b
+          ebackupserver3_host: node-3-link3
           #backupserver3_port: 65001
           fbackupserver4_host: node-4-link4b
           #backupserver4_port: 65001
@@ -244,9 +244,9 @@ eventstreams:
           bstrategy: 1
           cbackupserver1_host: node-1-link1
           #backupserver1_port: 65001
-          dbackupserver2_host: node-2-link2b
+          dbackupserver2_host: node-2-link2
           #backupserver2_port: 65001
-          ebackupserver3_host: node-3-link3b
+          ebackupserver3_host: node-3-link3
           #backupserver3_port: 65001
           fbackupserver4_host: node-4-link4b
           #backupserver4_port: 65001
@@ -272,33 +272,42 @@ eventstreams:
         agent: client_agent1 
         method: startPMU
         args:
-          prony_host: node-1
-          prony_port: 65002
+          rls_host: node-1
+          rls_port: 65002
           source_file: /proj/PMUdata/code/PronyADMM_resiliency_RT/Y1_3581.txt
 
+      - type: trigger
+        triggers: [{timeout: 250}]
+        
       - type: event
         agent: client_agent2 
         method: startPMU
         args:
-          prony_host: node-2
-          prony_port: 65002
+          rls_host: node-2
+          rls_port: 65002
           source_file: /proj/PMUdata/code/PronyADMM_resiliency_RT/Y2_3581.txt
           
+      - type: trigger
+        triggers: [{timeout: 250}]
+        
       - type: event
         agent: client_agent3 
         method: startPMU
         args:
-          prony_host: node-3
-          prony_port: 65002
+          rls_host: node-3
+          rls_port: 65002
           source_file: /proj/PMUdata/code/PronyADMM_resiliency_RT/Y3_3581.txt
           
+      - type: trigger
+        triggers: [{timeout: 250}]
+        
       - type: event
         agent: client_agent4 
         method: startPMU
         trigger: pmuStarted
         args:
-          prony_host: node-4
-          prony_port: 65002
+          rls_host: node-4
+          rls_port: 65002
           source_file: /proj/PMUdata/code/PronyADMM_resiliency_RT/Y4_3581.txt
 
       - type: trigger

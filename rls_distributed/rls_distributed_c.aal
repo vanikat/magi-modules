@@ -143,9 +143,9 @@ eventstreams:
           bstrategy: 1
           cbackupserver1_host: node-1-link1
           #backupserver1_port: 65001
-          dbackupserver2_host: node-2-link2b
+          dbackupserver2_host: node-2-link2
           #backupserver2_port: 65001
-          ebackupserver3_host: node-3-link3b
+          ebackupserver3_host: node-3-link3
           #backupserver3_port: 65001
           fbackupserver4_host: node-4-link4b
           #backupserver4_port: 65001

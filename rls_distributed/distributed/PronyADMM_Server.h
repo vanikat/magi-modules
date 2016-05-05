@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-	int ADMMServer(char* pmuNum, char* portNum);
+	int ADMMServer(char* num_of_pmus, char* data_port);
 
 #ifdef __cplusplus
 }

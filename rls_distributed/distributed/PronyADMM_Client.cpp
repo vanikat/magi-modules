@@ -28,9 +28,13 @@ extern "C" {
 #define Height_H 45
 #define IniHeight 20
 
-int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* argv5, char* argv6,
-                    char* argv7, char* argv8, char* argv9, char* argv10, char* argv11, char* argv12,
-                    char* argv13, char* argv14) {
+int PronyADMMClient(char* server_host, char* server_port, char* data_port,
+		char* strategy, char* backupserver1_host, char* backupserver1_port,
+		char* backupserver2_host, char* backupserver2_port,
+		char* backupserver3_host, char* backupserver3_port,
+		char* backupserver4_host, char* backupserver4_port,
+		char* num_of_attack, char* num_of_pdcs) {
+
     FILE* fFile;
     Logger* fLogger;
     fFile = fopen("/tmp/PronyADMM_client.log", "a");
@@ -51,7 +55,7 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
 	struct tm * tm_info;
 	tm_info = localtime(&now_time);
 	strcpy(filename, "DistriProny_Result_");
-	strcat(filename, argv3);
+	strcat(filename, data_port);
 	strcat(filename, "_");
 	snprintf(tempbuf1, 5, "%d", tm_info->tm_year+1900);	
 	strcat(filename, tempbuf1);
@@ -89,7 +93,7 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
     struct in_addr **addr_list;
     char* ip;
 
-    if ((he = gethostbyname(argv1)) == NULL) {  // get the host info
+    if ((he = gethostbyname(server_host)) == NULL) {  // get the host info
        exit(1);
     }
 
@@ -104,7 +108,7 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
    	struct sockaddr_in serv_addr, new_serv_addr;       
     memset(&serv_addr, '0', sizeof(serv_addr));   
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(atoi(argv2)); 
+    serv_addr.sin_port = htons(atoi(server_port));
 
    	if(inet_pton(AF_INET, ip, &serv_addr.sin_addr)<=0) {
         printf("\n inet_pton error occured\n");
@@ -136,7 +140,7 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
 	// Initiate local TCP server socket
 	LocalAddr.sin_family = AF_INET;
 	LocalAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	LocalAddr.sin_port = htons(atoi(argv3));
+	LocalAddr.sin_port = htons(atoi(data_port));
 
 	// Create, bind and listen the TCP_socket 
 	Server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -302,7 +306,7 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                 // Step 2: Send out local parameter vector new_a			
                 gettimeofday (&tvalStart, NULL); // Record sending time
                 // Format the export message
-                size = sprintf(buffer, "Iteration: %d, %s: %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f\r\n Starttime: %ld \r\n\r\n", k, argv3, new_a(0), new_a(1), new_a(2), new_a(3), new_a(4), new_a(5), new_a(6), new_a(7), new_a(8), new_a(9), new_a(10), new_a(11), new_a(12), new_a(13), new_a(14), new_a(15), new_a(16), new_a(17), new_a(18), new_a(19), (tvalStart.tv_sec*1000000 + tvalStart.tv_usec));	
+                size = sprintf(buffer, "Iteration: %d, %s: %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f\r\n Starttime: %ld \r\n\r\n", k, data_port, new_a(0), new_a(1), new_a(2), new_a(3), new_a(4), new_a(5), new_a(6), new_a(7), new_a(8), new_a(9), new_a(10), new_a(11), new_a(12), new_a(13), new_a(14), new_a(15), new_a(16), new_a(17), new_a(18), new_a(19), (tvalStart.tv_sec*1000000 + tvalStart.tv_usec));
 
                  cout<<"The value of size is "<<size<<endl;
                 
@@ -330,54 +334,54 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                     myfile << ", Main Server itself got attacked becasue the return value of write() function is negative!!!\n";
                     
                     if (argc==15) {					
-                        if (atoi(argv13)==1 && num_attack==1) {
+                        if (atoi(num_of_attack)==1 && num_attack==1) {
                             //Strategy 1: run server source code in the first backup Client 1 VM background	
                             puts("Starting now:");
                             cout<<"Num of attacks is "<<num_attack<<endl;
                             char command[50];
                             strcpy(command, "ADMMServer ");
-                            strcat(command, argv14);
+                            strcat(command, num_of_pdcs);
                             strcat(command, " ");				
-                            strcat(command, argv6);
+                            strcat(command, backupserver1_port);
                             strcat(command, " &");
                             system(command);
                             std::cout<<"Happy New Server at PDC"<<std::endl;		
                         } 
-                        if (atoi(argv13)==2 && num_attack==2) {
+                        if (atoi(num_of_attack)==2 && num_attack==2) {
                             //Strategy 1: run server source code in the second backup Client 2 VM background					
                             puts("Starting now:");
                             cout<<"Num of attacks is "<<num_attack<<endl;
                             char command[50];
                             strcpy(command, "ADMMServer ");
-                            strcat(command, argv14);
+                            strcat(command, num_of_pdcs);
                             strcat(command, " ");
-                            strcat(command, argv8);
+                            strcat(command, backupserver2_port);
                             strcat(command, " &");
                             system(command);
                             std::cout<<"Happy New Server at PDC"<<std::endl;		
                         }
-                        if (atoi(argv13)==3 && num_attack==3) {
+                        if (atoi(num_of_attack)==3 && num_attack==3) {
                             //Strategy 1: run server source code in the third backup Client 3 VM background	
                             puts("Starting now:");
                             cout<<"Num of attacks is "<<num_attack<<endl;
                             char command[50];
                             strcpy(command, "ADMMServer ");
-                            strcat(command, argv14);
+                            strcat(command, num_of_pdcs);
                             strcat(command, " ");				
-                            strcat(command, argv10);
+                            strcat(command, backupserver3_port);
                             strcat(command, " &");
                             system(command);
                             std::cout<<"Happy New Server at PDC"<<std::endl;		
                         } 
-                        if (atoi(argv13)==4 && num_attack==4) {
+                        if (atoi(num_of_attack)==4 && num_attack==4) {
                             //Strategy 1: run server source code in the fourth backup Client 4 VM background					
                             puts("Starting now:");
                             cout<<"Num of attacks is "<<num_attack<<endl;
                             char command[50];
                             strcpy(command, "ADMMServer ");
-                            strcat(command, argv14);
+                            strcat(command, num_of_pdcs);
                             strcat(command, " ");
-                            strcat(command, argv12);
+                            strcat(command, backupserver4_port);
                             strcat(command, " &");
                             system(command);
                             std::cout<<"Happy New Server at PDC"<<std::endl;		
@@ -394,8 +398,8 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                     new_serv_addr.sin_family = AF_INET;
 
                     if (num_attack==1) {
-                        new_serv_addr.sin_port = htons(atoi(argv6)); 
-                        if ((he1 = gethostbyname(argv5)) == NULL) {  // get the host info
+                        new_serv_addr.sin_port = htons(atoi(backupserver1_port));
+                        if ((he1 = gethostbyname(backupserver1_host)) == NULL) {  // get the host info
                             exit(1);
                         }
 
@@ -410,7 +414,7 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                         }
                     } 
                     if (num_attack==2) {
-                        if ((he1 = gethostbyname(argv7)) == NULL) {  // get the host info
+                        if ((he1 = gethostbyname(backupserver2_host)) == NULL) {  // get the host info
                             exit(1);
                         }
 
@@ -419,14 +423,14 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                             ip1 = inet_ntoa(*addr_list1[i]);
                         }
                         
-                        new_serv_addr.sin_port = htons(atoi(argv8)); 
+                        new_serv_addr.sin_port = htons(atoi(backupserver2_port));
                         if(inet_pton(AF_INET, ip1, &new_serv_addr.sin_addr)<=0){
                             printf("\n inet_pton error occured\n");
                             return 1;
                         }
                     } 
                     if (num_attack==3) {
-                        if ((he1 = gethostbyname(argv9)) == NULL) {  // get the host info
+                        if ((he1 = gethostbyname(backupserver3_host)) == NULL) {  // get the host info
                             exit(1);
                         }
 
@@ -435,14 +439,14 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                             ip1 = inet_ntoa(*addr_list1[i]);
                         }
                         
-                        new_serv_addr.sin_port = htons(atoi(argv10)); 
+                        new_serv_addr.sin_port = htons(atoi(backupserver3_port));
                         if(inet_pton(AF_INET, ip1, &new_serv_addr.sin_addr)<=0){
                             printf("\n inet_pton error occured\n");
                             return 1;
                           }
                     } 
                     if (num_attack==4) {
-                        if ((he1 = gethostbyname(argv11)) == NULL) {  // get the host info
+                        if ((he1 = gethostbyname(backupserver4_host)) == NULL) {  // get the host info
                             exit(1);
                         }
 
@@ -451,7 +455,7 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                                 ip1 = inet_ntoa(*addr_list1[i]);
                         }
                         
-                        new_serv_addr.sin_port = htons(atoi(argv12)); 
+                        new_serv_addr.sin_port = htons(atoi(backupserver4_port));
                         if(inet_pton(AF_INET, ip1, &new_serv_addr.sin_addr)<=0){
                             printf("\n inet_pton error occured\n");
                             return 1;
@@ -508,54 +512,54 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
 
                     // 2 Resiliency Strategies
                     char filename[20];
-                    strcpy(filename,argv3);		
+                    strcpy(filename,data_port);
                     if (argc==15) {
-                        if (atoi(argv13)==1 && num_attack==1) {
+                        if (atoi(num_of_attack)==1 && num_attack==1) {
                             //Strategy 1: run server source code in the first backup Client 1 VM background	
                             puts("Starting now:");
                             char command[50];
                             strcpy(command, "ADMMServer ");
-                            strcat(command, argv14);
+                            strcat(command, num_of_pdcs);
                             strcat(command, " ");				
-                            strcat(command, argv6);
+                            strcat(command, backupserver1_port);
                             strcat(command, " &");
                             system(command);
                             std::cout<<"Happy New Server at PDC"<<std::endl;			
                         } 
-                        if (atoi(argv13)==2 && num_attack==2) {
+                        if (atoi(num_of_attack)==2 && num_attack==2) {
                             //Strategy 1: run server source code in the second backup Client 1 VM background					
                             puts("Starting now:");
                             char command[50];
                             strcpy(command, "ADMMServer ");
-                            strcat(command, argv14);
+                            strcat(command, num_of_pdcs);
                             strcat(command, " ");
-                            strcat(command, argv8);
+                            strcat(command, backupserver2_port);
                             strcat(command, " &");
                             system(command);
                             std::cout<<"Happy New Server at PDC"<<std::endl;			
                         }
-                        if (atoi(argv13)==3 && num_attack==3) {
+                        if (atoi(num_of_attack)==3 && num_attack==3) {
                             //Strategy 1: run server source code in the third backup Client 3 VM background	
                             puts("Starting now:");
                             cout<<"Num of attacks is "<<num_attack<<endl;
                             char command[50];
                             strcpy(command, "ADMMServer ");
-                            strcat(command, argv14);
+                            strcat(command, num_of_pdcs);
                             strcat(command, " ");				
-                            strcat(command, argv10);
+                            strcat(command, backupserver3_port);
                             strcat(command, " &");
                             system(command);
                             std::cout<<"Happy New Server at PDC"<<std::endl;		
                         } 
-                        if (atoi(argv13)==4 && num_attack==4) {
+                        if (atoi(num_of_attack)==4 && num_attack==4) {
                             //Strategy 1: run server source code in the fourth backup Client 4 VM background					
                             puts("Starting now:");
                             cout<<"Num of attacks is "<<num_attack<<endl;
                             char command[50];
                             strcpy(command, "ADMMServer ");
-                            strcat(command, argv14);
+                            strcat(command, num_of_pdcs);
                             strcat(command, " ");
-                            strcat(command, argv12);
+                            strcat(command, backupserver4_port);
                             strcat(command, " &");
                             system(command);
                             std::cout<<"Happy New Server at PDC"<<std::endl;		
@@ -572,7 +576,7 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                     new_serv_addr.sin_family = AF_INET;   
 
                     if (num_attack==1) {
-                        if ((he2 = gethostbyname(argv5)) == NULL) {  // get the host info
+                        if ((he2 = gethostbyname(backupserver1_host)) == NULL) {  // get the host info
                             exit(1);
                         }
 
@@ -581,14 +585,14 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                             ip2 = inet_ntoa(*addr_list2[i]);
                         }
                         
-                        new_serv_addr.sin_port = htons(atoi(argv6)); 
+                        new_serv_addr.sin_port = htons(atoi(backupserver1_port));
                         if(inet_pton(AF_INET, ip2, &new_serv_addr.sin_addr)<=0){
                             printf("\n inet_pton error occured\n");
                             return 1;
                         }
                     } 
                     if (num_attack==2) {
-                        if ((he2 = gethostbyname(argv7)) == NULL) {  // get the host info
+                        if ((he2 = gethostbyname(backupserver2_host)) == NULL) {  // get the host info
                             exit(1);
                         }
 
@@ -597,14 +601,14 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                             ip2 = inet_ntoa(*addr_list2[i]);
                         }
                         
-                        new_serv_addr.sin_port = htons(atoi(argv8)); 
+                        new_serv_addr.sin_port = htons(atoi(backupserver2_port));
                         if(inet_pton(AF_INET, ip2, &new_serv_addr.sin_addr)<=0){
                             printf("\n inet_pton error occured\n");
                             return 1;
                         }
                     }
                     if (num_attack==3) {
-                        if ((he2 = gethostbyname(argv9)) == NULL) {  // get the host info
+                        if ((he2 = gethostbyname(backupserver3_host)) == NULL) {  // get the host info
                             exit(1);
                         }
 
@@ -613,14 +617,14 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                                 ip2 = inet_ntoa(*addr_list2[i]);
                         }
                         
-                        new_serv_addr.sin_port = htons(atoi(argv10)); 
+                        new_serv_addr.sin_port = htons(atoi(backupserver3_port));
                         if(inet_pton(AF_INET, ip2, &new_serv_addr.sin_addr)<=0){
                             printf("\n inet_pton error occured\n");
                             return 1;
                         }
                     } 
                     if (num_attack==4) {
-                        if ((he2 = gethostbyname(argv11)) == NULL) {  // get the host info
+                        if ((he2 = gethostbyname(backupserver4_host)) == NULL) {  // get the host info
                             exit(1);
                         }
 
@@ -629,7 +633,7 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                             ip2 = inet_ntoa(*addr_list2[i]);
                         }
                         
-                        new_serv_addr.sin_port = htons(atoi(argv12)); 
+                        new_serv_addr.sin_port = htons(atoi(backupserver4_port));
                         if(inet_pton(AF_INET, ip2, &new_serv_addr.sin_addr)<=0){
                             printf("\n inet_pton error occured\n");
                             return 1;
@@ -677,52 +681,52 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                     myfile << ", main Server itself got attacked becasue the return value of read() function is negative!!!\n";
                     
                     if (argc==15) {
-                        if (atoi(argv13)==1 && num_attack==1) {
+                        if (atoi(num_of_attack)==1 && num_attack==1) {
                             //Strategy 1: run server source code in the first backup Client 1 VM background	
                             puts("Starting now:");
                             char command[50];
                             strcpy(command, "ADMMServer ");
-                            strcat(command, argv14);
+                            strcat(command, num_of_pdcs);
                             strcat(command, " ");				
-                            strcat(command, argv6);
+                            strcat(command, backupserver1_port);
                             strcat(command, " &");
                             system(command);
                             std::cout<<"Happy New Server at PDC"<<std::endl;	
                         } 
-                        if (atoi(argv13)==2 && num_attack==2) {
+                        if (atoi(num_of_attack)==2 && num_attack==2) {
                             //Strategy 1: run server source code in the second backup Client 1 VM background					
                             puts("Starting now:");
                             char command[50];
                             strcpy(command, "ADMMServer ");
-                            strcat(command, argv14);
+                            strcat(command, num_of_pdcs);
                             strcat(command, " ");
-                            strcat(command, argv8);
+                            strcat(command, backupserver2_port);
                             strcat(command, " &");
                             system(command);
                             std::cout<<"Happy New Server at PDC"<<std::endl;	
                         }
-                        if (atoi(argv13)==3 && num_attack==3) {
+                        if (atoi(num_of_attack)==3 && num_attack==3) {
                             //Strategy 1: run server source code in the third backup Client 3 VM background	
                             puts("Starting now:");
                             cout<<"Num of attacks is "<<num_attack<<endl;
                             char command[50];
                             strcpy(command, "ADMMServer ");
-                            strcat(command, argv14);
+                            strcat(command, num_of_pdcs);
                             strcat(command, " ");				
-                            strcat(command, argv10);
+                            strcat(command, backupserver3_port);
                             strcat(command, " &");
                             system(command);
                             std::cout<<"Happy New Server at PDC"<<std::endl;		
                         } 
-                        if (atoi(argv13)==4 && num_attack==4) {
+                        if (atoi(num_of_attack)==4 && num_attack==4) {
                             //Strategy 1: run server source code in the fourth backup Client 4 VM background					
                             puts("Starting now:");
                             cout<<"Num of attacks is "<<num_attack<<endl;
                             char command[50];
                             strcpy(command, "ADMMServer ");
-                            strcat(command, argv14);
+                            strcat(command, num_of_pdcs);
                             strcat(command, " ");
-                            strcat(command, argv12);
+                            strcat(command, backupserver4_port);
                             strcat(command, " &");
                             system(command);
                             std::cout<<"Happy New Server at PDC"<<std::endl;		
@@ -738,7 +742,7 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                     memset(&new_serv_addr, '0', sizeof(new_serv_addr));   
                     new_serv_addr.sin_family = AF_INET;
                     if (num_attack==1) {
-                        if ((he3 = gethostbyname(argv5)) == NULL) {  // get the host info
+                        if ((he3 = gethostbyname(backupserver1_host)) == NULL) {  // get the host info
                             exit(1);
                         }
 
@@ -747,14 +751,14 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                             ip3 = inet_ntoa(*addr_list3[i]);
                         }
                         
-                        new_serv_addr.sin_port = htons(atoi(argv6)); 
+                        new_serv_addr.sin_port = htons(atoi(backupserver1_port));
                         if(inet_pton(AF_INET, ip3, &new_serv_addr.sin_addr)<=0){
                             printf("\n inet_pton error occured\n");
                             return 1;
                         }
                     } 
                     if (num_attack==2) {
-                        if ((he3 = gethostbyname(argv7)) == NULL) {  // get the host info
+                        if ((he3 = gethostbyname(backupserver2_host)) == NULL) {  // get the host info
                             exit(1);
                         }
 
@@ -763,14 +767,14 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                             ip3 = inet_ntoa(*addr_list3[i]);
                         }
                         
-                        new_serv_addr.sin_port = htons(atoi(argv8)); 
+                        new_serv_addr.sin_port = htons(atoi(backupserver2_port));
                         if(inet_pton(AF_INET, ip3, &new_serv_addr.sin_addr)<=0){
                             printf("\n inet_pton error occured\n");
                             return 1;
                         }
                     }
                     if (num_attack==3) {
-                        if ((he3 = gethostbyname(argv9)) == NULL) {  // get the host info
+                        if ((he3 = gethostbyname(backupserver3_host)) == NULL) {  // get the host info
                             exit(1);
                         }
 
@@ -779,14 +783,14 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                             ip3 = inet_ntoa(*addr_list3[i]);
                         }
                         
-                        new_serv_addr.sin_port = htons(atoi(argv10)); 
+                        new_serv_addr.sin_port = htons(atoi(backupserver3_port));
                         if(inet_pton(AF_INET, ip3, &new_serv_addr.sin_addr)<=0){
                             printf("\n inet_pton error occured\n");
                             return 1;
                         }
                     } 
                     if (num_attack==4) {
-                        if ((he3 = gethostbyname(argv11)) == NULL) {  // get the host info
+                        if ((he3 = gethostbyname(backupserver4_host)) == NULL) {  // get the host info
                             exit(1);
                         }
 
@@ -795,7 +799,7 @@ int PronyADMMClient(char* argv1, char* argv2, char* argv3, char* argv4, char* ar
                         for(i = 0; addr_list3[i] != NULL; i++) {
                             ip3 = inet_ntoa(*addr_list3[i]);
                         }
-                        new_serv_addr.sin_port = htons(atoi(argv12)); 
+                        new_serv_addr.sin_port = htons(atoi(backupserver4_port));
                         if(inet_pton(AF_INET, ip3, &new_serv_addr.sin_addr)<=0){
                             printf("\n inet_pton error occured\n");
                             return 1;

@@ -29,7 +29,7 @@ extern "C" {
 #define imagError 0.005
 #define MSS 250
 
-int ADMMServer(char* pmuNum, char* portNum) {
+int ADMMServer(char* num_of_pmus, char* data_port) {
     FILE* nFile;
     Logger* nLogger;
     nFile = fopen("/tmp/PronyADMM_server.log", "a");
@@ -67,7 +67,7 @@ int ADMMServer(char* pmuNum, char* portNum) {
     gettimeofday (&Start, NULL); 
 
     int CountClient,ClientNum;
-    ClientNum = atoi(pmuNum);
+    ClientNum = atoi(num_of_pmus);
     int Iteration = 0;
     int i,j;
     pthread_t handler_thread[ClientNum];
@@ -110,7 +110,7 @@ int ADMMServer(char* pmuNum, char* portNum) {
     // Initiate local TCP server socket
     LocalAddr.sin_family = AF_INET;
     LocalAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    LocalAddr.sin_port = htons(atoi(portNum));
+    LocalAddr.sin_port = htons(atoi(data_port));
 
     // Create, bind and listen the TCP_socket 
     Server_sockfd = socket(AF_INET, SOCK_STREAM, 0);

@@ -22,7 +22,7 @@ extern "C" {
     
 #define MSS 250
 
-int PMU(char * hostName, char *portNum, char* inFile) {
+int PMU(char * rls_host, char *rls_port, char* source_file) {
     FILE* fnFile;
     Logger* fnLogger;
     fnFile = fopen("/tmp/PMU.log", "a");
@@ -38,7 +38,7 @@ int PMU(char * hostName, char *portNum, char* inFile) {
     struct in_addr **addr_list;
     char* ip;
 
-    if ((he = gethostbyname(hostName)) == NULL) {
+    if ((he = gethostbyname(rls_host)) == NULL) {
         log_debug(fnLogger, "Error in resolving the hostname");
         exit(1);
     }
@@ -49,7 +49,7 @@ int PMU(char * hostName, char *portNum, char* inFile) {
     }
 
     VM_client.sin_family = AF_INET;
-    VM_client.sin_port = htons(atoi(portNum));
+    VM_client.sin_port = htons(atoi(rls_port));
     if(inet_pton(AF_INET, ip, &VM_client.sin_addr)<=0) {
         printf("\n inet_pton error occured\n");
         log_debug(fnLogger,"error in inet_pton");
@@ -57,7 +57,7 @@ int PMU(char * hostName, char *portNum, char* inFile) {
     }
 
     bzero(&(VM_client.sin_zero),8);
-    if((fp = fopen(inFile, "rb"))==NULL) {
+    if((fp = fopen(source_file, "rb"))==NULL) {
         log_debug(fnLogger,"error in file open");
         exit(1);
     }
