@@ -1,4 +1,6 @@
-#include "distributed/PMU_src.h"
+#include "distributed/PronyADMM_Server.h"
+#include "distributed/PronyADMM_Client.h"
+#include "distributed/PMU_prony.h"
 
 #include "Agent.h"
 #include "AgentRequest.h"
@@ -6,7 +8,6 @@
 #include "MAGIMessage.h"
 #include "Logger.h"
 #include "Util.h"
-#include "AgentMessenger.h"
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -23,143 +24,144 @@
 #include <unistd.h>
 
 
-dList_t* list;
+extern Logger* logger;
 
-FILE* agentFile;
-Logger* agentLogger;
 pthread_t pidADMMServer;
 pthread_t pidPMU;
 pthread_t pidPronyClient;
 
 struct argsADMMServer
 {
-   char  agentArg1[100];
-   char  agentArg2[100];
+	char  pmuNum[100];
+	char  portNum[100];
 };
-
-struct argsPMU
-{
-   char  agentArg1[100];
-   char  agentArg2[100];
-   char  agentArg3[100];
-};  
 
 struct argsPronyClient 
 {
-   char  agentArg1[100];
-   char  agentArg2[100];
-   char  agentArg3[100];
-   char  agentArg4[100];
-   char  agentArg5[100];
-   char  agentArg6[100];
-   char  agentArg7[100];
-   char  agentArg8[100];
-   char  agentArg9[100];
-   char  agentArg10[100];
-   char  agentArg11[100];
-   char  agentArg12[100];
-   char  agentArg13[100];
-   char  agentArg14[100];
+	char  serverHost[100];
+	char  serverPort[100];
+	char  dataPort[100];
+	char  strategy[100];
+	char  bkpServerHost1[100];
+	char  bkpServerPort1[100];
+	char  bkpServerHost2[100];
+	char  bkpServerPort2[100];
+	char  bkpServerHost3[100];
+	char  bkpServerPort3[100];
+	char  bkpServerHost4[100];
+	char  bkpServerPort4[100];
+	char  numAttacks[100];
+	char  numPdcs[100];
 };
 
+struct argsPMU {
+	char  hostName[100];
+	char  portNum[100];
+	char  inFile[100];
+};
+
+void startServer(char* a, char* b);
+void *tempStartServer(void* arg);
+void returnWhenServerDone();
+void startPronyClient(char* server_host, char* strategy,
+		char* backupserver1_host, char* backupserver2_host,
+		char* backupserver3_host, char* backupserver4_host,
+		char* num_of_attack, char* num_of_pdcs);
+void *tempStartPronyClient(void* arg);
+void startPMU(char* a, char* b, char* c);
+void *tempStartPMU(void* arg);
+
+void startServer(char* pmuNum, char* portNum) {
+	log_info(logger, "entering startServer");
+	struct argsADMMServer *serverArgs = (struct argsADMMServer*) malloc(sizeof(struct argsADMMServer));
+	strcpy(serverArgs->pmuNum, pmuNum);
+	strcpy(serverArgs->portNum, portNum);
+	log_info(logger, "pmuNum: %s, portNum: %s", serverArgs->pmuNum, serverArgs->portNum);
+	pthread_create(&pidADMMServer, NULL, tempStartServer, serverArgs);
+	log_info(logger, "exiting startServer");
+}
+
 void *tempStartServer(void* arg) {
-  log_info(agentLogger, "entering tempStartServer \n");
-  struct argsADMMServer* agent1;
-  agent1 = (struct argsADMMServer*)arg;
-  log_info(agentLogger, "arg1 %s arg2 %s\n", agent1->agentArg1, agent1->agentArg2);
-  int retTemp = ADMMServer(agent1->agentArg1, agent1->agentArg2);
-  log_info(agentLogger, "exiting tempStartServer \n");
-  return NULL;
+	log_info(logger, "entering tempStartServer");
+	struct argsADMMServer* serverArgs;
+	serverArgs = (struct argsADMMServer*) arg;
+	log_info(logger, "tempStartServer: pmuNum: %s, portNum: %s", serverArgs->pmuNum, serverArgs->portNum);
+	int retTemp = ADMMServer(serverArgs->pmuNum, serverArgs->portNum);
+	log_info(logger, "exiting tempStartServer");
+	return NULL;
 }
 
-void startADDMServer(char* a, char* b)
-{
-  log_info(agentLogger, "entering startServer \n");
-  struct argsADMMServer *agent = (struct argsADMMServer *)malloc(sizeof(struct argsADMMServer));
-  strcpy(agent->agentArg1, a);
-  strcpy(agent->agentArg2, b);
-  log_info(agentLogger, "arg1 %s arg2 %s\n", agent->agentArg1, agent->agentArg2);
-  pthread_create(&pidADMMServer, NULL, tempStartServer, agent);
-  log_info(agentLogger, "exiting startServer \n");
+void returnWhenServerDone() {
+	log_info(logger, "entering returnWhenServerDone");
+	pthread_join(pidADMMServer, NULL);
+	log_info(logger, "exiting returnWhenServerDone");
 }
 
-void returnWhenServerDone()
-{
-  log_info(agentLogger, "entering returnWhenServerDone \n");
-  pthread_join(pidADMMServer, NULL);
-  log_info(agentLogger, "exiting returnWhenServerDone \n");
-}
-
-void *tempStartPMU(void* arg) {
-  log_info(agentLogger, "entering tempStartPMU \n");
-  struct argsPMU* agent1;
-  agent1 = (struct argsPMU*)arg;
-  log_info(agentLogger, "tempPMU: arg1 %s arg2 %s arg3 %s\n", agent1->agentArg1, agent1->agentArg2, agent1->agentArg3);
-  int retTemp = PMU(agent1->agentArg1, agent1->agentArg2, agent1->agentArg3);
-  log_info(agentLogger, "exiting tempStartPMU \n");
-  return NULL;
-}
-
-void startPMU(char* a, char* b, char* c)
-{
-  log_info(agentLogger, "entering startPMU \n");
-  struct argsPMU* agent = (struct argsPMU *)malloc(sizeof(struct argsPMU));
-  strcpy(agent->agentArg1, a);
-  strcpy(agent->agentArg2, b);
-  strcpy(agent->agentArg3, c);
-  log_info(agentLogger, "PMU: arg1 %s arg2 %s arg3 %s \n", agent->agentArg1, agent->agentArg2, agent->agentArg3);
-  pthread_create(&pidPMU, NULL, tempStartPMU, agent);
-  log_info(agentLogger,"exiting startPMU function\n");
+void startPronyClient(char* server_host, char* strategy,
+		char* backupserver1_host, char* backupserver2_host,
+		char* backupserver3_host, char* backupserver4_host,
+		char* num_of_attack, char* num_of_pdcs) {
+	log_info(logger, "entering startPronyClient");
+	struct argsPronyClient *clientArgs = (struct argsPronyClient*) malloc(sizeof(struct argsPronyClient));
+	strcpy(clientArgs->serverHost, server_host);
+	strcpy(clientArgs->serverPort, "65000");
+	strcpy(clientArgs->dataPort, "65002");
+	strcpy(clientArgs->strategy, strategy);
+	strcpy(clientArgs->bkpServerHost1, backupserver1_host);
+	strcpy(clientArgs->bkpServerPort1, "65001");
+	strcpy(clientArgs->bkpServerHost2, backupserver2_host);
+	strcpy(clientArgs->bkpServerPort2, "65001");
+	strcpy(clientArgs->bkpServerHost3, backupserver3_host);
+	strcpy(clientArgs->bkpServerPort3, "65001");
+	strcpy(clientArgs->bkpServerHost4, backupserver4_host);
+	strcpy(clientArgs->bkpServerPort4, "65001");
+	strcpy(clientArgs->numAttacks, num_of_attack);
+	strcpy(clientArgs->numPdcs, num_of_pdcs);
+	pthread_create(&pidPronyClient, NULL, tempStartPronyClient, clientArgs);
+	log_info(logger, "exiting startPronyClient");
 }
 
 void *tempStartPronyClient(void* arg) {
-  log_info(agentLogger, "entering tempStartPronyClient\n");
-  struct argsPronyClient* agent1;
-  agent1 = (struct argsPronyClient*)arg;
-  int retTemp = PronyADMMClient(agent1->agentArg1, agent1->agentArg2, agent1->agentArg3, agent1->agentArg4,
-                                agent1->agentArg5, agent1->agentArg6, agent1->agentArg7, agent1->agentArg8,
-                                agent1->agentArg9, agent1->agentArg10, agent1->agentArg11, agent1->agentArg12,
-                                agent1->agentArg13, agent1->agentArg14);
-  log_info(agentLogger, "exiting tempStartPronyClient\n");
-  return NULL;
+	log_info(logger, "entering tempStartPronyClient");
+	struct argsPronyClient* clientArgs;
+	clientArgs = (struct argsPronyClient*)arg;
+	int retTemp = PronyADMMClient(clientArgs->serverHost, clientArgs->serverPort,
+			clientArgs->dataPort, clientArgs->strategy,
+			clientArgs->bkpServerHost1, clientArgs->bkpServerPort1,
+			clientArgs->bkpServerHost2, clientArgs->bkpServerPort2,
+			clientArgs->bkpServerHost3, clientArgs->bkpServerPort3,
+			clientArgs->bkpServerHost4, clientArgs->bkpServerPort4,
+			clientArgs->numAttacks, clientArgs->numPdcs);
+	log_info(logger, "exiting tempStartPronyClient");
+	return NULL;
 }
 
-int* startADDMClient(char* b, char* c)
-{
-  int* result = (int*)malloc(sizeof(int));
-  log_info(agentLogger, "entering startPronyClient\n");
-  struct argsPronyClient *agent = (struct argsPronyClient *)malloc(sizeof(struct argsPronyClient));
-  strcpy(agent->agentArg1, "node-0-link0");
-  strcpy(agent->agentArg2, "65000");
-  strcpy(agent->agentArg3, "65002");
-  strcpy(agent->agentArg4, "1");
-  strcpy(agent->agentArg5, "node-1-link1");
-  strcpy(agent->agentArg6, "65001");
-  strcpy(agent->agentArg7, "node-2-link2");
-  strcpy(agent->agentArg8, "65001");
-  strcpy(agent->agentArg9, "node-3-link3");
-  strcpy(agent->agentArg10, "65001");
-  strcpy(agent->agentArg11, "node-4-link4b");
-  strcpy(agent->agentArg12, "65001");
-  strcpy(agent->agentArg13, "1");
-  strcpy(agent->agentArg14, "4");
-  pthread_create(&pidPronyClient, NULL, tempStartPronyClient, agent);
-  log_info(agentLogger, "exiting startPronyClient \n");
-  *result = 20;
-  return result;
+void startPMU(char* hostName, char* portNum, char* inFile) {
+	log_info(logger, "entering startPMU");
+	struct argsPMU* pmuArgs = (struct argsPMU*) malloc(sizeof(struct argsPMU));
+	strcpy(pmuArgs->hostName, hostName);
+	strcpy(pmuArgs->portNum, portNum);
+	strcpy(pmuArgs->inFile, inFile);
+	log_info(logger, "hostName: %s, portNum: %s, inFile: %s", pmuArgs->hostName, pmuArgs->portNum, pmuArgs->inFile);
+	pthread_create(&pidPMU, NULL, tempStartPMU, pmuArgs);
+	log_info(logger,"exiting startPMU");
 }
 
+void *tempStartPMU(void* arg) {
+	log_info(logger, "entering tempStartPMU");
+	struct argsPMU* pmuArgs;
+	pmuArgs = (struct argsPronyClient*) arg;
+	log_info(logger, "tempStartPMU: hostName: %s, portNum: %s, inFile: %s", pmuArgs->hostName, pmuArgs->portNum, pmuArgs->inFile);
+	int retTemp = PMU(pmuArgs->hostName, pmuArgs->portNum, pmuArgs->inFile);
+	log_info(logger, "exiting tempStartPMU");
+	return NULL;
+}
 
-int main(int argc, char **argv)
-{
-  agentFile = fopen("/tmp/cagent.log","a");
-  agentLogger = Logger_create(agentFile,0);
-  log_info(agentLogger,"Main function called\n");
-  addFunc("startADDMServer", "void", &startADDMServer, 2, "char*" ,"char*");
-  addFunc("startPMU", "void", &startPMU, 3, "char*" ,"char*", "char*");
-  addFunc("startADDMClient", "int*", &startADDMClient, 2, "char*" ,"char*");
-  addFunc("returnWhenServerDone", "void", &returnWhenServerDone, 0, NULL);
-  list = ArgParser(argc,argv);
-  agentStart(argc,argv);
-  fclose(agentFile);
+int main(int argc, char **argv) {
+	registerFunction("startServer", "void", &startServer, 2, "char*" ,"char*");
+	registerFunction("returnWhenServerDone", "void", &returnWhenServerDone, 0, NULL);
+	registerFunction("startPronyClient", "void", &startPronyClient, 8,
+			"char*" ,"char*", "char*" ,"char*", "char*" ,"char*", "char*" ,"char*");
+	registerFunction("startPMU", "void", &startPMU, 3, "char*" ,"char*", "char*");
+	agentStart(argc, argv);
 }

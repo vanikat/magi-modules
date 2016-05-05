@@ -1,8 +1,7 @@
 #include "Prony_common.h"
 
-#include "AgentRequest.h"
-#include "MAGIMessage.h"
 #include "AgentMessenger.h"
+#include "Logger.h"
 
 #include <arpa/inet.h>
 #include <errno.h>

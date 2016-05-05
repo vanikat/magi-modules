@@ -1,11 +1,11 @@
-#ifndef _PMU_H
-#define _PMU_H
+#ifndef _RLS_H
+#define _RLS_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-	int PMU(char* a, char* b, char* c);
+	int RLS(char* a, char* b, char* c);
 
 #ifdef __cplusplus
 }

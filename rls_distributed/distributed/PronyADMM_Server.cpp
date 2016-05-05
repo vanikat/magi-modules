@@ -1,9 +1,7 @@
 #include "Prony_common.h"
 
 #include "AgentMessenger.h"
-#include "AgentRequest.h"
-#include "Database.h"
-#include "MAGIMessage.h"
+#include "Logger.h"
 
 #include <string>
 #include <iostream>
@@ -25,11 +23,13 @@
 
 extern "C" {
 
+#include "Database.h"
+
 #define ERROR 0.001
 #define imagError 0.005
 #define MSS 250
 
-int ADMMServer(char* pmuNUM, char* portNum) {
+int ADMMServer(char* pmuNum, char* portNum) {
     FILE* nFile;
     Logger* nLogger;
     nFile = fopen("/tmp/PronyADMM_server.log", "a");
@@ -67,7 +67,7 @@ int ADMMServer(char* pmuNUM, char* portNum) {
     gettimeofday (&Start, NULL); 
 
     int CountClient,ClientNum;
-    ClientNum = atoi(pmuNUM);
+    ClientNum = atoi(pmuNum);
     int Iteration = 0;
     int i,j;
     pthread_t handler_thread[ClientNum];

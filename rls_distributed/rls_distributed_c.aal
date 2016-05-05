@@ -7,7 +7,7 @@ groups:
   client_group3: [node-7]
   client_group4: [node-8]
   sensor_group: [control]
-  nclient_group: [node-1, node-2, node-3, node-4]  
+  nclient_group: [node-0, node-1, node-2, node-3, node-4]  
   nserver_group: &slist [control]
     
 agents:
@@ -19,7 +19,7 @@ agents:
   prony_agent:
     group: prony_group
     path: /proj/montage/magi-modules/rls_distributed/ 
-    execargs: {}
+    execargs: { loglevel: debug }
 
   client_agent1:
     group: client_group1
@@ -120,7 +120,7 @@ eventstreams:
 
       - type: event
         agent: server_agent 
-        method: startADDMServer
+        method: startServer
         trigger: serverStarted 
         args:
           anum_of_pmus: 4
@@ -134,14 +134,26 @@ eventstreams:
 
       - type: event
         agent: prony_agent
-        method: startADDMClient
+        method: startPronyClient
         trigger: pronyStarted
         args:
-          anum_of_pmus: 65000
-          bdata_port: 65002
+          aserver_host: node-0-link0
+          #server_port: 65000
+          #data_port: 65002
+          bstrategy: 1
+          cbackupserver1_host: node-1-link1
+          #backupserver1_port: 65001
+          dbackupserver2_host: node-2-link2b
+          #backupserver2_port: 65001
+          ebackupserver3_host: node-3-link3b
+          #backupserver3_port: 65001
+          fbackupserver4_host: node-4-link4b
+          #backupserver4_port: 65001
+          gnum_of_attack: 1
+          hnum_of_pdcs: 4
 
       - type: trigger
-        triggers: [ {event: pronyStarted, retVal: 20} ]
+        triggers: [ {event: pronyStarted} ]
 
       - type: trigger
         triggers: [{timeout: 1000}]

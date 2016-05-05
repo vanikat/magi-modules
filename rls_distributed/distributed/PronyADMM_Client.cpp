@@ -1,9 +1,7 @@
 #include "Prony_common.h"
 
 #include "AgentMessenger.h"
-#include "AgentRequest.h"
-#include "Database.h"
-#include "MAGIMessage.h"
+#include "Logger.h"
 
 #include <string>
 #include <iostream>
@@ -24,7 +22,7 @@
 
 
 extern "C" {
-    
+
 #define MSS 250
 #define rho 0.0005  // try smaller values, e.g. 1e-3, 1e-4, 1e-5;  0.06
 #define Height_H 45

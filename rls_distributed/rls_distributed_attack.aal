@@ -1,0 +1,450 @@
+
+groups:
+  server_group: [node-0]
+  prony_group1: [node-1]
+  prony_group2: [node-2]
+  prony_group3: [node-3]
+  prony_group4: [node-4]
+  client_group1: [node-5]
+  client_group2: [node-6]
+  client_group3: [node-7]
+  client_group4: [node-8]
+  sensor_group: [control]
+  nclient_group: [node-0, node-1, node-2, node-3, node-4]  
+  nserver_group: &slist [control]
+  attacker_group0: [control]
+  attacker_group1: [control]
+  attacker_group2: [control]
+  attacker_group3: [control]
+        
+agents:
+  server_agent:
+    group: server_group
+    path: /proj/montage/magi-modules/rls_distributed/ 
+    execargs: []
+
+  prony_agent1:
+    group: prony_group1
+    path: /proj/montage/magi-modules/rls_distributed/ 
+    execargs: []
+
+  prony_agent2:
+    group: prony_group2
+    path: /proj/montage/magi-modules/rls_distributed/ 
+    execargs: []
+    
+  prony_agent3:
+    group: prony_group3
+    path: /proj/montage/magi-modules/rls_distributed/ 
+    execargs: []
+    
+  prony_agent4:
+    group: prony_group4
+    path: /proj/montage/magi-modules/rls_distributed/ 
+    execargs: []
+        
+  client_agent1:
+    group: client_group1
+    path: /proj/montage/magi-modules/rls_distributed/ 
+    execargs: []
+
+  client_agent2:
+    group: client_group2
+    path: /proj/montage/magi-modules/rls_distributed/ 
+    execargs: []
+
+  client_agent3:
+    group: client_group3
+    path: /proj/montage/magi-modules/rls_distributed/ 
+    execargs: []
+
+  client_agent4:
+    group: client_group4
+    path: /proj/montage/magi-modules/rls_distributed/ 
+    execargs: []
+
+  intfsensor_agent:
+    group: sensor_group
+    path: /share/magi/modules/pktcounters/pktCountersAgent.tar.gz
+    execargs: {}
+
+  nclient_agent:
+    group: nclient_group
+    path: /share/magi/modules/http_client/http_client.tar.gz
+    execargs: {servers: *slist, interval: '1', sizes: 'minmax(100000,500000)'}
+
+  nserver_agent:
+    group: nserver_group
+    path: /share/magi/modules/apache/apache.tar.gz 
+    execargs: []
+
+  attacker_agent0:
+    group: attacker_group0
+    path: /share/magi/modules/flooder/flooder.tar.gz
+    execargs: {dst: 'node-0', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '1500', sport: 'minmax(1024,4096)'}
+
+  attacker_agent1:
+    group: attacker_group1
+    path: /share/magi/modules/flooder/flooder.tar.gz
+    execargs: {dst: 'node-1', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '1500', sport: 'minmax(1024,4096)'}
+
+  attacker_agent2:
+    group: attacker_group2
+    path: /share/magi/modules/flooder/flooder.tar.gz
+    execargs: {dst: 'node-2', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '1500', sport: 'minmax(1024,4096)'}
+
+  attacker_agent3:
+    group: attacker_group3
+    path: /share/magi/modules/flooder/flooder.tar.gz
+    execargs: {dst: 'node-3', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '1500', sport: 'minmax(1024,4096)'}
+    
+streamstarts: [ nserverstream, nclientstream, sensorstream, experimentstream, attackstream, cleanupstream ]
+
+eventstreams:
+  nserverstream:         
+      - type: event
+        agent: nserver_agent 
+        method: startServer
+        trigger: nserverStarted 
+        args: {}
+
+      - type: trigger
+        triggers: [ { event: nclientStopped} ] 
+
+      - type: event
+        agent: nserver_agent 
+        method: stopServer 
+        trigger: nserverStopped 
+        args: {} 
+
+  nclientstream:      
+      - type: trigger
+        triggers: [ { event: nserverStarted } ] 
+
+      - type: event
+        agent: nclient_agent
+        method: startClient
+        trigger: nclientStarted
+        args: {}
+
+      - type: trigger
+        triggers: [ { event: serverDone } ] 
+        
+      - type: event
+        agent: nclient_agent
+        method: stopClient
+        trigger: nclientStopped
+        args: {}
+
+  sensorstream:
+      - type: trigger
+        triggers: [ { event: nclientStarted } ] 
+
+      - type: event
+        agent: intfsensor_agent
+        method: startCollection
+        args: {}
+        trigger: monitorStarted
+
+      - type: trigger
+        triggers: [ { event: serverDone } ] 
+
+      - type: event
+        agent: intfsensor_agent
+        method: stopCollection
+        trigger: monitorStopped 
+        args: {} 
+                
+  experimentstream: 
+      - type: trigger
+        triggers: [ { event: monitorStarted } ] 
+
+      - type: event
+        agent: server_agent 
+        method: startServer
+        trigger: serverStarted 
+        args:
+          anum_of_pmus: 4
+          bdata_port: 65000
+        
+      - type: trigger
+        triggers: [ {event: serverStarted} ]
+
+      - type: trigger
+        triggers: [{timeout: 1000}]
+
+      - type: event
+        agent: prony_agent1 
+        method: startPronyClient
+        trigger: pronyStarted1 
+        args:
+          aserver_host: node-0-link0
+          #server_port: 65000
+          #data_port: 65002
+          bstrategy: 1
+          cbackupserver1_host: node-1-link1
+          #backupserver1_port: 65001
+          dbackupserver2_host: node-2-link2b
+          #backupserver2_port: 65001
+          ebackupserver3_host: node-3-link3b
+          #backupserver3_port: 65001
+          fbackupserver4_host: node-4-link4b
+          #backupserver4_port: 65001
+          gnum_of_attack: 1
+          hnum_of_pdcs: 4
+
+      - type: event
+        agent: prony_agent2 
+        method: startPronyClient
+        trigger: pronyStarted2 
+        args:
+          aserver_host: node-0-link0
+          #server_port: 65000
+          #data_port: 65002
+          bstrategy: 1
+          cbackupserver1_host: node-1-link1
+          #backupserver1_port: 65001
+          dbackupserver2_host: node-2-link2b
+          #backupserver2_port: 65001
+          ebackupserver3_host: node-3-link3b
+          #backupserver3_port: 65001
+          fbackupserver4_host: node-4-link4b
+          #backupserver4_port: 65001
+          gnum_of_attack: 1
+          hnum_of_pdcs: 4
+
+      - type: event
+        agent: prony_agent3 
+        method: startPronyClient
+        trigger: pronyStarted3 
+        args:
+          aserver_host: node-0-link0
+          #server_port: 65000
+          #data_port: 65002
+          bstrategy: 1
+          cbackupserver1_host: node-1-link1
+          #backupserver1_port: 65001
+          dbackupserver2_host: node-2-link2b
+          #backupserver2_port: 65001
+          ebackupserver3_host: node-3-link3b
+          #backupserver3_port: 65001
+          fbackupserver4_host: node-4-link4b
+          #backupserver4_port: 65001
+          gnum_of_attack: 1
+          hnum_of_pdcs: 4
+          
+      - type: event
+        agent: prony_agent4 
+        method: startPronyClient
+        trigger: pronyStarted4
+        args:
+          aserver_host: node-0-link0
+          #server_port: 65000
+          #data_port: 65002
+          bstrategy: 1
+          cbackupserver1_host: node-1-link1
+          #backupserver1_port: 65001
+          dbackupserver2_host: node-2-link2b
+          #backupserver2_port: 65001
+          ebackupserver3_host: node-3-link3b
+          #backupserver3_port: 65001
+          fbackupserver4_host: node-4-link4b
+          #backupserver4_port: 65001
+          gnum_of_attack: 1
+          hnum_of_pdcs: 4
+          
+      - type: trigger
+        triggers: [ {event: pronyStarted1} ]
+                
+      - type: trigger
+        triggers: [ {event: pronyStarted2} ]
+
+      - type: trigger
+        triggers: [ {event: pronyStarted3} ]
+                
+      - type: trigger
+        triggers: [ {event: pronyStarted4} ]
+        
+      - type: trigger
+        triggers: [{timeout: 1000}]
+        
+      - type: event
+        agent: client_agent1 
+        method: startPMU
+        args:
+          prony_host: node-1
+          prony_port: 65002
+          source_file: /proj/PMUdata/code/PronyADMM_resiliency_RT/Y1_3581.txt
+
+      - type: event
+        agent: client_agent2 
+        method: startPMU
+        args:
+          prony_host: node-2
+          prony_port: 65002
+          source_file: /proj/PMUdata/code/PronyADMM_resiliency_RT/Y2_3581.txt
+          
+      - type: event
+        agent: client_agent3 
+        method: startPMU
+        args:
+          prony_host: node-3
+          prony_port: 65002
+          source_file: /proj/PMUdata/code/PronyADMM_resiliency_RT/Y3_3581.txt
+          
+      - type: event
+        agent: client_agent4 
+        method: startPMU
+        trigger: pmuStarted
+        args:
+          prony_host: node-4
+          prony_port: 65002
+          source_file: /proj/PMUdata/code/PronyADMM_resiliency_RT/Y4_3581.txt
+
+      - type: trigger
+        triggers: [ { event: pmuStarted } ] 
+
+      - type: event
+        agent: prony_agent1 
+        method: returnWhenServerStarted
+        trigger: backupServerStarted1
+        args:
+          name: "Backup Server 1"
+
+      - type: event
+        agent: prony_agent2 
+        method: returnWhenServerStarted
+        trigger: backupServerStarted2
+        args:
+          name: "Backup Server 2"
+
+      - type: event
+        agent: prony_agent3
+        method: returnWhenServerStarted
+        trigger: backupServerStarted3
+        args:
+          name: "Backup Server 3"
+
+      - type: event
+        agent: prony_agent4
+        method: returnWhenServerStarted
+        trigger: backupServerStarted3
+        args:
+          name: "Backup Server 4"
+                                            
+      - type: event
+        agent: prony_agent1 
+        method: returnWhenPronyClientDone
+        trigger: serverDone
+        args: {}
+
+  attackstream:
+      - type: trigger
+        triggers: [ { event: pmuStarted } ] 
+
+      - type: trigger
+        triggers: [ { timeout: 10000 } ]
+                
+      - type: event
+        agent: attacker_agent0
+        method: startFlood
+        trigger: attackStarted0
+        args: {} 
+
+      - type: trigger
+        triggers: [ { event: attackStarted0 } ] 
+        
+      - type: trigger
+        triggers: [ { event: backupServerStarted1 } ] 
+
+      - type: trigger
+        triggers: [ { timeout: 20000 } ]
+                
+      - type: event
+        agent: attacker_agent1
+        method: startFlood
+        trigger: attackStarted1
+        args: {} 
+
+      - type: trigger
+        triggers: [ { event: attackStarted1 } ] 
+                
+      - type: trigger
+        triggers: [ { event: backupServerStarted2 } ] 
+
+      - type: trigger
+        triggers: [ { timeout: 23000 } ]
+                                
+      - type: event
+        agent: attacker_agent2
+        method: startFlood
+        trigger: attackStarted2
+        args: {} 
+
+      - type: trigger
+        triggers: [ { event: attackStarted2 } ] 
+                
+      - type: trigger
+        triggers: [ { event: backupServerStarted3 } ] 
+
+      - type: trigger
+        triggers: [ { timeout: 21000 } ]
+                
+      - type: event
+        agent: attacker_agent3
+        method: startFlood
+        trigger: attackStarted3
+        args: {} 
+
+      - type: trigger
+        triggers: [ { event: attackStarted3 } ] 
+
+      - type: trigger
+        triggers: [ { event: backupServerStarted4 } ] 
+                        
+      - type: trigger
+        triggers: [ { event: serverDone } ]  
+
+      - type: event
+        agent: attacker_agent0
+        method: stopFlood
+        trigger: attackStopped0
+        args: {}
+
+      - type: event
+        agent: attacker_agent1
+        method: stopFlood
+        trigger: attackStopped1
+        args: {}
+                
+      - type: event
+        agent: attacker_agent2
+        method: stopFlood
+        trigger: attackStopped2
+        args: {}
+
+      - type: event
+        agent: attacker_agent3
+        method: stopFlood
+        trigger: attackStopped3
+        args: {}
+                                        
+  cleanupstream:
+      - type: trigger
+        triggers: [ { event: attackStopped0 } ] 
+        
+      - type: trigger
+        triggers: [ { event: attackStopped1 } ] 
+
+      - type: trigger
+        triggers: [ { event: attackStopped2 } ] 
+        
+      - type: trigger
+        triggers: [ { event: attackStopped3 } ] 
+                
+      - type: trigger
+        triggers: [ { event: nserverStopped } ] 
+                          
+      - type: trigger
+        triggers: [ { event: monitorStopped, target: exit } ] 
+
