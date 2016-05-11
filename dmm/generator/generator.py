@@ -6,7 +6,7 @@ import sys
 
 from magi.messaging.magimessage import MAGIMessage
 from magi.util import helpers
-from magi.util.agent import DispatchAgent
+from magi.util.agent import DispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
 import yaml
 
@@ -22,7 +22,7 @@ class Generator(DispatchAgent):
         self.configFileName = 'AGCDR_agent.mat'
         self.N_iter = 100
         self.active = True
-        
+    
     def setConfiguration(self, msg, **kwargs):
         DispatchAgent.setConfiguration(self, msg, **kwargs)
         
@@ -58,42 +58,63 @@ class Generator(DispatchAgent):
         
         #Attack
         self.deception = 0
+        self.gradFDeceptionAttack = False
         self.gradFDeception = 0
+        self.gradFDeceptionInc = 0
         
+        #Out of Market
+        self.lastPgRcvdTs = -1
+    
+    @agentmethod()
     def receivePg(self, msg, k, pg):
-        log.info("Received P_G: %f(k=%d)", pg, k)
         
         if self.active:
+            log.info("Received P_G: %f(k=%d)", pg, k)
             self.P_G[k] = pg + self.deception
+            
+            if self.P_G[k] < self.P_Gmin:
+                self.P_G[k] = self.P_Gmin
+            elif self.P_G[k] > self.P_Gmax:
+                self.P_G[k] = self.P_Gmax
+            
+            self.lastPgRcvdTs = k
+            
+            self.computeGradF(k)
+            
+            self.sendPgReply(k)
+            self.sendGradF(k)
+            
         else:
             log.info("Agent is inactive")
-            self.P_G[k] = self.P_G[k-1]
             
-        if self.P_G[k] < self.P_Gmin:
-            self.P_G[k] = self.P_Gmin
-        elif self.P_G[k] > self.P_Gmax:
-            self.P_G[k] = self.P_Gmax
-            
-        self.sendPg(k)
-        
-        self.computeGradF(k)
-        self.sendGradF(k)
+        #self.sendPg(None, k)
         
         self.computeMu(k)
     
-    def sendPg(self, k):
+    def sendPgReply(self, k):
+        functionName = self.sendPgReply.__name__
+        helpers.entrylog(log, functionName)
+        if self.active:
+            pg = self.P_G[k]
+            log.info("Sending P_G Reply: %f (k=%d)", pg, k)
+            kwargs = {'method' : 'receivePg', 'args' : {'k' : k, 'pg' : pg}, 'version' : 1.0}
+            msg = MAGIMessage(nodes="iso", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
+            self.messenger.send(msg)
+        else:
+            log.info("Agent is inactive. No P_G reply sent to ISO.")
+        helpers.exitlog(log, functionName)
+    
+    @agentmethod()
+    def sendPg(self, msg, k):
         functionName = self.sendPg.__name__
         helpers.entrylog(log, functionName)
+        if k > self.lastPgRcvdTs:
+            self.P_G[k] = self.P_G[self.lastPgRcvdTs]
         pg = self.P_G[k]
         log.info("Sending P_G: %f (k=%d)", pg, k)
         kwargs = {'method' : 'receivePg', 'args' : {'k' : k, 'pg' : pg}, 'version' : 1.0}
         msg = MAGIMessage(nodes="grid", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
         self.messenger.send(msg)
-        if self.active:
-            msg = MAGIMessage(nodes="iso", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
-            self.messenger.send(msg)
-        else:
-            log.info("Agent is inactive. No P_G reply sent to ISO.")
         helpers.exitlog(log, functionName)
     
     def computeGradF(self, k):
@@ -101,21 +122,24 @@ class Generator(DispatchAgent):
         helpers.entrylog(log, functionName)
         self.grad_f[k] = self.c_G*(self.P_G[k]) - self.mu3[k] + self.mu4[k] + self.b_G
         helpers.exitlog(log, functionName)
-        
+    
     def sendGradF(self, k):
         functionName = self.sendGradF.__name__
         helpers.entrylog(log, functionName, locals())
         if self.active:
-            grad_f = self.grad_f[k] + self.gradFDeception
+            grad_f = self.grad_f[k]
+            if self.gradFDeceptionAttack:
+                grad_f += self.gradFDeception
+                self.gradFDeception += self.gradFDeceptionInc
             log.info("Sending grad_f: %f (k=%d)", grad_f, k)
             kwargs = {'method' : 'receiveGradF', 'args' : {'k' : k, 'grad_f' : grad_f}, 'version' : 1.0}
             #log.info("Sending reply: %s", kwargs['args'])
             msg = MAGIMessage(nodes="iso", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
             self.messenger.send(msg)
         else:
-            log.info("Agent is inactive")
+            log.info("Agent is inactive. Grad_f not sent to ISO.")
         helpers.exitlog(log, functionName)
-        
+    
     def computeMu(self, k):
         functionName = self.computeMu.__name__
         helpers.entrylog(log, functionName)
@@ -124,37 +148,45 @@ class Generator(DispatchAgent):
         log.info("Computed Mu. k=%d, mu3:%f, mu4:%f", k+1, self.mu3[k+1], self.mu4[k+1])
         helpers.exitlog(log, functionName)
     
+    @agentmethod()
     def deactivate(self, msg, nodes):
         log.info("Nodes to deactivate: %s", nodes)
         if self.hostname in nodes:
             log.info("Deactivating")
             self.active = False
-            
+    
+    @agentmethod()
     def activate(self, msg, nodes):
         log.info("Nodes to activate: %s", nodes)
         if self.hostname in nodes:
             log.info("Activating")
             self.active = True
     
+    @agentmethod()
     def startDeception(self, msg, deception, nodes):
         log.info("Attacked nodes: %s", nodes)
         if self.hostname in nodes:
             log.info("Activated deception %d", deception)
             self.deception = deception
         
+    @agentmethod()
     def stopDeception(self, msg, nodes):
         self.deception = 0
-
-    def startGradFDeception(self, msg, deception, nodes):
+    
+    @agentmethod()
+    def startGradFDeception(self, msg, initial, increment, nodes):
         log.info("Attacked nodes: %s", nodes)
         if self.hostname in nodes:
-            self.gradFDeception = deception
-            log.info("Activated grad_f deception %d", deception)
+            self.gradFDeception = initial
+            self.gradFDeceptionInc = increment
+            log.info("Activated grad_f deception, initial %d, increment %d", initial, increment)
+            self.gradFDeceptionAttack = True
     
+    @agentmethod()
     def stopGradFDeception(self, msg, nodes):
-        self.gradFDeception = 0        
-            
-            
+        self.gradFDeceptionAttack = False       
+    
+        
 def getAgent(**kwargs):
     agent = Generator()
     agent.setConfiguration(None, **kwargs)

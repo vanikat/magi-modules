@@ -6,7 +6,7 @@ import sys
 
 from magi.messaging.magimessage import MAGIMessage
 from magi.util import helpers
-from magi.util.agent import DispatchAgent
+from magi.util.agent import DispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
 import yaml
 
@@ -22,7 +22,7 @@ class DemandResponse(DispatchAgent):
         self.configFileName = 'AGCDR_agent.mat'
         self.N_iter = 100
         self.active = True
-        
+    
     def setConfiguration(self, msg, **kwargs):
         DispatchAgent.setConfiguration(self, msg, **kwargs)
         self.config = scipy.io.loadmat(self.configFileName, mat_dtype=True)
@@ -56,7 +56,8 @@ class DemandResponse(DispatchAgent):
         self.E_D[0] = self.config['E_D'][self.index]
         self.mu5[0] = self.config['mu5'][self.index]
         self.mu6[0] = self.config['mu6'][self.index]
-        
+    
+    @agentmethod()
     def receivePdr(self, msg, k, pdr):
         log.info("Received P_D: %f(k=%d)", pdr, k)
         
@@ -102,6 +103,7 @@ class DemandResponse(DispatchAgent):
             log.info("Agent is inactive")
         helpers.exitlog(log, functionName)
     
+    @agentmethod()
     def receiveEdr(self, msg, k, edr):
         log.info("Received E_D: %f(k=%d)", edr, k)
         self.E_D[k] = edr
@@ -114,18 +116,20 @@ class DemandResponse(DispatchAgent):
         log.info("Computed Mu. k=%d, mu5:%f, mu6:%f", k+1, self.mu5[k+1], self.mu6[k+1])
         helpers.exitlog(log, functionName)
     
+    @agentmethod()
     def deactivate(self, msg, nodes):
         log.info("Nodes to deactivate: %s", nodes)
         if self.hostname in nodes:
             log.info("Deactivating")
             self.active = False
-            
+    
+    @agentmethod()
     def activate(self, msg, nodes):
         log.info("Nodes to activate: %s", nodes)
         if self.hostname in nodes:
             log.info("Activating")
             self.active = True
-        
+    
 
 def getAgent(**kwargs):
     agent = DemandResponse()

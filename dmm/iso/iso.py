@@ -8,7 +8,7 @@ import time
 
 from magi.messaging.magimessage import MAGIMessage
 from magi.util import helpers, database
-from magi.util.agent import DispatchAgent
+from magi.util.agent import DispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
 import yaml
 
@@ -119,6 +119,9 @@ class ISO(DispatchAgent):
         self.collection.remove({})
         
         self.inactiveGens = []
+        
+        self.freqErrorStatus = False
+        self.commStatusGen = np.zeros((self.N_gen))
     
     def runAgent(self, msg):
         functionName = self.runAgent.__name__
@@ -126,7 +129,7 @@ class ISO(DispatchAgent):
         self.thread = threading.Thread(target=self.runSimulation)
         self.thread.start()
         helpers.exitlog(log, functionName, level=logging.INFO)
-        
+    
     def runSimulation(self):
         functionName = self.runSimulation.__name__
         helpers.entrylog(log, functionName, level=logging.INFO)
@@ -142,14 +145,16 @@ class ISO(DispatchAgent):
                 
             lastItrTS = time.time()
             
+            self.commStatusGen += 1
+            
             # break apart components of x to send to agents
             log.info("Splitting x")
             self.theta[:, k] = self.xi[0:self.N_ang, k]
             self.P_G[:, k] = self.xi[(self.N_ang):(self.N_ang+self.N_gen), k];
             self.P_D[:, k] = self.xi[(self.N_ang+self.N_gen):(self.N_ang+self.N_gen+self.N_dem), k];
             
-            log.info("Logging xi (k=%d)", k)
-            log.info(self.xi[:, k])
+            log.debug("Logging xi (k=%d)", k)
+            log.debug(self.xi[:, k])
             
             self.collection.insert({'k' : k, 'pg' : self.P_G[:, k].tolist()})
             self.collection.insert({'k' : k, 'pdr' : self.P_D[:, k].tolist()})
@@ -173,10 +178,18 @@ class ISO(DispatchAgent):
             self.grad_f[:, k] = self.grad_f_current[:]
             #log.info("Logging grad_f (k=%d)", k)
             #log.info(self.grad_f[:, k])
+                
+#             if k == 68:
+#                 log.info("Removing generator 5")
+#                 self.removeGenerator(4, k)
             
-            if k == -1:
-                log.info("Removing generator 5")
-                self.removeGenerator(4, k)
+            if(self.freqErrorStatus):
+                log.info("Frequency Error")
+                if ((self.commStatusGen > 10).any()):
+                    log.info("Communication Error Found")
+                    errorGens = np.where(self.commStatusGen > 10)[0]
+                    for eg in errorGens:
+                        self.removeGenerator(eg, k)
             
             log.info("Trimming to active generators only")
             xi_active = self.getActive(self.xi[:, k])
@@ -225,30 +238,7 @@ class ISO(DispatchAgent):
             self.collection.insert({'k' : k+1, 'lpf' : (self.T_lineR.dot(self.theta[:, k])).tolist()})
             
         helpers.exitlog(log, functionName, level=logging.INFO)
-            
-    def receiveGradF(self, msg, k, grad_f):
-        #log.info("Received X, Source: %s, k:%d, grad_f:%f", msg.src, k, grad_f)
-        agentType, agentIndex = msg.src.split("-")
-        agentIndex = int(agentIndex)
-        if agentType == "gen":
-            self.grad_f_current[self.N_ang+agentIndex] = grad_f
-        elif agentType == "dr":
-            self.grad_f_current[self.N_ang+self.N_gen+agentIndex] = grad_f
-        else:
-            log.error("Invalid Agent: %s", msg.src)
-            
-    def receivePg(self, msg, k, pg):
-        log.info("Received pg from %s for k=%d: %f", msg.src, k, pg)
-        index = int(msg.src.split("-")[-1])
-        self.xi[self.N_ang + index] = pg
         
-    def receiveRho(self, msg, k, rho):
-        functionName = self.receiveRho.__name__
-        helpers.entrylog(log, functionName)
-        log.info("Received rho, k:%d, rho:%f", k, rho)
-        self.rho[k] = rho
-        helpers.exitlog(log, functionName)
-            
     def sendPg(self, k):
         functionName = self.sendPg.__name__
         helpers.entrylog(log, functionName)
@@ -268,7 +258,6 @@ class ISO(DispatchAgent):
     def sendPdr(self, k):
         functionName = self.sendPdr.__name__
         helpers.entrylog(log, functionName)
-        
         for agentIndex in range(0, self.N_dem):
             node = "dr-"+str(agentIndex)
             pdr = self.P_D[agentIndex, k]
@@ -277,7 +266,6 @@ class ISO(DispatchAgent):
             msg = MAGIMessage(nodes=node, docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
             
             self.messenger.send(msg)
-
         helpers.exitlog(log, functionName)
     
     def sendTheta(self, k):
@@ -288,7 +276,35 @@ class ISO(DispatchAgent):
         msg = MAGIMessage(nodes="grid", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
         self.messenger.send(msg)
         helpers.exitlog(log, functionName)
-            
+    
+    @agentmethod()
+    def receiveGradF(self, msg, k, grad_f):
+        #log.info("Received X, Source: %s, k:%d, grad_f:%f", msg.src, k, grad_f)
+        agentType, agentIndex = msg.src.split("-")
+        agentIndex = int(agentIndex)
+        if agentType == "gen":
+            self.grad_f_current[self.N_ang+agentIndex] = grad_f
+        elif agentType == "dr":
+            self.grad_f_current[self.N_ang+self.N_gen+agentIndex] = grad_f
+        else:
+            log.error("Invalid Agent: %s", msg.src)
+    
+    @agentmethod()
+    def receivePg(self, msg, k, pg):
+        log.debug("Received pg from %s for k=%d: %f", msg.src, k, pg)
+        index = int(msg.src.split("-")[-1])
+        self.xi[self.N_ang + index] = pg
+        self.commStatusGen[index] = 0
+    
+    @agentmethod()
+    def receiveRho(self, msg, k, rho):
+        functionName = self.receiveRho.__name__
+        helpers.entrylog(log, functionName)
+        log.info("Received rho, k:%d, rho:%f", k, rho)
+        self.rho[k] = rho
+        helpers.exitlog(log, functionName)
+    
+    @agentmethod()
     def stopAgent(self, msg):
         functionName = self.stopAgent.__name__
         helpers.entrylog(log, functionName, level=logging.INFO)
@@ -296,7 +312,7 @@ class ISO(DispatchAgent):
         if self.thread:
             self.thread.join()
         helpers.exitlog(log, functionName, level=logging.INFO)
-        
+    
     def getActive(self, full):
         active = np.ndarray((0,))
         curItr = 0
@@ -321,7 +337,16 @@ class ISO(DispatchAgent):
         full = np.concatenate((full, active[curItr:]))
         return full
     
+    @agentmethod()
+    def receiveFreqErrorNotice(self, msg, status):
+        log.info("Frequency Error Notice Received: %s" %(status))
+        self.freqErrorStatus = status
+    
     def removeGenerator(self, genNum, k):
+        log.info("Removing generator %d at k:%d" %(genNum, k))
+        if genNum in self.inactiveGens:
+            log.info("Already Inactive")
+            return
         self.inactiveGens.append(genNum)
         self.inactivePgLoad[genNum] = self.P_G[genNum, k]
         config = scipy.io.loadmat(self.inactiveGenConfigFile, mat_dtype=True)
@@ -330,7 +355,12 @@ class ISO(DispatchAgent):
         self.A1 = config['A1']
         self.A2 = config['A2']
         self.beta = np.squeeze(config['beta'])
-        
+    
+    def setupMessaging(self):
+        pass
+    
+    def stopMessaging(self):
+        pass
 
 def addColumn(arr, numOfColumns=1):
     arr = np.append(arr, np.zeros((len(arr), numOfColumns)), axis=1)

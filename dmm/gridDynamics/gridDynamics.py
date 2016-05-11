@@ -7,7 +7,7 @@ import time
 
 from magi.messaging.magimessage import MAGIMessage
 from magi.util import helpers, database
-from magi.util.agent import NonBlockingDispatchAgent
+from magi.util.agent import NonBlockingDispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
 import yaml
 
@@ -24,7 +24,7 @@ class GridDynamics(NonBlockingDispatchAgent):
         self.configFileName = 'AGCDR_agent.mat'
         self.loadProfileConfigFileName = 'AGCDR_profiles.mat'
         self.N_iter = 100
-        
+    
     def setConfiguration(self, msg, **kwargs):
         NonBlockingDispatchAgent.setConfiguration(self, msg, **kwargs)
 
@@ -97,23 +97,42 @@ class GridDynamics(NonBlockingDispatchAgent):
         self.collection.insert({'k' : 0, 'y' : self.y[:, 0].tolist()})
         self.collection.insert({'k' : 0, 'rho' : self.rho[0].tolist()})
         self.collection.insert({'k' : 0, 'edr' : self.E_D[:, 0].tolist()})
-          
+        
+        self.w_state = self.config['w_state'].astype(int)-1
+        self.freqErrorStatus = False
+    
+    @agentmethod()
     def receiveTheta(self, msg, k, theta):
-        log.info("Received theta for k=%d", k)
+        log.debug("Received theta for k=%d", k)
         self.xi_current[0:self.N_ang] = theta
         self.theta[:] = theta
+        
+        self.requestPg(k)
         
         time.sleep(1)
         self.compute(k)
     
+    def requestPg(self, k):
+        functionName = self.requestPg.__name__
+        helpers.entrylog(log, functionName)
+        
+        log.debug("Requesting Pg, k:%d", k)
+        kwargs = {'method' : 'sendPg', 'args' : {'k' : k}, 'version' : 1.0}
+        msg = MAGIMessage(groups="gen_group", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
+        self.messenger.send(msg)
+
+        helpers.exitlog(log, functionName)
+    
+    @agentmethod()
     def receivePg(self, msg, k, pg):
-        log.info("Received pg from %s for k=%d: %f", msg.src, k, pg)
+        log.debug("Received pg from %s for k=%d: %f", msg.src, k, pg)
         index = int(msg.src.split("-")[-1])
         self.xi_current[self.N_ang + index] = pg
         self.P_G[index] = pg
     
+    @agentmethod()
     def receivePdr(self, msg, k, pdr):
-        log.info("Received pdr from %s for k=%d: %f", msg.src, k, pdr)
+        log.debug("Received pdr from %s for k=%d: %f", msg.src, k, pdr)
         index = int(msg.src.split("-")[-1])
         self.xi_current[self.N_ang + self.N_gen + index] = pdr
         self.P_D[index] = pdr
@@ -122,15 +141,27 @@ class GridDynamics(NonBlockingDispatchAgent):
         # UPDATE GRID DYNAMICS (centralized)
         log.info("Upgrading grid dynamics")
         
-        log.info("Logging x (k=%d)", k)
-        log.info(self.xi_current)
+        log.debug("Logging x (k=%d)", k)
+        log.debug(self.xi_current)
         
         self.y[:, k+1] = self.Phi.dot(self.y[:, k]) + self.Gamma_P_L.dot(self.P_L[:, k]) \
                                                     + self.Gamma_P_G.dot(self.P_G[:]) \
                                                     + self.Gamma_P_D.dot(self.P_D[:])
-        log.info("Logging y (k=%d)", k+1)
-        log.info(self.y[:, k+1])
+        log.debug("Logging y (k=%d)", k+1)
+        log.debug(self.y[:, k+1])
         self.collection.insert({'k' : k+1, 'y' : self.y[:, k+1].tolist()})
+        
+        freqBus10 = self.y[self.w_state.min()+9, k+1]
+        self.collection.insert({'k' : k+1, 'freqBus10' : freqBus10})
+        
+        maxAbsFreq = np.max(np.absolute(self.y[self.w_state.min():self.w_state.max(), k+1]))
+        log.info("Maximum Absolute Frequency: %f", maxAbsFreq)
+        
+        freqOutsideSoftLimit = maxAbsFreq > 0.02
+        
+        if(freqOutsideSoftLimit != self.freqErrorStatus):
+            self.freqErrorStatus = not self.freqErrorStatus
+            self.sendFreqErrorNotice(self.freqErrorStatus)
 
         self.rho[k+1] = self.rho[k] - self.Kf*self.A3.dot(self.y[:, k])
         log.info("Logging rho(k=%d): %f", k+1, self.rho[k+1])
@@ -140,17 +171,16 @@ class GridDynamics(NonBlockingDispatchAgent):
         self.sendRho(k+1)
         
         self.E_D[:, k+1] = self.E_D[:, k] + self.A4.dot(self.y[:, k])
-        log.info("Logging E_D (k=%d)", k+1)
-        log.info(self.E_D[:, k+1])
+        log.debug("Logging E_D (k=%d)", k+1)
+        log.debug(self.E_D[:, k+1])
         self.collection.insert({'k' : k+1, 'edr' : self.E_D[:, k+1].tolist()})
         
         log.info("Sending E_D to demand response agents")
         self.sendEdr(k+1)
-        
+    
     def sendEdr(self, k):
         functionName = self.sendEdr.__name__
         helpers.entrylog(log, functionName)
-        
         for agentIndex in range(0, self.N_dem):
             node = "dr-"+str(agentIndex)
             edr = self.E_D[agentIndex, k]
@@ -158,14 +188,22 @@ class GridDynamics(NonBlockingDispatchAgent):
             kwargs = {'method' : 'receiveEdr', 'args' : {'k' : k, 'edr' : edr}, 'version' : 1.0}
             msg = MAGIMessage(nodes=node, docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
             self.messenger.send(msg)
-
         helpers.exitlog(log, functionName) 
-        
+    
     def sendRho(self, k):
         functionName = self.sendRho.__name__
         helpers.entrylog(log, functionName, locals())
         kwargs = {'method' : 'receiveRho', 'args' : {'k' : k, 'rho' : self.rho[k]}, 'version' : 1.0}
         log.debug("Sending rho: %s", kwargs['args'])
+        msg = MAGIMessage(nodes="iso", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
+        self.messenger.send(msg)
+        helpers.exitlog(log, functionName) 
+        
+    def sendFreqErrorNotice(self, status):
+        functionName = self.sendFreqErrorNotice.__name__
+        helpers.entrylog(log, functionName, locals())
+        kwargs = {'method' : 'receiveFreqErrorNotice', 'args' : {'status' : status}, 'version' : 1.0}
+        log.info("Sending freqErrorNotice: %s", kwargs['args'])
         msg = MAGIMessage(nodes="iso", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
         self.messenger.send(msg)
         helpers.exitlog(log, functionName) 
