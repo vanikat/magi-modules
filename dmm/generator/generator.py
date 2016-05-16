@@ -6,25 +6,26 @@ import sys
 
 from magi.messaging.magimessage import MAGIMessage
 from magi.util import helpers
-from magi.util.agent import DispatchAgent, agentmethod
+from magi.util.agent import NonBlockingDispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
 import yaml
 
+from commClient import ClientCommService
 import numpy as np
 
 
 log = logging.getLogger(__name__)
 
-class Generator(DispatchAgent):
+class Generator(NonBlockingDispatchAgent):
     
     def __init__(self):
-        DispatchAgent.__init__(self)
+        NonBlockingDispatchAgent.__init__(self)
         self.configFileName = 'AGCDR_agent.mat'
         self.N_iter = 100
         self.active = True
     
     def setConfiguration(self, msg, **kwargs):
-        DispatchAgent.setConfiguration(self, msg, **kwargs)
+        NonBlockingDispatchAgent.setConfiguration(self, msg, **kwargs)
         
         log.info("Loading Config File: %s", self.configFileName)
         self.config = scipy.io.loadmat(self.configFileName, mat_dtype=True)
@@ -64,9 +65,36 @@ class Generator(DispatchAgent):
         
         #Out of Market
         self.lastPgRcvdTs = -1
+        self.currentGridTs = -1
+        
+        self.commClient = None
     
     @agentmethod()
-    def receivePg(self, msg, k, pg):
+    def initCommClient(self, msg):
+        self.commClient = ClientCommService(self.hostname)
+        self.commClient.initCommClient("iso", self.isoPgRequestHandler)
+    
+    @agentmethod()
+    def stop(self, msg):
+        NonBlockingDispatchAgent.stop(self, msg)
+        if self.commClient:
+            self.commClient.stop()
+        
+    def isoPgRequestHandler(self, msgData):
+        log.info("isoPgRequestHandler: %s", msgData)
+        
+        dst = msgData['dst']
+        if dst != self.hostname:
+            log.error("Message sent to incorrect destination.")
+            return
+           
+        k = msgData['k'] 
+        pg = msgData['pg']
+        
+        if k < self.currentGridTs:
+            log.error("Stale message. Dropping. Current TS: %d, Msg TS: %d", 
+                      self.currentGridTs, k)
+            return
         
         if self.active:
             log.info("Received P_G: %f(k=%d)", pg, k)
@@ -80,43 +108,14 @@ class Generator(DispatchAgent):
             self.lastPgRcvdTs = k
             
             self.computeGradF(k)
-            
-            self.sendPgReply(k)
             self.sendGradF(k)
+            #self.sendPgReply(k)
             
         else:
             log.info("Agent is inactive")
             
-        #self.sendPg(None, k)
-        
         self.computeMu(k)
-    
-    def sendPgReply(self, k):
-        functionName = self.sendPgReply.__name__
-        helpers.entrylog(log, functionName)
-        if self.active:
-            pg = self.P_G[k]
-            log.info("Sending P_G Reply: %f (k=%d)", pg, k)
-            kwargs = {'method' : 'receivePg', 'args' : {'k' : k, 'pg' : pg}, 'version' : 1.0}
-            msg = MAGIMessage(nodes="iso", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
-            self.messenger.send(msg)
-        else:
-            log.info("Agent is inactive. No P_G reply sent to ISO.")
-        helpers.exitlog(log, functionName)
-    
-    @agentmethod()
-    def sendPg(self, msg, k):
-        functionName = self.sendPg.__name__
-        helpers.entrylog(log, functionName)
-        if k > self.lastPgRcvdTs:
-            self.P_G[k] = self.P_G[self.lastPgRcvdTs]
-        pg = self.P_G[k]
-        log.info("Sending P_G: %f (k=%d)", pg, k)
-        kwargs = {'method' : 'receivePg', 'args' : {'k' : k, 'pg' : pg}, 'version' : 1.0}
-        msg = MAGIMessage(nodes="grid", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
-        self.messenger.send(msg)
-        helpers.exitlog(log, functionName)
-    
+        
     def computeGradF(self, k):
         functionName = self.computeGradF.__name__
         helpers.entrylog(log, functionName)
@@ -126,20 +125,42 @@ class Generator(DispatchAgent):
     def sendGradF(self, k):
         functionName = self.sendGradF.__name__
         helpers.entrylog(log, functionName, locals())
-        if self.active:
-            grad_f = self.grad_f[k]
-            if self.gradFDeceptionAttack:
-                grad_f += self.gradFDeception
-                self.gradFDeception += self.gradFDeceptionInc
-            log.info("Sending grad_f: %f (k=%d)", grad_f, k)
-            kwargs = {'method' : 'receiveGradF', 'args' : {'k' : k, 'grad_f' : grad_f}, 'version' : 1.0}
-            #log.info("Sending reply: %s", kwargs['args'])
-            msg = MAGIMessage(nodes="iso", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
-            self.messenger.send(msg)
-        else:
-            log.info("Agent is inactive. Grad_f not sent to ISO.")
+        pg = self.P_G[k]
+        grad_f = self.grad_f[k]
+        if self.gradFDeceptionAttack:
+            grad_f += self.gradFDeception
+            self.gradFDeception += self.gradFDeceptionInc
+        log.info("Sending grad_f: %f, P_G: %f (k=%d)", grad_f, pg, k)
+        self.commClient.sendData({'k' : k, 'pg': pg, 'grad_f' : grad_f})
         helpers.exitlog(log, functionName)
-    
+
+#     def sendPgReply(self, k):
+#         functionName = self.sendPgReply.__name__
+#         helpers.entrylog(log, functionName)
+#         if self.active:
+#             pg = self.P_G[k]
+#             log.info("Sending P_G Reply: %f (k=%d)", pg, k)
+#             kwargs = {'method' : 'receivePg', 'args' : {'k' : k, 'pg' : pg}, 'version' : 1.0}
+#             msg = MAGIMessage(nodes="iso", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
+#             self.messenger.send(msg)
+#         else:
+#             log.info("Agent is inactive. No P_G reply sent to ISO.")
+#         helpers.exitlog(log, functionName)
+
+    @agentmethod()
+    def sendPg(self, msg, k):
+        functionName = self.sendPg.__name__
+        helpers.entrylog(log, functionName)
+        self.currentGridTs = k
+        if k > self.lastPgRcvdTs:
+            self.P_G[k] = self.P_G[self.lastPgRcvdTs]
+        pg = self.P_G[k]
+        log.info("Sending P_G: %f (k=%d)", pg, k)
+        kwargs = {'method' : 'receivePg', 'args' : {'k' : k, 'pg' : pg}, 'version' : 1.0}
+        msg = MAGIMessage(nodes="grid", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
+        self.messenger.send(msg)
+        helpers.exitlog(log, functionName)
+            
     def computeMu(self, k):
         functionName = self.computeMu.__name__
         helpers.entrylog(log, functionName)

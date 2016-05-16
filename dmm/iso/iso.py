@@ -8,20 +8,21 @@ import time
 
 from magi.messaging.magimessage import MAGIMessage
 from magi.util import helpers, database
-from magi.util.agent import DispatchAgent, agentmethod
+from magi.util.agent import NonBlockingDispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
 import yaml
 
+from commServer import ServerCommService
 import numpy as np
 
 
 log = logging.getLogger(__name__)
 
 
-class ISO(DispatchAgent):
+class ISO(NonBlockingDispatchAgent):
     
     def __init__(self):
-        DispatchAgent.__init__(self)
+        NonBlockingDispatchAgent.__init__(self)
         self.configFileName = 'AGCDR_agent.mat'
         self.loadProfileConfigFileName = 'AGCDR_profiles.mat'
         self.inactiveGenConfigFile = 'AGCDR_agent_remove.mat'
@@ -30,7 +31,7 @@ class ISO(DispatchAgent):
         self.active = True
         
     def setConfiguration(self, msg, **kwargs):
-        DispatchAgent.setConfiguration(self, msg, **kwargs)
+        NonBlockingDispatchAgent.setConfiguration(self, msg, **kwargs)
         
         log.info("Loading Config File: %s", self.configFileName)
         config = scipy.io.loadmat(self.configFileName, mat_dtype=True)
@@ -122,7 +123,18 @@ class ISO(DispatchAgent):
         
         self.freqErrorStatus = False
         self.commStatusGen = np.zeros((self.N_gen))
+        
+        self.commServer = None
     
+    def initCommServer(self, msg):
+        self.commServer = ServerCommService()
+        self.commServer.initCommServer(self.pgResponseHandler)
+        
+    @agentmethod()
+    def stop(self, msg):
+        NonBlockingDispatchAgent.stop(self, msg)
+        self.commServer.stop()
+        
     def runAgent(self, msg):
         functionName = self.runAgent.__name__
         helpers.entrylog(log, functionName, level=logging.INFO)
@@ -242,17 +254,13 @@ class ISO(DispatchAgent):
     def sendPg(self, k):
         functionName = self.sendPg.__name__
         helpers.entrylog(log, functionName)
-        
         for agentIndex in range(0, self.N_gen):
             if agentIndex in self.inactiveGens:
                 continue
             node = "gen-"+str(agentIndex)
             pg = self.P_G[agentIndex, k]
-            log.debug("Sending Pg, Node: %s, k:%d, Pg:%f", node, k, pg)
-            kwargs = {'method' : 'receivePg', 'args' : {'k' : k, 'pg' : pg}, 'version' : 1.0}
-            msg = MAGIMessage(nodes=node, docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
-            self.messenger.send(msg)
-
+            log.info("Sending P_G, dst: %s, k:%d, pg:%f", node, k, pg)
+            self.commServer.sendData(node, {'k' : k, 'pg' : pg})
         helpers.exitlog(log, functionName)
     
     def sendPdr(self, k):
@@ -261,11 +269,8 @@ class ISO(DispatchAgent):
         for agentIndex in range(0, self.N_dem):
             node = "dr-"+str(agentIndex)
             pdr = self.P_D[agentIndex, k]
-            log.debug("Sending Pdr, Node: %s, k:%d, Pdr:%f", node, k, pdr)
-            kwargs = {'method' : 'receivePdr', 'args' : {'k' : k, 'pdr' : pdr}, 'version' : 1.0}
-            msg = MAGIMessage(nodes=node, docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
-            
-            self.messenger.send(msg)
+            log.info("Sending P_D, dst: %s, k:%d, pdr:%f", node, k, pdr)
+            self.commServer.sendData(node, {'k' : k, 'pdr' : pdr})
         helpers.exitlog(log, functionName)
     
     def sendTheta(self, k):
@@ -277,6 +282,38 @@ class ISO(DispatchAgent):
         self.messenger.send(msg)
         helpers.exitlog(log, functionName)
     
+    def pgResponseHandler(self, msgData):
+        log.debug("pgResponseHandler:: %s", msgData)
+        try:
+            src = msgData['src']
+            k = msgData['k']
+            
+            grad_f = msgData['grad_f']
+            self.recvGradF(src, k, grad_f)
+            
+            if 'pg' in msgData:
+                pg = msgData['pg']
+                self.receivePgReply(src, k, pg)
+        except:
+            log.error("Exception while handling response")
+    
+    def recvGradF(self, src, k, grad_f):
+        log.info("Received grad_f from %s for k=%d: %f", src, k, grad_f)
+        agentType, agentIndex = src.split("-")
+        agentIndex = int(agentIndex)
+        if agentType == "gen":
+            self.grad_f_current[self.N_ang+agentIndex] = grad_f
+        elif agentType == "dr":
+            self.grad_f_current[self.N_ang+self.N_gen+agentIndex] = grad_f
+        else:
+            log.error("Invalid Agent: %s", src)
+    
+    def receivePgReply(self, src, k, pg):
+        log.debug("Received P_G Reply from %s for k=%d: %f", src, k, pg)
+        index = int(src.split("-")[-1])
+        self.xi[self.N_ang + index] = pg
+        self.commStatusGen[index] = 0
+        
     @agentmethod()
     def receiveGradF(self, msg, k, grad_f):
         #log.info("Received X, Source: %s, k:%d, grad_f:%f", msg.src, k, grad_f)
@@ -288,13 +325,6 @@ class ISO(DispatchAgent):
             self.grad_f_current[self.N_ang+self.N_gen+agentIndex] = grad_f
         else:
             log.error("Invalid Agent: %s", msg.src)
-    
-    @agentmethod()
-    def receivePg(self, msg, k, pg):
-        log.debug("Received pg from %s for k=%d: %f", msg.src, k, pg)
-        index = int(msg.src.split("-")[-1])
-        self.xi[self.N_ang + index] = pg
-        self.commStatusGen[index] = 0
     
     @agentmethod()
     def receiveRho(self, msg, k, rho):
@@ -356,12 +386,6 @@ class ISO(DispatchAgent):
         self.A2 = config['A2']
         self.beta = np.squeeze(config['beta'])
     
-    def setupMessaging(self):
-        pass
-    
-    def stopMessaging(self):
-        pass
-
 def addColumn(arr, numOfColumns=1):
     arr = np.append(arr, np.zeros((len(arr), numOfColumns)), axis=1)
     return arr

@@ -108,21 +108,31 @@ class GridDynamics(NonBlockingDispatchAgent):
         self.theta[:] = theta
         
         self.requestPg(k)
+        self.requestPdr(k)
         
+        #Waiting to receive pg and pdr
         time.sleep(1)
+        
         self.compute(k)
     
     def requestPg(self, k):
         functionName = self.requestPg.__name__
         helpers.entrylog(log, functionName)
-        
         log.debug("Requesting Pg, k:%d", k)
         kwargs = {'method' : 'sendPg', 'args' : {'k' : k}, 'version' : 1.0}
         msg = MAGIMessage(groups="gen_group", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
         self.messenger.send(msg)
-
         helpers.exitlog(log, functionName)
-    
+
+    def requestPdr(self, k):
+        functionName = self.requestPdr.__name__
+        helpers.entrylog(log, functionName)
+        log.debug("Requesting Pdr, k:%d", k)
+        kwargs = {'method' : 'sendPdr', 'args' : {'k' : k}, 'version' : 1.0}
+        msg = MAGIMessage(groups="dr_group", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
+        self.messenger.send(msg)
+        helpers.exitlog(log, functionName)
+            
     @agentmethod()
     def receivePg(self, msg, k, pg):
         log.debug("Received pg from %s for k=%d: %f", msg.src, k, pg)

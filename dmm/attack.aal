@@ -11,7 +11,9 @@ groups:
               gen-30, gen-31, gen-32, gen-33, gen-34, gen-35, gen-36, gen-37, gen-38, gen-39,
               gen-40, gen-41, gen-42, gen-43, gen-44, gen-45, gen-46, gen-47, gen-48, gen-49,
               gen-50, gen-51, gen-52, gen-53]
-
+  attacker_group: [control]
+  sensor_group: [control]
+  
 # Base config file    
 configFileName: &config /proj/montage/magi-modules/dmm/AGCDR_agent_revised.mat
 
@@ -49,7 +51,17 @@ agents:
     dock: dmm_dock
     execargs: {configFileName: *config, loadProfileConfigFileName: *loadConfig, N_iter: *niter}
     
-streamstarts: [ grid_stream, attack_stream ]
+  attacker_agent:
+    group: attacker_group
+    path: /share/magi/modules/flooder/flooder.tar.gz
+    execargs: {dst: 'gen-4-linkAttack', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '15000', sport: 'minmax(1024,4096)'}
+  
+  intfsensor_agent:
+    group: sensor_group
+    path: /share/magi/modules/pktcounters/
+    execargs: {}
+    
+streamstarts: [ grid_stream, attack_stream, sensor_stream ]
 
 eventstreams:
 
@@ -99,9 +111,6 @@ eventstreams:
         args: {}
         trigger: agentStopped
 
-      - type: trigger
-        triggers: [ {event: agentStopped, target: 'exit'} ]
-
   attack_stream:
       - type: trigger
         triggers: [ {event: agentRunning} ]
@@ -110,18 +119,39 @@ eventstreams:
         triggers: [ {timeout: 20000} ]
         
       - type: event
-        agent: gen_agent
-        method: deactivate
-        args: 
-            nodes: *attack_nodes
-        trigger: deactivated
+        agent: attacker_agent
+        method: startFlood
+        args: {}
+        trigger: attackStarted
         
       - type: trigger
         triggers: [ {timeout: 180000} ]
 
       - type: event
-        agent: gen_agent
-        method: activate
-        args: 
-            nodes: *attack_nodes
-        trigger: activated
+        agent: attacker_agent
+        method: stopFlood
+        args: {}
+        trigger: attackStopped
+        
+  sensor_stream:
+      - type: trigger
+        triggers: [ { event: agentRunning } ] 
+
+      - type: event
+        agent: intfsensor_agent
+        method: startCollection
+        args: {}
+        trigger: monitorStarted
+
+      - type: trigger
+        triggers: [ { event: agentStopped} ]
+
+      - type: event
+        agent: intfsensor_agent
+        method: stopCollection
+        trigger: monitorStopped 
+        args: {} 
+        
+      - type: trigger
+        triggers: [ {event: monitorStopped, target: 'exit'} ]
+        

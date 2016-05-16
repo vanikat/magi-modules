@@ -54,6 +54,33 @@ eventstreams:
   grid_stream:         
       - type: event
         agent: iso_agent
+        method: initCommServer
+        args: {}
+        trigger: commServerInitialized
+
+      - type: trigger
+        triggers: [ {event: commServerInitialized} ]
+        
+      - type: event
+        agent: gen_agent
+        method: initCommClient
+        args: {}
+        trigger: genCommClientInitialized
+
+      - type: event
+        agent: dr_agent
+        method: initCommClient
+        args: {}
+        trigger: drCommClientInitialized
+
+      - type: trigger
+        triggers: [ {event: genCommClientInitialized} ]
+        
+      - type: trigger
+        triggers: [ {event: drCommClientInitialized} ]
+                
+      - type: event
+        agent: iso_agent
         method: runAgent
         args: {}
         trigger: agentRunning
@@ -72,4 +99,3 @@ eventstreams:
 
       - type: trigger
         triggers: [ {event: agentStopped, target: 'exit'} ]
-
