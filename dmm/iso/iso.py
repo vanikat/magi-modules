@@ -119,13 +119,18 @@ class ISO(NonBlockingDispatchAgent):
         self.collection = database.getCollection("iso_agent")
         self.collection.remove({})
         
+        # generators removed from the market
         self.inactiveGens = []
         
+        # frequency out soft limit or not, managed by grid dynamics agent
         self.freqErrorStatus = False
-        self.commStatusGen = np.zeros((self.N_gen))
+        
+        # how many time-steps ago did the iso last hear from the generators
+        self.lastHeardFromGenMap = np.zeros((self.N_gen))
         
         self.commServer = None
     
+    @agentmethod()
     def initCommServer(self, msg):
         self.commServer = ServerCommService()
         self.commServer.initCommServer(self.pgResponseHandler)
@@ -134,7 +139,8 @@ class ISO(NonBlockingDispatchAgent):
     def stop(self, msg):
         NonBlockingDispatchAgent.stop(self, msg)
         self.commServer.stop()
-        
+    
+    @agentmethod()
     def runAgent(self, msg):
         functionName = self.runAgent.__name__
         helpers.entrylog(log, functionName, level=logging.INFO)
@@ -157,7 +163,7 @@ class ISO(NonBlockingDispatchAgent):
                 
             lastItrTS = time.time()
             
-            self.commStatusGen += 1
+            self.lastHeardFromGenMap += 1
             
             # break apart components of x to send to agents
             log.info("Splitting x")
@@ -197,9 +203,9 @@ class ISO(NonBlockingDispatchAgent):
             
             if(self.freqErrorStatus):
                 log.info("Frequency Error")
-                if ((self.commStatusGen > 10).any()):
+                if ((self.lastHeardFromGenMap > 10).any()):
                     log.info("Communication Error Found")
-                    errorGens = np.where(self.commStatusGen > 10)[0]
+                    errorGens = np.where(self.lastHeardFromGenMap > 10)[0]
                     for eg in errorGens:
                         self.removeGenerator(eg, k)
             
@@ -289,7 +295,7 @@ class ISO(NonBlockingDispatchAgent):
             k = msgData['k']
             
             grad_f = msgData['grad_f']
-            self.recvGradF(src, k, grad_f)
+            self.receiveGradF(src, k, grad_f)
             
             if 'pg' in msgData:
                 pg = msgData['pg']
@@ -297,7 +303,7 @@ class ISO(NonBlockingDispatchAgent):
         except:
             log.error("Exception while handling response")
     
-    def recvGradF(self, src, k, grad_f):
+    def receiveGradF(self, src, k, grad_f):
         log.info("Received grad_f from %s for k=%d: %f", src, k, grad_f)
         agentType, agentIndex = src.split("-")
         agentIndex = int(agentIndex)
@@ -312,20 +318,8 @@ class ISO(NonBlockingDispatchAgent):
         log.debug("Received P_G Reply from %s for k=%d: %f", src, k, pg)
         index = int(src.split("-")[-1])
         self.xi[self.N_ang + index] = pg
-        self.commStatusGen[index] = 0
+        self.lastHeardFromGenMap[index] = 0
         
-    @agentmethod()
-    def receiveGradF(self, msg, k, grad_f):
-        #log.info("Received X, Source: %s, k:%d, grad_f:%f", msg.src, k, grad_f)
-        agentType, agentIndex = msg.src.split("-")
-        agentIndex = int(agentIndex)
-        if agentType == "gen":
-            self.grad_f_current[self.N_ang+agentIndex] = grad_f
-        elif agentType == "dr":
-            self.grad_f_current[self.N_ang+self.N_gen+agentIndex] = grad_f
-        else:
-            log.error("Invalid Agent: %s", msg.src)
-    
     @agentmethod()
     def receiveRho(self, msg, k, rho):
         functionName = self.receiveRho.__name__

@@ -81,7 +81,7 @@ class Generator(NonBlockingDispatchAgent):
             self.commClient.stop()
         
     def isoPgRequestHandler(self, msgData):
-        log.info("isoPgRequestHandler: %s", msgData)
+        log.debug("isoPgRequestHandler: %s", msgData)
         
         dst = msgData['dst']
         if dst != self.hostname:
@@ -97,7 +97,7 @@ class Generator(NonBlockingDispatchAgent):
             return
         
         if self.active:
-            log.info("Received P_G: %f(k=%d)", pg, k)
+            log.info("Received P_G from ISO: %f(k=%d)", pg, k)
             self.P_G[k] = pg + self.deception
             
             if self.P_G[k] < self.P_Gmin:
@@ -130,7 +130,7 @@ class Generator(NonBlockingDispatchAgent):
         if self.gradFDeceptionAttack:
             grad_f += self.gradFDeception
             self.gradFDeception += self.gradFDeceptionInc
-        log.info("Sending grad_f: %f, P_G: %f (k=%d)", grad_f, pg, k)
+        log.info("Sending grad_f to ISO: %f, P_G: %f (k=%d)", grad_f, pg, k)
         self.commClient.sendData({'k' : k, 'pg': pg, 'grad_f' : grad_f})
         helpers.exitlog(log, functionName)
 
@@ -155,7 +155,7 @@ class Generator(NonBlockingDispatchAgent):
         if k > self.lastPgRcvdTs:
             self.P_G[k] = self.P_G[self.lastPgRcvdTs]
         pg = self.P_G[k]
-        log.info("Sending P_G: %f (k=%d)", pg, k)
+        log.info("Sending P_G to grid agent: %f (k=%d)", pg, k)
         kwargs = {'method' : 'receivePg', 'args' : {'k' : k, 'pg' : pg}, 'version' : 1.0}
         msg = MAGIMessage(nodes="grid", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
         self.messenger.send(msg)

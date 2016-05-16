@@ -58,28 +58,28 @@ eventstreams:
         agent: iso_agent
         method: initCommServer
         args: {}
-        trigger: commServerInitialized
+        trigger: commServerStarted
 
       - type: trigger
-        triggers: [ {event: commServerInitialized} ]
+        triggers: [ {event: commServerStarted} ]
         
       - type: event
         agent: gen_agent
         method: initCommClient
         args: {}
-        trigger: genCommClientInitialized
+        trigger: genCommClientConnected
 
       - type: event
         agent: dr_agent
         method: initCommClient
         args: {}
-        trigger: drCommClientInitialized
+        trigger: drCommClientConnected
 
       - type: trigger
-        triggers: [ {event: genCommClientInitialized} ]
+        triggers: [ {event: genCommClientConnected} ]
         
       - type: trigger
-        triggers: [ {event: drCommClientInitialized} ]
+        triggers: [ {event: drCommClientConnected} ]
                 
       - type: event
         agent: iso_agent

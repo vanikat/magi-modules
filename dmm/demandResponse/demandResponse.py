@@ -92,7 +92,7 @@ class DemandResponse(NonBlockingDispatchAgent):
             return
         
         if self.active:
-            log.info("Received P_D: %f(k=%d)", pdr, k)
+            log.info("Received P_D from ISO: %f(k=%d)", pdr, k)
             self.P_D[k] = pdr
             
             if self.P_D[k] < self.P_Dmin:
@@ -121,7 +121,7 @@ class DemandResponse(NonBlockingDispatchAgent):
         helpers.entrylog(log, functionName)
         pdr = self.P_D[k]
         grad_f = self.grad_f[k]
-        log.info("Sending grad_f: %f, P_D: %f (k=%d)", grad_f, pdr, k)
+        log.info("Sending grad_f to ISO: %f, P_D: %f (k=%d)", grad_f, pdr, k)
         self.commClient.sendData({'k' : k, 'pdr': pdr, 'grad_f' : grad_f})
         helpers.exitlog(log, functionName)
     
@@ -133,7 +133,7 @@ class DemandResponse(NonBlockingDispatchAgent):
         if k > self.lastPdrRcvdTs:
             self.P_D[k] = self.P_D[self.lastPdrRcvdTs]
         pdr = self.P_D[k]
-        log.info("Sending P_D: %f (k=%d)", pdr, k)
+        log.info("Sending P_D to grid agent: %f (k=%d)", pdr, k)
         kwargs = {'method' : 'receivePdr', 'args' : {'k' : k, 'pdr' : pdr}, 'version' : 1.0}
         msg = MAGIMessage(nodes="grid", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
         self.messenger.send(msg)
@@ -141,7 +141,7 @@ class DemandResponse(NonBlockingDispatchAgent):
         
     @agentmethod()
     def receiveEdr(self, msg, k, edr):
-        log.info("Received E_D: %f(k=%d)", edr, k)
+        log.info("Received E_D from grid agent: %f(k=%d)", edr, k)
         self.E_D[k] = edr
     
     def computeMu(self, k):
