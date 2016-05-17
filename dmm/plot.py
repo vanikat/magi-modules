@@ -88,6 +88,10 @@ def plotData(figs_dir, data_file):
         plot(collection, "grid_agent", "y", "Actual Generation", "generation_actual", Pm_state, figs_dir)
         
         plot(collection, "grid_agent", "rho", "Rho", "rho", None, figs_dir)
+        
+        plot(collection, "iso_agent", "gpp", "Generator Power Price", "gpp", None, figs_dir)
+        plot(collection, "iso_agent", "gtpc", "Generator Total Power Cost", "gtpc", None, figs_dir)
+         
 
     
     finally:
@@ -129,7 +133,7 @@ if __name__ == "__main__":
 #         
 #         plotData(figs_dir, data_file)    
     
-    figs_dir = "/Users/jaipuria/playground/cps/dmm_figs/attack_new/default/"
+    figs_dir = "/Users/jaipuria/playground/cps/dmm_figs/attack_new/temp/"
     if not os.path.exists(figs_dir):
         os.makedirs(figs_dir)
     

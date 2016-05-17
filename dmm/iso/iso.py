@@ -25,7 +25,7 @@ class ISO(NonBlockingDispatchAgent):
         NonBlockingDispatchAgent.__init__(self)
         self.configFileName = 'AGCDR_agent.mat'
         self.loadProfileConfigFileName = 'AGCDR_profiles.mat'
-        self.inactiveGenConfigFile = 'AGCDR_agent_remove.mat'
+        self.inactiveGenConfigFile = 'AGCDR_agent_removed_<removed-node>.mat'
         self.N_iter = 100
         self.thread = None
         self.active = True
@@ -111,6 +111,11 @@ class ISO(NonBlockingDispatchAgent):
         self.mu2[:, 0] = config['mu2'][:, -1]
         self.rho[0] = config['rho']
         
+        # Generator Power Price
+        self.gpp = np.zeros((self.N_gen, self.N_iter+1));
+        # Generator Total Power Cost
+        self.gtpc = np.zeros((self.N_gen, self.N_iter+1));
+        
         # Splitting components of x
         self.theta[:, 0] = self.xi[0:self.N_ang, 0]
         self.P_G[:, 0] = self.xi[(self.N_ang):(self.N_ang+self.N_gen), 0]
@@ -168,8 +173,8 @@ class ISO(NonBlockingDispatchAgent):
             # break apart components of x to send to agents
             log.info("Splitting x")
             self.theta[:, k] = self.xi[0:self.N_ang, k]
-            self.P_G[:, k] = self.xi[(self.N_ang):(self.N_ang+self.N_gen), k];
-            self.P_D[:, k] = self.xi[(self.N_ang+self.N_gen):(self.N_ang+self.N_gen+self.N_dem), k];
+            self.P_G[:, k] = self.xi[(self.N_ang):(self.N_ang+self.N_gen), k]
+            self.P_D[:, k] = self.xi[(self.N_ang+self.N_gen):(self.N_ang+self.N_gen+self.N_dem), k]
             
             log.debug("Logging xi (k=%d)", k)
             log.debug(self.xi[:, k])
@@ -188,7 +193,7 @@ class ISO(NonBlockingDispatchAgent):
             
             # voltage angles (computed by ISO)
             log.info("Computing voltage angles")
-            self.grad_f_current[0:self.N_ang] = self.T_lineR.conj().transpose().dot(self.mu2[:, k] - self.mu1[:, k])
+            self.grad_f_current[0:self.N_ang] = self.T_lineR.transpose().dot(self.mu2[:, k] - self.mu1[:, k])
             
             #TODO: Wait to receive grad_fs, Pg reply and rho
             time.sleep(1) 
@@ -224,17 +229,27 @@ class ISO(NonBlockingDispatchAgent):
             
             # compute lambda_hat (at ISO)
             log.info("Computing lamda_hat")
-            self.lambda_hat[:, k] = self.A1.dot(self.Nh.conj().transpose().dot(xi_active) 
+            self.lambda_hat[:, k] = self.A1.dot(self.Nh.transpose().dot(xi_active) 
                                                      + self.beta*self.rho[k] + self.P_L_hat[:, k] - self.A2.dot(grad_f_active))
             #log.info(self.lambda_hat[:, k])
             
             # compute prices
             log.info("Computing lambda")
-            self.lambda_[:, k] = self.lambda_hat[:, k] - self.alpha*self.gamma*(self.Nh.conj().transpose().dot(xi_active) 
+            self.lambda_[:, k] = self.lambda_hat[:, k] - self.alpha*self.gamma*(self.Nh.transpose().dot(xi_active) 
                                                      + self.beta*self.rho[k] + self.P_L_hat[:, k])
             
             #log.info(self.lambda_[:, k])
             self.collection.insert({'k' : k, 'lambda' : self.lambda_[:, k].tolist()})
+            
+            log.info("Computing generator power price")
+            self.gpp[:, k] = self.A_G.transpose().dot(self.lambda_[:, k])
+            #log.info("Logging generator power price")
+            #log.info(self.gpp[:, k])
+            self.collection.insert({'k' : k, 'gpp' : self.gpp[:, k].tolist()})
+            
+            log.info("Computing generator total power cost")
+            self.gtpc[:, k] = self.xi[(self.N_ang):(self.N_ang+self.N_gen), k] * self.gpp[:, k]
+            self.collection.insert({'k' : k, 'gtpc' : self.gtpc[:, k].tolist()})
             
             # compute gradient of Lagrangian (at ISO)
             log.info("Computing gradient of Lagrangian")
@@ -317,7 +332,7 @@ class ISO(NonBlockingDispatchAgent):
     def receivePgReply(self, src, k, pg):
         log.debug("Received P_G Reply from %s for k=%d: %f", src, k, pg)
         index = int(src.split("-")[-1])
-        self.xi[self.N_ang + index] = pg
+        self.xi[self.N_ang + index, k] = pg
         self.lastHeardFromGenMap[index] = 0
         
     @agentmethod()
@@ -373,7 +388,11 @@ class ISO(NonBlockingDispatchAgent):
             return
         self.inactiveGens.append(genNum)
         self.inactivePgLoad[genNum] = self.P_G[genNum, k]
-        config = scipy.io.loadmat(self.inactiveGenConfigFile, mat_dtype=True)
+        
+        newConfigFile = self.inactiveGenConfigFile.replace('<removed-node>', 
+                                                           'gen-'+str(genNum+1))
+        log.info("Loading new config file: %s" %(newConfigFile))
+        config = scipy.io.loadmat(newConfigFile, mat_dtype=True)
         self.Nh = config['Nh']
         self.Hbarinv = config['Hbarinv']
         self.A1 = config['A1']

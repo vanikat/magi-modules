@@ -20,7 +20,7 @@ loadProfileConfigFileName: &loadConfig /proj/montage/magi-modules/dmm/AGCDR_prof
 
 attack_group: &attack_nodes [gen-4]
 
-inactiveGenConfigFile: &inactiveGenConfig /proj/montage/magi-modules/dmm/AGCDR_agent_removed_gen5.mat
+inactiveGenConfigFile: &inactiveGenConfig /proj/montage/magi-modules/dmm/AGCDR_agent_removed_<removed-node>.mat
 
 iterations: &niter 150
 

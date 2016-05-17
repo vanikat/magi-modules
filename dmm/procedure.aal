@@ -18,7 +18,7 @@ configFileName: &config /proj/montage/magi-modules/dmm/AGCDR_agent_revised.mat
 # Load profile config file
 loadProfileConfigFileName: &loadConfig /proj/montage/magi-modules/dmm/AGCDR_profiles.mat
 
-inactiveGenConfigFile: &inactiveGenConfig /proj/montage/magi-modules/dmm/AGCDR_agent_removed.mat
+inactiveGenConfigFile: &inactiveGenConfig /proj/montage/magi-modules/dmm/AGCDR_agent_removed_<removed-node>.mat
 
 iterations: &niter 150
 
