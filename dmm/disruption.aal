@@ -59,7 +59,7 @@ agents:
   intfsensor_agent:
     group: sensor_group
     path: /share/magi/modules/pktcounters/
-    execargs: {}
+    execargs: {interval: 2}
     
 streamstarts: [ grid_stream, attack_stream, sensor_stream ]
 

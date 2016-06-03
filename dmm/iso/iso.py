@@ -112,7 +112,7 @@ class ISO(NonBlockingDispatchAgent):
         self.rho[0] = config['rho']
         
         # Generator Power Price
-        self.gpp = np.zeros((self.N_gen, self.N_iter+1));
+        self.gppu = np.zeros((self.N_gen, self.N_iter+1));
         # Generator Total Power Cost
         self.gtpc = np.zeros((self.N_gen, self.N_iter+1));
         
@@ -124,8 +124,8 @@ class ISO(NonBlockingDispatchAgent):
         self.collection = database.getCollection("iso_agent")
         self.collection.remove({})
         
-        # generators removed from the market
-        self.inactiveGens = []
+        # generator status (active in the market or not)
+        self.statusGens = np.ones((self.N_gen), dtype=bool)
         
         # frequency out soft limit or not, managed by grid dynamics agent
         self.freqErrorStatus = False
@@ -138,7 +138,7 @@ class ISO(NonBlockingDispatchAgent):
     @agentmethod()
     def initCommServer(self, msg):
         self.commServer = ServerCommService()
-        self.commServer.initCommServer(self.pgResponseHandler)
+        self.commServer.initCommServer(self.responseHandler)
         
     @agentmethod()
     def stop(self, msg):
@@ -206,6 +206,8 @@ class ISO(NonBlockingDispatchAgent):
 #                 log.info("Removing generator 5")
 #                 self.removeGenerator(4, k)
             
+            self.collection.insert({'k' : k, 'lastResponse' : self.lastHeardFromGenMap.tolist()})
+            
             if(self.freqErrorStatus):
                 log.info("Frequency Error")
                 if ((self.lastHeardFromGenMap > 10).any()):
@@ -213,6 +215,8 @@ class ISO(NonBlockingDispatchAgent):
                     errorGens = np.where(self.lastHeardFromGenMap > 10)[0]
                     for eg in errorGens:
                         self.removeGenerator(eg, k)
+            
+            self.collection.insert({'k' : k, 'statusGens' : self.statusGens.tolist()})
             
             log.info("Trimming to active generators only")
             xi_active = self.getActive(self.xi[:, k])
@@ -241,15 +245,29 @@ class ISO(NonBlockingDispatchAgent):
             #log.info(self.lambda_[:, k])
             self.collection.insert({'k' : k, 'lambda' : self.lambda_[:, k].tolist()})
             
-            log.info("Computing generator power price")
-            self.gpp[:, k] = self.A_G.transpose().dot(self.lambda_[:, k])
-            #log.info("Logging generator power price")
-            #log.info(self.gpp[:, k])
-            self.collection.insert({'k' : k, 'gpp' : self.gpp[:, k].tolist()})
+            log.info("Computing generator power price per unit")
+            self.gppu[:, k] = self.A_G.transpose().dot(self.lambda_[:, k])
+            #log.info("Logging generator power price per unit")
+            #log.info(self.gppu[:, k])
+            self.collection.insert({'k' : k, 'gppu' : self.gppu[:, k].tolist()})
+            
+            self.collection.insert({'k' : k, 'grad_f' : self.grad_f_current[(self.N_ang):(self.N_ang+self.N_gen)].tolist()})
             
             log.info("Computing generator total power cost")
-            self.gtpc[:, k] = self.xi[(self.N_ang):(self.N_ang+self.N_gen), k] * self.gpp[:, k]
+            self.gtpc[:, k] = self.xi[(self.N_ang):(self.N_ang+self.N_gen), k] * self.gppu[:, k]
+            #log.info(self.gtpc[:, k])
             self.collection.insert({'k' : k, 'gtpc' : self.gtpc[:, k].tolist()})
+            
+            # total power cost
+            tpc = np.sum(self.gtpc[:, k])
+            # total power generated
+            tpg = np.sum(self.xi[(self.N_ang):(self.N_ang+self.N_gen), k])
+            # average power per unit
+            appu = tpc/tpg
+            
+            self.collection.insert({'k' : k, 'tpg' : tpg})
+            self.collection.insert({'k' : k, 'tpc' : tpc})
+            self.collection.insert({'k' : k, 'appu' : appu})
             
             # compute gradient of Lagrangian (at ISO)
             log.info("Computing gradient of Lagrangian")
@@ -276,11 +294,11 @@ class ISO(NonBlockingDispatchAgent):
         functionName = self.sendPg.__name__
         helpers.entrylog(log, functionName)
         for agentIndex in range(0, self.N_gen):
-            if agentIndex in self.inactiveGens:
-                continue
+            if not self.statusGens[agentIndex]:
+                continue # inactive generator
             node = "gen-"+str(agentIndex)
             pg = self.P_G[agentIndex, k]
-            log.info("Sending P_G, dst: %s, k:%d, pg:%f", node, k, pg)
+            log.debug("Sending P_G, dst: %s, k:%d, pg:%f", node, k, pg)
             self.commServer.sendData(node, {'k' : k, 'pg' : pg})
         helpers.exitlog(log, functionName)
     
@@ -290,7 +308,7 @@ class ISO(NonBlockingDispatchAgent):
         for agentIndex in range(0, self.N_dem):
             node = "dr-"+str(agentIndex)
             pdr = self.P_D[agentIndex, k]
-            log.info("Sending P_D, dst: %s, k:%d, pdr:%f", node, k, pdr)
+            log.debug("Sending P_D, dst: %s, k:%d, pdr:%f", node, k, pdr)
             self.commServer.sendData(node, {'k' : k, 'pdr' : pdr})
         helpers.exitlog(log, functionName)
     
@@ -303,8 +321,8 @@ class ISO(NonBlockingDispatchAgent):
         self.messenger.send(msg)
         helpers.exitlog(log, functionName)
     
-    def pgResponseHandler(self, msgData):
-        log.debug("pgResponseHandler:: %s", msgData)
+    def responseHandler(self, msgData):
+        log.debug("responseHandler:: %s", msgData)
         try:
             src = msgData['src']
             k = msgData['k']
@@ -315,11 +333,12 @@ class ISO(NonBlockingDispatchAgent):
             if 'pg' in msgData:
                 pg = msgData['pg']
                 self.receivePgReply(src, k, pg)
+            # pd can be extracted in a similar way 
         except:
             log.error("Exception while handling response")
     
     def receiveGradF(self, src, k, grad_f):
-        log.info("Received grad_f from %s for k=%d: %f", src, k, grad_f)
+        log.debug("Received grad_f from %s for k=%d: %f", src, k, grad_f)
         agentType, agentIndex = src.split("-")
         agentIndex = int(agentIndex)
         if agentType == "gen":
@@ -355,8 +374,7 @@ class ISO(NonBlockingDispatchAgent):
     def getActive(self, full):
         active = np.ndarray((0,))
         curItr = 0
-        self.inactiveGens.sort()
-        for g in self.inactiveGens:
+        for g in np.where(self.statusGens == False)[0]:
             active = np.concatenate((active, full[curItr:self.N_ang+g]))
             curItr = self.N_ang+g+1
         active = np.concatenate((active, full[curItr:]))
@@ -365,8 +383,7 @@ class ISO(NonBlockingDispatchAgent):
     def getFull(self, active):
         full = np.ndarray((0,))
         curItr = 0
-        self.inactiveGens.sort()
-        for g in self.inactiveGens:
+        for g in np.where(self.statusGens == False)[0]:
             full = np.concatenate((full, active[curItr:self.N_ang+g]))
             full = np.concatenate((full, [0]))
             curItr = self.N_ang+g
@@ -383,10 +400,10 @@ class ISO(NonBlockingDispatchAgent):
     
     def removeGenerator(self, genNum, k):
         log.info("Removing generator %d at k:%d" %(genNum, k))
-        if genNum in self.inactiveGens:
+        if not self.statusGens[genNum]:
             log.info("Already Inactive")
             return
-        self.inactiveGens.append(genNum)
+        self.statusGens[genNum] = False
         self.inactivePgLoad[genNum] = self.P_G[genNum, k]
         
         newConfigFile = self.inactiveGenConfigFile.replace('<removed-node>', 

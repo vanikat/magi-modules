@@ -5,7 +5,7 @@ import scipy.io
 import sys
 
 from magi.messaging.magimessage import MAGIMessage
-from magi.util import helpers
+from magi.util import helpers, database
 from magi.util.agent import NonBlockingDispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
 import yaml
@@ -57,8 +57,10 @@ class Generator(NonBlockingDispatchAgent):
         self.mu3[0] = self.config['mu3'][self.index]
         self.mu4[0] = self.config['mu4'][self.index]
         
+        self.collection = database.getCollection("gen_agent")
+        self.collection.remove({})
+        
         #Attack
-        self.deception = 0
         self.gradFDeceptionAttack = False
         self.gradFDeception = 0
         self.gradFDeceptionInc = 0
@@ -98,13 +100,12 @@ class Generator(NonBlockingDispatchAgent):
         
         if self.active:
             log.info("Received P_G from ISO: %f(k=%d)", pg, k)
-            self.P_G[k] = pg + self.deception
+            if pg < self.P_Gmin:
+                pg = self.P_Gmin
+            elif pg > self.P_Gmax:
+                pg = self.P_Gmax
             
-            if self.P_G[k] < self.P_Gmin:
-                self.P_G[k] = self.P_Gmin
-            elif self.P_G[k] > self.P_Gmax:
-                self.P_G[k] = self.P_Gmax
-            
+            self.P_G[k] = pg
             self.lastPgRcvdTs = k
             
             self.computeGradF(k)
@@ -127,7 +128,10 @@ class Generator(NonBlockingDispatchAgent):
         helpers.entrylog(log, functionName, locals())
         pg = self.P_G[k]
         grad_f = self.grad_f[k]
+        self.collection.insert({'k' : k, 'gradFDeception' : self.gradFDeception})
         if self.gradFDeceptionAttack:
+            log.info("gradFDeception grad_f: %f, deception: %f (k=%d)", 
+                     grad_f, self.gradFDeception, k)
             grad_f += self.gradFDeception
             self.gradFDeception += self.gradFDeceptionInc
         log.info("Sending grad_f to ISO: %f, P_G: %f (k=%d)", grad_f, pg, k)
@@ -184,28 +188,18 @@ class Generator(NonBlockingDispatchAgent):
             self.active = True
     
     @agentmethod()
-    def startDeception(self, msg, deception, nodes):
-        log.info("Attacked nodes: %s", nodes)
-        if self.hostname in nodes:
-            log.info("Activated deception %d", deception)
-            self.deception = deception
-        
-    @agentmethod()
-    def stopDeception(self, msg, nodes):
-        self.deception = 0
-    
-    @agentmethod()
     def startGradFDeception(self, msg, initial, increment, nodes):
         log.info("Attacked nodes: %s", nodes)
         if self.hostname in nodes:
             self.gradFDeception = initial
             self.gradFDeceptionInc = increment
-            log.info("Activated grad_f deception, initial %d, increment %d", initial, increment)
+            log.info("Activated grad_f deception, initial %f, increment %f", initial, increment)
             self.gradFDeceptionAttack = True
     
     @agentmethod()
     def stopGradFDeception(self, msg, nodes):
-        self.gradFDeceptionAttack = False       
+        self.gradFDeceptionAttack = False    
+        self.gradFDeception = 0   
     
         
 def getAgent(**kwargs):

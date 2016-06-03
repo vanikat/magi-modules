@@ -18,9 +18,9 @@ configFileName: &config /proj/montage/magi-modules/dmm/AGCDR_agent_revised.mat
 # Load profile config file
 loadProfileConfigFileName: &loadConfig /proj/montage/magi-modules/dmm/AGCDR_profiles.mat
 
-attack_group: &attack_nodes [gen-4]
+attack_group: &attack_nodes [gen-39]
 
-inactiveGenConfigFile: &inactiveGenConfig /proj/montage/magi-modules/dmm/AGCDR_agent_removed_gen5.mat
+inactiveGenConfigFile: &inactiveGenConfig /proj/montage/magi-modules/dmm/AGCDR_agent_removed_<removed-node>.mat
 
 iterations: &niter 150
 
@@ -56,6 +56,33 @@ eventstreams:
   grid_stream:         
       - type: event
         agent: iso_agent
+        method: initCommServer
+        args: {}
+        trigger: commServerInitialized
+
+      - type: trigger
+        triggers: [ {event: commServerInitialized} ]
+        
+      - type: event
+        agent: gen_agent
+        method: initCommClient
+        args: {}
+        trigger: genCommClientInitialized
+
+      - type: event
+        agent: dr_agent
+        method: initCommClient
+        args: {}
+        trigger: drCommClientInitialized
+
+      - type: trigger
+        triggers: [ {event: genCommClientInitialized} ]
+        
+      - type: trigger
+        triggers: [ {event: drCommClientInitialized} ]
+                
+      - type: event
+        agent: iso_agent
         method: runAgent
         args: {}
         trigger: agentRunning
@@ -84,16 +111,28 @@ eventstreams:
         
       - type: event
         agent: gen_agent
-        method: startDeception
+        method: startGradFDeception
         args: 
-            deception: 5
+            initial: 0.1
+            increment: 0.1
             nodes: *attack_nodes
         
       - type: trigger
-        triggers: [ {timeout: 180000} ]
+        triggers: [ {timeout: 90000} ]
 
       - type: event
         agent: gen_agent
-        method: stopDeception
+        method: startGradFDeception
+        args: 
+            initial: 4.5
+            increment: -0.1
+            nodes: *attack_nodes
+
+      - type: trigger
+        triggers: [ {timeout: 90000} ]
+                    
+      - type: event
+        agent: gen_agent
+        method: stopGradFDeception
         args: 
             nodes: *attack_nodes

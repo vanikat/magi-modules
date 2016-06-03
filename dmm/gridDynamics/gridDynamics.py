@@ -161,10 +161,10 @@ class GridDynamics(NonBlockingDispatchAgent):
         log.debug(self.y[:, k+1])
         self.collection.insert({'k' : k+1, 'y' : self.y[:, k+1].tolist()})
         
-        freqBus10 = self.y[self.w_state.min()+9, k+1]
-        self.collection.insert({'k' : k+1, 'freqBus10' : freqBus10})
+        extremeFreq = self.extreme(self.y[self.w_state.min():self.w_state.max(), k+1])
+        self.collection.insert({'k' : k+1, 'extremeFreq' : extremeFreq})
         
-        maxAbsFreq = np.max(np.absolute(self.y[self.w_state.min():self.w_state.max(), k+1]))
+        maxAbsFreq = np.abs(extremeFreq)
         log.info("Maximum Absolute Frequency: %f", maxAbsFreq)
         
         freqOutsideSoftLimit = maxAbsFreq > 0.02
@@ -216,8 +216,15 @@ class GridDynamics(NonBlockingDispatchAgent):
         log.info("Sending freqErrorNotice: %s", kwargs['args'])
         msg = MAGIMessage(nodes="iso", docks="dmm_dock", data=yaml.dump(kwargs), contenttype=MAGIMessage.YAML)
         self.messenger.send(msg)
-        helpers.exitlog(log, functionName) 
-
+        helpers.exitlog(log, functionName)
+    
+    def extreme(self, nparray):
+        p = np.max(nparray)
+        n = np.min(nparray)
+        if np.abs(p) > np.abs(n):
+            return p
+        return n
+    
 def addColumn(arr, numOfColumns=1):
     arr = np.append(arr, np.zeros((len(arr), numOfColumns)), axis=1)
     return arr
