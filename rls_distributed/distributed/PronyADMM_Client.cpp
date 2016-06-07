@@ -54,7 +54,7 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
 	time(&now_time);
 	struct tm * tm_info;
 	tm_info = localtime(&now_time);
-	strcpy(filename, "DistriProny_Result_");
+	strcpy(filename, "/tmp/DistriProny_Result_");
 	strcat(filename, data_port);
 	strcat(filename, "_");
 	snprintf(tempbuf1, 5, "%d", tm_info->tm_year+1900);	

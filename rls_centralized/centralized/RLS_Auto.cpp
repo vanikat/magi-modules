@@ -72,7 +72,7 @@ int RLS(char* num_of_pmus, char* data_port, char* file_of_initials) {
     time(&timer);
     struct tm * tm_info;
     tm_info = localtime(&timer);
-    strcpy(filename, "CentralRLS_Result_");
+    strcpy(filename, "/tmp/CentralRLS_Result_");
     snprintf(tempbuf1, 5, "%d", tm_info->tm_year+1900);	
     strcat(filename, tempbuf1);
     strcat(filename, "-");

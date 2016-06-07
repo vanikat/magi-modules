@@ -40,8 +40,8 @@ int ADMMServer(char* num_of_pmus, char* data_port) {
     ofstream modefile;
     char filename_error[50];
     char filename_mode[50];
-    strcpy(filename_error, "DistriProny_Result_Errors.txt");
-    strcpy(filename_mode, "DistriProny_Result_Modes.txt");
+    strcpy(filename_error, "/tmp/DistriProny_Result_Errors.txt");
+    strcpy(filename_mode, "/tmp/DistriProny_Result_Modes.txt");
     
     keyValueNode_t head = (keyValueNode_t)malloc(sizeof(struct keyValueNode));
     keyValueNode_t node1 = (keyValueNode_t)malloc(sizeof(struct keyValueNode));
