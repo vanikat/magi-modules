@@ -1,8 +1,6 @@
 import sys
 import traceback
-from os.path import basename
 import threading
-import random
 import time
 import json
 
@@ -10,14 +8,19 @@ from server_comm_service import ServerCommService
 from bbb_iso import BBB_ISO
 from magi.util import database
 from magi.util.agent import DispatchAgent, agentmethod
-from magi.util.processAgent import initializeProcessAgent
+from magi.util.distributions import minmax
 
 import logging
 log = logging.getLogger(__name__)
 
-import os
-import io
-
+def probability(probabilities, values):
+    p = random.randint(0, 100)
+    l = 0
+    for i in range(len(probabilities)):
+        l += probabilities[i]
+        if p in range(l):
+            return values[i]
+        
 class ISOServerAgent(DispatchAgent):
 
     def __init__(self):
@@ -29,7 +32,6 @@ class ISOServerAgent(DispatchAgent):
     def initServer(self, msg):
         log.info("Initializing ISOServer...")
         
-        globalConfig = None
         log.info("Attempting to read from configFile: %s" % self.configFileName)
         with open(self.configFileName, 'r') as configFile:
             globalConfig = json.load(configFile)
@@ -67,7 +69,7 @@ class ISOServerAgent(DispatchAgent):
                 if self.simRunning:
                     log.info("Simulation Timestep %d..." % t)
                     time.sleep(self.tS/10.0)
-                    pDispatch = self.VPP[t]
+                    pDispatch = probability([30,30,40], [0,5,10]) #minmax(0,10) #self.VPP[t]
                     log.info("AgileBalancing %d units of power..." % pDispatch)
                     self.ISO.agileBalancing(t,pDispatch)
                     
@@ -87,7 +89,7 @@ class ISOServerAgent(DispatchAgent):
                 else:
                     log.info( "Simulation has been told to exit, timestep = %d" % t)
                     break
-        except Exception, e:
+        except Exception:
             log.info("RunServer threw an exception during main loop")
             exc_type, exc_value, exc_tb = sys.exc_info()
             log.error(''.join(traceback.format_exception(exc_type, exc_value, exc_tb)))

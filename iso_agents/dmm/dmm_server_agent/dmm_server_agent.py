@@ -60,7 +60,7 @@ class DMMServerAgent(DispatchAgent):
         self.simThread = threading.Thread(
             target = self.runServer,
             name = 'DMMServerSimThread',
-            target = self.serverThread)
+            target = self.serverThread
         )
 
         self.clientList = self.ISO.getClientList()
