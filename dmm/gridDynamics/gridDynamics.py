@@ -167,7 +167,7 @@ class GridDynamics(NonBlockingDispatchAgent):
         maxAbsFreq = np.abs(extremeFreq)
         log.info("Maximum Absolute Frequency: %f", maxAbsFreq)
         
-        freqOutsideSoftLimit = maxAbsFreq > 0.02
+        freqOutsideSoftLimit = maxAbsFreq > 0.015
         
         if(freqOutsideSoftLimit != self.freqErrorStatus):
             self.freqErrorStatus = not self.freqErrorStatus

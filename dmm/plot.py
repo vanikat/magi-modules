@@ -2,13 +2,11 @@
 
 import os
 import scipy.io
-import subprocess
 
 from magi.util import helpers
 from pymongo import MongoClient
 
 import matplotlib.pyplot as plt
-
 
 def plot(collection, agent, col, title, output=None, colRange=None, figs_dir="/tmp/"):
     
@@ -26,6 +24,9 @@ def plot(collection, agent, col, title, output=None, colRange=None, figs_dir="/t
     
     plt.plot(x, y)
     
+    ax = plt.gca()
+    ax.get_yaxis().get_major_formatter().set_useOffset(False)
+
     plt.title(title)
     
     if output is None:
@@ -89,10 +90,14 @@ def plotData(figs_dir, data_file):
         
         plot(collection, "grid_agent", "rho", "Rho", "rho", None, figs_dir)
         
-        plot(collection, "iso_agent", "gpp", "Generator Power Price", "gpp", None, figs_dir)
+        plot(collection, "iso_agent", "grad_f", "Grad_f", "grad_f", None, figs_dir)
+        plot(collection, "iso_agent", "gppu", "Generator Power Price Per Unit", "gppu", None, figs_dir)
         plot(collection, "iso_agent", "gtpc", "Generator Total Power Cost", "gtpc", None, figs_dir)
-         
-
+        
+        plot(collection, "iso_agent", "tpc", "Total Power Cost", "tpc", None, figs_dir)
+        plot(collection, "iso_agent", "appu", "Average Power Price Per Unit / Social Welfare", "appu", None, figs_dir)
+        
+        plot(collection, "iso_agent", "tpg", "Total Power Generated", "tpg", None, figs_dir)
     
     finally:
         if db_tunnel_cmd:
@@ -133,7 +138,7 @@ if __name__ == "__main__":
 #         
 #         plotData(figs_dir, data_file)    
     
-    figs_dir = "/Users/jaipuria/playground/cps/dmm_figs/attack_new/temp/"
+    figs_dir = "/Users/jaipuria/playground/cps/dmm_figs/attack_new/temp_0/"
     if not os.path.exists(figs_dir):
         os.makedirs(figs_dir)
     

@@ -54,7 +54,7 @@ agents:
   attacker_agent:
     group: attacker_group
     path: /share/magi/modules/flooder/flooder.tar.gz
-    execargs: {dst: 'gen-4-linkAttack', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '15000', sport: 'minmax(1024,4096)'}
+    execargs: {dst: 'gen-4', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '15000', sport: 'minmax(1024,4096)'}
   
   intfsensor_agent:
     group: sensor_group
