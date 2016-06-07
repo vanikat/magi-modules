@@ -20,82 +20,82 @@ groups:
 agents:
   server_agent:
     group: server_group
-    path: /proj/montage/magi-modules/rls_distributed/ 
+    path: /share/magi/modules/rls_distributed/ 
     execargs: []
 
   prony_agent1:
     group: prony_group1
-    path: /proj/montage/magi-modules/rls_distributed/ 
+    path: /share/magi/modules/rls_distributed/ 
     execargs: []
 
   prony_agent2:
     group: prony_group2
-    path: /proj/montage/magi-modules/rls_distributed/ 
+    path: /share/magi/modules/rls_distributed/ 
     execargs: []
     
   prony_agent3:
     group: prony_group3
-    path: /proj/montage/magi-modules/rls_distributed/ 
+    path: /share/magi/modules/rls_distributed/ 
     execargs: []
     
   prony_agent4:
     group: prony_group4
-    path: /proj/montage/magi-modules/rls_distributed/ 
+    path: /share/magi/modules/rls_distributed/ 
     execargs: []
         
   client_agent1:
     group: client_group1
-    path: /proj/montage/magi-modules/rls_distributed/ 
+    path: /share/magi/modules/rls_distributed/ 
     execargs: []
 
   client_agent2:
     group: client_group2
-    path: /proj/montage/magi-modules/rls_distributed/ 
+    path: /share/magi/modules/rls_distributed/ 
     execargs: []
 
   client_agent3:
     group: client_group3
-    path: /proj/montage/magi-modules/rls_distributed/ 
+    path: /share/magi/modules/rls_distributed/ 
     execargs: []
 
   client_agent4:
     group: client_group4
-    path: /proj/montage/magi-modules/rls_distributed/ 
+    path: /share/magi/modules/rls_distributed/ 
     execargs: []
 
   intfsensor_agent:
     group: sensor_group
-    path: /share/magi/modules/pktcounters/pktCountersAgent.tar.gz
+    path: /share/magi/modules/pktcounters/
     execargs: {}
 
   nclient_agent:
     group: nclient_group
-    path: /share/magi/modules/http_client/http_client.tar.gz
+    path: /share/magi/modules/http_client/
     execargs: {servers: *slist, interval: '1', sizes: 'minmax(100000,500000)'}
 
   nserver_agent:
     group: nserver_group
-    path: /share/magi/modules/apache/apache.tar.gz 
+    path: /share/magi/modules/apache/
     execargs: []
 
   attacker_agent0:
     group: attacker_group0
-    path: /share/magi/modules/flooder/flooder.tar.gz
+    path: /share/magi/modules/flooder/
     execargs: {dst: 'node-0', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '1500', sport: 'minmax(1024,4096)'}
 
   attacker_agent1:
     group: attacker_group1
-    path: /share/magi/modules/flooder/flooder.tar.gz
+    path: /share/magi/modules/flooder/
     execargs: {dst: 'node-1', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '1500', sport: 'minmax(1024,4096)'}
 
   attacker_agent2:
     group: attacker_group2
-    path: /share/magi/modules/flooder/flooder.tar.gz
+    path: /share/magi/modules/flooder/
     execargs: {dst: 'node-2', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '1500', sport: 'minmax(1024,4096)'}
 
   attacker_agent3:
     group: attacker_group3
-    path: /share/magi/modules/flooder/flooder.tar.gz
+    path: /share/magi/modules/flooder/
     execargs: {dst: 'node-3', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '1500', sport: 'minmax(1024,4096)'}
     
 streamstarts: [ nserverstream, nclientstream, sensorstream, experimentstream, attackstream, cleanupstream ]
@@ -274,7 +274,7 @@ eventstreams:
         args:
           rls_host: node-1
           rls_port: 65002
-          source_file: /proj/PMUdata/code/PronyADMM_resiliency_RT/Y1_3581.txt
+          source_file: /share/magi/modules/rls_distributed/data/large/Y1_3581.txt
 
       - type: trigger
         triggers: [{timeout: 250}]
@@ -285,7 +285,7 @@ eventstreams:
         args:
           rls_host: node-2
           rls_port: 65002
-          source_file: /proj/PMUdata/code/PronyADMM_resiliency_RT/Y2_3581.txt
+          source_file: /share/magi/modules/rls_distributed/data/large/Y2_3581.txt
           
       - type: trigger
         triggers: [{timeout: 250}]
@@ -296,7 +296,7 @@ eventstreams:
         args:
           rls_host: node-3
           rls_port: 65002
-          source_file: /proj/PMUdata/code/PronyADMM_resiliency_RT/Y3_3581.txt
+          source_file: /share/magi/modules/rls_distributed/data/large/Y3_3581.txt
           
       - type: trigger
         triggers: [{timeout: 250}]
@@ -308,7 +308,7 @@ eventstreams:
         args:
           rls_host: node-4
           rls_port: 65002
-          source_file: /proj/PMUdata/code/PronyADMM_resiliency_RT/Y4_3581.txt
+          source_file: /share/magi/modules/rls_distributed/data/large/Y4_3581.txt
 
       - type: trigger
         triggers: [ { event: pmuStarted } ] 

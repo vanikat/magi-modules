@@ -15,27 +15,27 @@ groups:
 agents:
   server_agent:
     group: server_group
-    path: /proj/montage/magi-modules/rls_centralized 
+    path: /share/magi/modules/rls_centralized 
     execargs: {}
 
   client_agent1:
     group: client_group1
-    path: /proj/montage/magi-modules/rls_centralized 
+    path: /share/magi/modules/rls_centralized 
     execargs: {}
 
   client_agent2:
     group: client_group2
-    path: /proj/montage/magi-modules/rls_centralized 
+    path: /share/magi/modules/rls_centralized 
     execargs: {}
 
   client_agent3:
     group: client_group3
-    path: /proj/montage/magi-modules/rls_centralized 
+    path: /share/magi/modules/rls_centralized 
     execargs: {}
 
   client_agent4:
     group: client_group4
-    path: /proj/montage/magi-modules/rls_centralized 
+    path: /share/magi/modules/rls_centralized 
     execargs: {}
 
   intfsensor_agent:
@@ -137,7 +137,7 @@ eventstreams:
         args:
           anum_of_pmus: 4
           bdata_port: 65000
-          cfile_of_initials: /proj/montage/magi-modules/rls_centralized/data/large/InitialGuess.txt
+          cfile_of_initials: /share/magi/modules/rls_centralized/data/large/InitialGuess.txt
         
       - type: trigger
         triggers: [ {event: rlsStarted} ]
@@ -151,7 +151,7 @@ eventstreams:
         args:
           rls_host: node-0
           rls_port: 65000
-          source_file: /proj/montage/magi-modules/rls_centralized/data/large/Y1_3581.txt
+          source_file: /share/magi/modules/rls_centralized/data/large/Y1_3581.txt
 
       - type: trigger
         triggers: [{timeout: 250}]
@@ -162,7 +162,7 @@ eventstreams:
         args:
           rls_host: node-0
           rls_port: 65000
-          source_file: /proj/montage/magi-modules/rls_centralized/data/large/Y2_3581.txt
+          source_file: /share/magi/modules/rls_centralized/data/large/Y2_3581.txt
 
       - type: trigger
         triggers: [{timeout: 250}]          
@@ -173,7 +173,7 @@ eventstreams:
         args:
           rls_host: node-0
           rls_port: 65000
-          source_file: /proj/montage/magi-modules/rls_centralized/data/large/Y3_3581.txt
+          source_file: /share/magi/modules/rls_centralized/data/large/Y3_3581.txt
 
       - type: trigger
         triggers: [{timeout: 250}]
@@ -185,7 +185,7 @@ eventstreams:
         args:
           rls_host: node-0
           rls_port: 65000
-          source_file: /proj/montage/magi-modules/rls_centralized/data/large/Y4_3581.txt
+          source_file: /share/magi/modules/rls_centralized/data/large/Y4_3581.txt
 
       - type: trigger
         triggers: [ { event: pmuStarted} ] 
