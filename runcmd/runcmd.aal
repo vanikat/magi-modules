@@ -1,0 +1,39 @@
+groups:
+  Agroup: [node1]
+
+agents:
+  Aagent:
+    group: Agroup
+    path: /proj/montage/modules/runcmd/runcmd.tar.gz
+    execargs: {}
+
+eventstreams:
+  main:
+  
+  - type: event
+    agent: Aagent
+    method: setConfiguration
+    trigger: Configured
+    args:
+      cmdstring: "ls -al"
+      
+  - type: trigger
+    triggers: [ {event: Configured, agent: Aagent} ]    
+    
+  - type: event
+    agent: Aagent
+    method: start
+    args: {}
+
+  # Wait for some time (10seconds) and then stop the agent 
+  - type: trigger
+    triggers: [{timeout: 10000}]
+
+  - type: event
+    agent: Aagent
+    method: stop
+    trigger: Stopped 
+    args: {}
+
+  - type: trigger
+    triggers: [ {event: Stopped, agent: Aagent, target: exit} ] 

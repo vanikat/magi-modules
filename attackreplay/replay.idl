@@ -1,0 +1,26 @@
+name: AttackReplay
+display: A wrapper around tcprelay 
+description: Take a pcap file and directs ALL the traffic in the file to a victim destination.
+execute: thread
+mainfile: attackreplay.py
+inherits:
+    - DispatchAgent
+
+software:
+    - libnet-dev
+    - libpcap-dev
+    - tcpreplay 
+
+methods:
+    - name: start
+      help: start sending the packets to the destination 
+      args: []
+    
+variables:
+    - name: dst
+      type: string
+      help: 'The CIDR representation of the destination(s) to flood. Format: "A.A.A.A/N"  (cidr), "A.A.A.A/M.M.M.M" (address and mask), "A.A.A.A" (single address).'
+
+    - name: pcapfile
+      type: string
+      help: 'The path of the attack file. Ideally located on the local node not over nfs'

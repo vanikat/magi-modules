@@ -1,0 +1,31 @@
+name: curlreporter
+display: curl HTTP bandwidth/latency collector
+description: a simple HTTP client agent using curl to perform requests
+execute: thread
+mainfile: curl_reporter.py
+inherits:
+   - trafficclient
+variables:
+   - name: dests
+     type: list
+     help: destination web servers
+   - name: url
+     type: string
+     help: URL template to use for requsting data, %s for dest host, %d for length
+   - name: sizes
+     type: list 
+     help: the sizes of data to request via the URL
+   - name: useSocks
+     type: boolean
+     help: If true use tsocks to send the request. Note that this agent assumes tsocks is installed on configured on the machine. 
+   - name: interval
+     type: int
+     help: number of seconds between each measurement
+   - name: wait
+     type: int
+     help: number of seconds to wait between each host during each iteration
+   - name: truncate
+     type: boolean
+     help: when set to True, the magi database table is cleared on start
+software:
+   - curl

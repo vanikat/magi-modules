@@ -1,0 +1,7 @@
+name: runcmd
+display: runcmd
+description: runcmd
+mainfile: runcmd.py
+execute: pipe
+    
+
