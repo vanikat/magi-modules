@@ -1,0 +1,48 @@
+Create containerized experiment
+/share/containers/containerize.py montage dmmcont nsfile.ns --packing=8 --openvz-diskspace 15G --openvz-template ubuntu-12.04-x86_64 --pnode-type MicroCloud
+
+Default No Attack Case
+magi_orchestrator.py -p montage -e dmmcont -f procedure.aal
+
+Disruption
+magi_orchestrator.py -p montage -e dmmcont -f disruption.aal
+
+Deception
+magi_orchestrator.py -p montage -e dmmcont -f deception.aal
+
+Visualization
+http://tau.isi.edu/magi-viz/dmm/disruption.html
+http://tau.isi.edu/magi-viz/dmm/deception.html
+
+Sample data and data gathering instructions
+magi-viz/dmm/data/
+
+
+Collected Data
+
+At the ISO
+pg  - Commanded Generation
+pdr - Commanded Consumption
+grad_f - Gradient of F values
+lambda - LMP [per MW]
+gtpc - Generator Total Power Cost
+gppu - Generator Power Price Per Unit (=gtpc/pg)
+tpg - Total Power Generated
+tpc - Total Power Cost
+appu - Average Power Price Per Unit (=tpc/tpg)
+lastResponse - time steps since last heard from generators
+statusGens - status of generators
+
+At the Grid Agent
+frequency - Bus Frequencies
+extremeFreq - Maximum frequency deviation
+voltageAngles - Bus Voltage Angles
+lpf - Line Power Flows
+pg - Actual Generation
+pdr - Actual Consumption
+rho - Rho
+edr - Energy values for Demand Response agents
+
+At the Generator
+gradFDeception - Grad_f deception attack
+
