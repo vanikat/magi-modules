@@ -1,0 +1,27 @@
+# This is a simple ns script that demonstrates star network topology for prony algorithm test
+set ns [new Simulator]
+source tb_compat.tcl
+
+set magi_start "sudo python /share/magi/current/magi_bootstrap.py --enablecagent" 
+
+# Change this to a number of nodes you want
+set NODES 5
+
+for {set i 0} {$i < $NODES} {incr i} {
+    set node($i) [$ns node]
+    tb-set-node-startcmd $node($i) "$magi_start"
+    tb-set-node-os $node($i) Ubuntu1204-64-STD
+}
+
+set control [$ns node]
+tb-set-node-startcmd $control "$magi_start"
+tb-set-node-os $control Ubuntu1204-64-STD
+
+set link0 [$ns duplex-link $control $node(0) 10Mbps 0ms DropTail] 
+set link1 [$ns duplex-link $control $node(1) 10Mbps 0ms DropTail] 
+set link2 [$ns duplex-link $control $node(2) 10Mbps 0ms DropTail] 
+set link3 [$ns duplex-link $control $node(3) 10Mbps 0ms DropTail] 
+set link4 [$ns duplex-link $control $node(4) 10Mbps 0ms DropTail] 
+
+$ns rtproto Static
+$ns run                     

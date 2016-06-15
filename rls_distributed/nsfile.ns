@@ -1,0 +1,49 @@
+# This is a simple ns script that demonstrates star network topology for prony algorithm test
+set ns [new Simulator]
+source tb_compat.tcl
+
+set prony_start "/share/magi/modules/rls_distributed/setpronyroutes.sh; sudo python /share/magi/current/magi_bootstrap.py --enablecagent" 
+#set prony_start "sudo python /share/magi/current/magi_bootstrap.py --enablecagent" 
+set magi_start "sudo python /share/magi/current/magi_bootstrap.py --enablecagent" 
+
+# Change this to a number of nodes you want
+set NODES 9
+for {set i 0} {$i < 5} {incr i} {
+    set node($i) [$ns node]
+    tb-set-node-startcmd $node($i) "$prony_start"
+    tb-set-node-os $node($i) Ubuntu1204-64-STD
+}
+
+for {set i 5} {$i < $NODES} {incr i} {
+    set node($i) [$ns node]
+    tb-set-node-startcmd $node($i) "$magi_start"
+    tb-set-node-os $node($i) Ubuntu1204-64-STD
+}
+
+set control [$ns node]
+tb-set-node-startcmd $control "$magi_start"
+tb-set-node-os $control Ubuntu1204-64-STD
+
+set controlb [$ns node]
+tb-set-node-startcmd $controlb "$magi_start"
+tb-set-node-os $controlb Ubuntu1204-64-STD
+
+set link0 [$ns duplex-link $control $node(0) 10Mbps 0ms DropTail] 
+set link1 [$ns duplex-link $control $node(1) 10Mbps 0ms DropTail]
+set link2 [$ns duplex-link $control $node(2) 10Mbps 0ms DropTail] 
+set link3 [$ns duplex-link $control $node(3) 10Mbps 0ms DropTail] 
+set link4 [$ns duplex-link $control $node(4) 10Mbps 0ms DropTail] 
+
+set link5 [$ns duplex-link $node(1) $node(5) 100Mbps 0ms DropTail] 
+set link6 [$ns duplex-link $node(2) $node(6) 100Mbps 0ms DropTail] 
+set link7 [$ns duplex-link $node(3) $node(7) 100Mbps 0ms DropTail] 
+set link8 [$ns duplex-link $node(4) $node(8) 100Mbps 0ms DropTail] 
+
+set link0b [$ns duplex-link $controlb $node(0) 100Mbps 0ms DropTail]
+set link1b [$ns duplex-link $controlb $node(1) 100Mbps 0ms DropTail] 
+set link2b [$ns duplex-link $controlb $node(2) 100Mbps 0ms DropTail] 
+set link3b [$ns duplex-link $controlb $node(3) 100Mbps 0ms DropTail] 
+set link4b [$ns duplex-link $controlb $node(4) 100Mbps 0ms DropTail] 
+
+$ns rtproto Static
+$ns run   
