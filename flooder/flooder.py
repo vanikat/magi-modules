@@ -101,6 +101,11 @@ class flooder_agent(DispatchAgent):
 
 		self.pids = []
 		return True
+	
+	@agentmethod()
+	def stop(self, msg):
+		self.stopFlood(msg)
+		DispatchAgent.stop(self)
 
 	@agentmethod()
 	def confirmConfiguration(self):
