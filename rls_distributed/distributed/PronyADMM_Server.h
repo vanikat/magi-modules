@@ -1,5 +1,5 @@
-#ifndef _PMU_H
-#define _PMU_H
+#ifndef _ADMMS_H
+#define _ADMMS_H
 
 #ifdef __cplusplus
 extern "C" {

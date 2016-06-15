@@ -135,19 +135,18 @@ int ADMMServer(char* num_of_pmus, char* data_port) {
     // ========================================= The below is the loop =========================================// 
     while(Iteration < 3500) {
         usleep(20000);
+
+        log_debug(nLogger, "Iteration (inside while): %d", Iteration);
+
         //========================Step1: Collect the parameters from all clients===================//
         cout<<"Step1: start collecting localpara ..."<<endl;
         CountClient = 0;
-        log_debug(nLogger, "Iteration inside while %d", Iteration);
 
         while(CountClient < ClientNum) {
-            gettimeofday (&currenttime, NULL);
-            cout<<"Current time is "<<currenttime.tv_sec*1000000 + currenttime.tv_usec<<endl;
-
             // Accept connection		
             if(Iteration == 0){
                 Client_sockfd[CountClient] = accept(Server_sockfd,(struct sockaddr *)&Client_address, (socklen_t*)&Client_len);
-                log_debug(nLogger, "Accepted connection");
+                log_debug(nLogger, "Accepted connection %d", CountClient+1);
                 cout<<"Client_sockfd is "<<Client_sockfd[CountClient]<<endl;		
             }
 
@@ -169,7 +168,7 @@ int ADMMServer(char* num_of_pmus, char* data_port) {
             pht = strtok(Buffer, " ");
             pht = strtok(NULL, " ");
             Iteration = strtol(pht, NULL, 10); 
-            cout<<"Received iteration is "<<Iteration<<endl;
+            log_debug(nLogger, "Received iteration is %d", Iteration);
             pht = strtok(NULL, " ");
             for (j=0; j<ParaNum; j++) {
                 pht = strtok(NULL, " ");
@@ -262,7 +261,7 @@ int ADMMServer(char* num_of_pmus, char* data_port) {
             write(Client_sockfd[i], avgBuffer, size); 
         }
 
-        cout<<"========================= This is end of Iteration "<<Iteration<<" . ^_^ ========================= "<<endl;
+        log_debug(nLogger, "End of Main loop. Iteration: %d", Iteration);
     } // end big while loop
 
     Mutex_destroy();

@@ -27,8 +27,8 @@
 extern Logger* logger;
 
 pthread_t pidADMMServer;
-pthread_t pidPMU;
 pthread_t pidPronyClient;
+pthread_t pidPMU;
 
 struct argsADMMServer
 {
@@ -97,6 +97,12 @@ void returnWhenServerDone() {
 	log_info(logger, "exiting returnWhenServerDone");
 }
 
+void returnWhenServerStarted(char* name) {
+	log_info(logger, "entering returnWhenServerStarted");
+	//TODO: Should wait for back server to start and return once it is up
+	log_info(logger, "exiting returnWhenServerStarted");
+}
+
 void startPronyClient(char* server_host, char* strategy,
 		char* backupserver1_host, char* backupserver2_host,
 		char* backupserver3_host, char* backupserver4_host,
@@ -136,6 +142,12 @@ void *tempStartPronyClient(void* arg) {
 	return NULL;
 }
 
+void returnWhenPronyClientDone() {
+	log_info(logger, "entering returnWhenPronyClientDone");
+	pthread_join(pidPronyClient, NULL);
+	log_info(logger, "exiting returnWhenPronyClientDone");
+}
+
 void startPMU(char* hostName, char* portNum, char* inFile) {
 	log_info(logger, "entering startPMU");
 	struct argsPMU* pmuArgs = (struct argsPMU*) malloc(sizeof(struct argsPMU));
@@ -160,8 +172,10 @@ void *tempStartPMU(void* arg) {
 int main(int argc, char **argv) {
 	registerFunction("startServer", "void", &startServer, 2, "char*" ,"char*");
 	registerFunction("returnWhenServerDone", "void", &returnWhenServerDone, 0, NULL);
+	registerFunction("returnWhenServerStarted", "void", &returnWhenServerStarted, 1, "char*");
 	registerFunction("startPronyClient", "void", &startPronyClient, 8,
 			"char*" ,"char*", "char*" ,"char*", "char*" ,"char*", "char*" ,"char*");
+	registerFunction("returnWhenPronyClientDone", "void", &returnWhenPronyClientDone, 0, NULL);
 	registerFunction("startPMU", "void", &startPMU, 3, "char*" ,"char*", "char*");
 	agentStart(argc, argv);
 }

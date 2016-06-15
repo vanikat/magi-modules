@@ -3,6 +3,8 @@
 #include "AgentMessenger.h"
 #include "Logger.h"
 
+#include "../rDistributed.h"
+
 #include <string>
 #include <iostream>
 
@@ -27,6 +29,13 @@ extern "C" {
 #define rho 0.0005  // try smaller values, e.g. 1e-3, 1e-4, 1e-5;  0.06
 #define Height_H 45
 #define IniHeight 20
+
+int attackResProtocol(char* backupserver1_host, char* backupserver1_port,
+		char* backupserver2_host, char* backupserver2_port,
+		char* backupserver3_host, char* backupserver3_port,
+		char* backupserver4_host, char* backupserver4_port,
+		char* num_of_attack, char* num_of_pdcs,
+		int k, int num_attack, int sockfd, Logger* fLogger);
 
 int PronyADMMClient(char* server_host, char* server_port, char* data_port,
 		char* strategy, char* backupserver1_host, char* backupserver1_port,
@@ -56,17 +65,21 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
 	tm_info = localtime(&now_time);
 	strcpy(filename, "/tmp/DistriProny_Result_");
 	strcat(filename, data_port);
+
 	strcat(filename, "_");
 	snprintf(tempbuf1, 5, "%d", tm_info->tm_year+1900);	
 	strcat(filename, tempbuf1);
+
 	strcat(filename, "-");
 	//itoa(now->tm_mon + 1, tempbuf2, 10);
 	snprintf(tempbuf2, 5, "%d", tm_info->tm_mon + 1);	
 	strcat(filename, tempbuf2);
+
 	strcat(filename, "-");
 	//itoa(now->tm_mday, tempbuf3, 10);
 	snprintf(tempbuf3, 5, "%d", tm_info->tm_mday);	
 	strcat(filename, tempbuf3);
+
 	strcat(filename, ".txt");
 	
 	myfile.open(filename);
@@ -76,19 +89,20 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
 	int num_attack = 0;
 	int i = 0;
 	int Algorithm_Finishes = 0;
-	struct timeval tvalStart, currenttime, Start, End, Result, algo_start_time, timer;
-	struct timeval timeout={TIMEOUT_SEC, TIMEOUT_USEC};
-	struct timeval temp_timeout={TEMP_TIMEOUT_SEC, TEMP_TIMEOUT_USEC};
-	
+	struct timeval tvalStart, Start, End, Result, algo_start_time, timeout;
+
     gettimeofday (&Start, NULL);
+
 	// Read sock for connection monitor of resiliency mechanism
-	fd_set read_sock;
+	fd_set readfds;
     int select_ret; 
+
 	// Declare a vector for store the sample data
 	vector<double> theta;
 	theta.clear();	
 
 	//===============1. Setup a TCP connection of client for sending localpara to main Prony_server============//
+
     struct hostent *he;
     struct in_addr **addr_list;
     char* ip;
@@ -104,35 +118,36 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
     }
 
   	int sockfd = 0;
-	int new_sockfd = 0;
-   	struct sockaddr_in serv_addr, new_serv_addr;       
+   	struct sockaddr_in serv_addr;
+
     memset(&serv_addr, '0', sizeof(serv_addr));   
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(atoi(server_port));
 
    	if(inet_pton(AF_INET, ip, &serv_addr.sin_addr)<=0) {
-        printf("\n inet_pton error occured\n");
-        log_debug(fLogger,"inet pton error");
+        log_error(fLogger,"inet pton error");
         return 1;
-    } 
+    }
+
+   	log_debug(fLogger, "Server Host: %s, IP: %s, Port:%s", server_host, ip, server_port);
+
 	// Create a socket and connection with old server
 	if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        printf("\n Error : Could not create socket \n");
-        log_debug(fLogger,"socket erroe");
+		log_error(fLogger,"Could not create socket.");
         return 1;
     } 
-    
+	log_debug(fLogger,"Socket created");
+
     if(connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1) {
-        cout<<"connect() failed."<<endl;
-        log_debug(fLogger,"connection failed");
+        log_error(fLogger,"connect() failed.");
         return 1;
-    } else {
-        log_debug(fLogger,"connection is up");
-        printf("\n TCP Connection has been set up\n");
-    }	
+    }
+    log_debug(fLogger,"TCP Connection has been set up");
 	
-	//===============2. Setup a TCP connection of server for receving sample data from PMU============//
+
+	//===============2. Setup a TCP connection of server for receiving sample data from PMU============//
 	// Set up TCP socket of server side for collecting PMU measurements for single PMU machine
+
 	int Server_sockfd, data_sockfd;
 	struct sockaddr_in LocalAddr, PMU_address;
 	int Client_len = sizeof(PMU_address);
@@ -154,6 +169,7 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
 	listen(Server_sockfd, DEFAULT_QUEUE_LEN);
 	data_sockfd = accept(Server_sockfd,(struct sockaddr *)&PMU_address, (socklen_t*)&Client_len);
 	printf("PMU Connection has been accepted and Prony VM is waiting for data ...\n");
+
 
 	//===============3. Parameters for Receiving PMU data and Parse data ====================//	
 	// Declare char pointer to token when parsing data
@@ -216,13 +232,12 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
 	char *avgBuffer = (char*)malloc(512*sizeof(char));
 
 	// For calculate new local parameters
-	struct timeval start;
 	char *pht;
 
 	// ======================= Main loop: Receive PMU data and Parse data and PronyADMM =========================// 
 
     while(1) {
-        cout<<"====================== Iteration  "<<Iteration<<"  ======================"<<endl;
+        log_debug(fLogger,"Main loop begin. Iteration: %d", Iteration);
         
         read(data_sockfd, receive_packet, DEFAULT_MAX_BUFFER_LEN);		
         data_length = receive_packet_header->data_length;	
@@ -239,17 +254,13 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
         
         memset(Buffer, '\0', 15);
         
-        #ifdef DEBUG
-            cout<<"The length of last string is "<<last.length()<<endl;
-        #endif
+        //log_debug(fLogger, "The length of last string is %d", last.length());
         
         if((last.length()!= 0) && (Iteration != 0)) strncat(Buffer, last.c_str(), last.length()+1);
         strncat(Buffer, receive_packet_content, data_length);
         lastchar = Buffer[last.length()*sizeof(char)+data_length-1]; 
 
-        #ifdef DEBUG
-            printf("After receive packet %d,  Buffer contains \n %s \n", Iteration, Buffer);
-        #endif		
+        //log_debug(fLogger, "After receive packet %d,  Buffer contains \n %s \n", Iteration, Buffer);
         
         memset(Buffer+(last.length()+data_length+1)*sizeof(char), '\0', 20);
 
@@ -262,9 +273,9 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
                 break;	
             } 
             last = token;
-        #ifdef DEBUG
-            cout<<"The data is "<<token<<endl;
-        #endif
+
+            //log_debug(fLogger, "The data is %s", token);
+
             theta.push_back(strtod(token, NULL));						
             length = length + strlen(token) + 1;
         } // end of parsing data
@@ -277,9 +288,12 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
 
         // (II): Process each sample in this packet
         if (theta.size() >= IniHeight+ParaNum){  
-            cout<<"size of theta is "<<theta.size()<<endl; 				
-            for (k=counter; k<(int)theta.size(); k++) {
-                gettimeofday(&algo_start_time, NULL);
+
+        	cout<<"size of theta is "<<theta.size()<<endl;
+
+        	for (k=counter; k<(int)theta.size(); k++) {
+
+        		gettimeofday(&algo_start_time, NULL);
                 // Step 1: Update matrice H and C, and Calculate new_a 
                 if (IniHeight+floor(k/5)<Height_H){
                     TT = IniHeight + floor(k/5);
@@ -306,528 +320,82 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
                 // Step 2: Send out local parameter vector new_a			
                 gettimeofday (&tvalStart, NULL); // Record sending time
                 // Format the export message
-                size = sprintf(buffer, "Iteration: %d, %s: %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f\r\n Starttime: %ld \r\n\r\n", k, data_port, new_a(0), new_a(1), new_a(2), new_a(3), new_a(4), new_a(5), new_a(6), new_a(7), new_a(8), new_a(9), new_a(10), new_a(11), new_a(12), new_a(13), new_a(14), new_a(15), new_a(16), new_a(17), new_a(18), new_a(19), (tvalStart.tv_sec*1000000 + tvalStart.tv_usec));
+                size = sprintf(buffer, "Iteration: %d, %s: %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f\r\n Starttime: %ld \r\n\r\n",
+                		k, data_port, new_a(0), new_a(1), new_a(2), new_a(3), new_a(4), new_a(5), new_a(6), new_a(7), new_a(8),
+						new_a(9), new_a(10), new_a(11), new_a(12), new_a(13), new_a(14), new_a(15), new_a(16), new_a(17), new_a(18),
+						new_a(19), (tvalStart.tv_sec*1000000 + tvalStart.tv_usec));
 
-                 cout<<"The value of size is "<<size<<endl;
+                cout<<"The value of size is "<<size<<endl;
                 
-                // =========================== Resiliency Mechanisim ===========================// 
-                flag = 0;
-                cout<<"Before write function. "<<endl;  
+                // =========================== Resiliency Mechanism ===========================//
+                //log_debug(fLogger, "Writing to server");
                 flag = write(sockfd, buffer, size);
-                cout<<"Return value is "<< flag <<" at Iteration index "<<k<<endl;
- 
                 if (flag <= 0) {
-                    perror ("The following error occurred ");		
-                    cout<<"Something wrong with the connection of old server. Try to connect to the new one ...."<<endl;
-                    close(sockfd);
-                    num_attack++;
-                    cout<<"Num of attacks is "<<num_attack<<endl;
-                    time(&now_time);
-                    tm_info = localtime(&now_time);
-                    strftime(timebuffer, 25, "%Y:%m:%d  %H:%M:%S", tm_info);
-                    
-                    myfile << timebuffer;
-                    myfile << "  At IterationNum  ";
-                    myfile << k;
-                    myfile << ": For Attack Number ";
-                    myfile << num_attack;
-                    myfile << ", Main Server itself got attacked becasue the return value of write() function is negative!!!\n";
-                    
-                    if (argc==15) {					
-                        if (atoi(num_of_attack)==1 && num_attack==1) {
-                            //Strategy 1: run server source code in the first backup Client 1 VM background	
-                            puts("Starting now:");
-                            cout<<"Num of attacks is "<<num_attack<<endl;
-                            char command[50];
-                            strcpy(command, "ADMMServer ");
-                            strcat(command, num_of_pdcs);
-                            strcat(command, " ");				
-                            strcat(command, backupserver1_port);
-                            strcat(command, " &");
-                            system(command);
-                            std::cout<<"Happy New Server at PDC"<<std::endl;		
-                        } 
-                        if (atoi(num_of_attack)==2 && num_attack==2) {
-                            //Strategy 1: run server source code in the second backup Client 2 VM background					
-                            puts("Starting now:");
-                            cout<<"Num of attacks is "<<num_attack<<endl;
-                            char command[50];
-                            strcpy(command, "ADMMServer ");
-                            strcat(command, num_of_pdcs);
-                            strcat(command, " ");
-                            strcat(command, backupserver2_port);
-                            strcat(command, " &");
-                            system(command);
-                            std::cout<<"Happy New Server at PDC"<<std::endl;		
-                        }
-                        if (atoi(num_of_attack)==3 && num_attack==3) {
-                            //Strategy 1: run server source code in the third backup Client 3 VM background	
-                            puts("Starting now:");
-                            cout<<"Num of attacks is "<<num_attack<<endl;
-                            char command[50];
-                            strcpy(command, "ADMMServer ");
-                            strcat(command, num_of_pdcs);
-                            strcat(command, " ");				
-                            strcat(command, backupserver3_port);
-                            strcat(command, " &");
-                            system(command);
-                            std::cout<<"Happy New Server at PDC"<<std::endl;		
-                        } 
-                        if (atoi(num_of_attack)==4 && num_attack==4) {
-                            //Strategy 1: run server source code in the fourth backup Client 4 VM background					
-                            puts("Starting now:");
-                            cout<<"Num of attacks is "<<num_attack<<endl;
-                            char command[50];
-                            strcpy(command, "ADMMServer ");
-                            strcat(command, num_of_pdcs);
-                            strcat(command, " ");
-                            strcat(command, backupserver4_port);
-                            strcat(command, " &");
-                            system(command);
-                            std::cout<<"Happy New Server at PDC"<<std::endl;		
-                        }
-                    } // if argc == 15
-
-                    //Strategy 0&1: backup server or run a server side at client1
-                    // Create a socket and connection with predefined new server
-                    struct hostent *he1; 
-                    struct in_addr **addr_list1; 
-                    char* ip1;
-
-                    memset(&new_serv_addr, '0', sizeof(new_serv_addr));   
-                    new_serv_addr.sin_family = AF_INET;
-
-                    if (num_attack==1) {
-                        new_serv_addr.sin_port = htons(atoi(backupserver1_port));
-                        if ((he1 = gethostbyname(backupserver1_host)) == NULL) {  // get the host info
-                            exit(1);
-                        }
-
-                        addr_list1 = (struct in_addr **)he1->h_addr_list;
-                        for(i = 0; addr_list1[i] != NULL; i++) {
-                            ip1 = inet_ntoa(*addr_list1[i]);
-                        }
-                        
-                        if(inet_pton(AF_INET, ip1, &new_serv_addr.sin_addr)<=0){
-                            printf("\n inet_pton error occured\n");
-                            return 1;
-                        }
-                    } 
-                    if (num_attack==2) {
-                        if ((he1 = gethostbyname(backupserver2_host)) == NULL) {  // get the host info
-                            exit(1);
-                        }
-
-                        addr_list1 = (struct in_addr **)he1->h_addr_list;
-                        for(i = 0; addr_list1[i] != NULL; i++) {
-                            ip1 = inet_ntoa(*addr_list1[i]);
-                        }
-                        
-                        new_serv_addr.sin_port = htons(atoi(backupserver2_port));
-                        if(inet_pton(AF_INET, ip1, &new_serv_addr.sin_addr)<=0){
-                            printf("\n inet_pton error occured\n");
-                            return 1;
-                        }
-                    } 
-                    if (num_attack==3) {
-                        if ((he1 = gethostbyname(backupserver3_host)) == NULL) {  // get the host info
-                            exit(1);
-                        }
-
-                        addr_list1 = (struct in_addr **)he1->h_addr_list;
-                        for(i = 0; addr_list1[i] != NULL; i++) {
-                            ip1 = inet_ntoa(*addr_list1[i]);
-                        }
-                        
-                        new_serv_addr.sin_port = htons(atoi(backupserver3_port));
-                        if(inet_pton(AF_INET, ip1, &new_serv_addr.sin_addr)<=0){
-                            printf("\n inet_pton error occured\n");
-                            return 1;
-                          }
-                    } 
-                    if (num_attack==4) {
-                        if ((he1 = gethostbyname(backupserver4_host)) == NULL) {  // get the host info
-                            exit(1);
-                        }
-
-                        addr_list1 = (struct in_addr **)he1->h_addr_list;
-                        for(i = 0; addr_list1[i] != NULL; i++) {
-                                ip1 = inet_ntoa(*addr_list1[i]);
-                        }
-                        
-                        new_serv_addr.sin_port = htons(atoi(backupserver4_port));
-                        if(inet_pton(AF_INET, ip1, &new_serv_addr.sin_addr)<=0){
-                            printf("\n inet_pton error occured\n");
-                            return 1;
-                          }
-                    }
-                    
-                    if((new_sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-                        printf("\n Error : Could not create new socket \n");
-                        return 1;
-                    }
-                    
-                    while (1){
-                        if(connect(new_sockfd, (struct sockaddr *)&new_serv_addr, sizeof(new_serv_addr)) < 0){
-                            printf("\n Error : New connect Failed \n");
-                        } else {
-                            printf("\n New TCP Connection has been set up\n");
-                            break;
-                        }
-                    } //end-while
-                    
-                    sockfd = new_sockfd;	
+                	log_debug(fLogger,"Main server got attacked because the return value of write() function is negative.");
+                	num_attack++;
+                    sockfd = attackResProtocol(backupserver1_host, backupserver1_port,
+                                                            		backupserver2_host, backupserver2_port,
+                                                            		backupserver3_host, backupserver3_port,
+                                                            		backupserver4_host, backupserver4_port,
+                                                            		num_of_attack, num_of_pdcs,
+                                                            		num_attack, sockfd, fLogger);
                     write(sockfd, buffer, size); // Write the local estimation to new server
                 } 
+                //log_debug(fLogger, "Write successful");
 
-                gettimeofday(&start, NULL);
-                // initializes the set of active read sockets
-                FD_ZERO(&read_sock);
-                FD_SET(sockfd, &read_sock);
-
-                // initializes time out - get the left time compared to timeout time			
-                gettimeofday(&currenttime, NULL);
-                if (Iteration == 1){		
-                    cal_timer(&start, &currenttime, &temp_timeout, &timer);	
+                if (Iteration == 1) {
+                	timeout.tv_sec = TEMP_TIMEOUT_SEC;
+                	timeout.tv_usec = TEMP_TIMEOUT_USEC;
                 } else {
-                    cal_timer(&start, &currenttime, &timeout, &timer);
+                	timeout.tv_sec = TIMEOUT_SEC;
+                	timeout.tv_usec = TIMEOUT_USEC;
                 }
 
-                select_ret = select(sockfd+1, &read_sock, NULL, NULL, &timer);
+                // initializes the set of active read sockets
+                FD_ZERO(&readfds);
+                FD_SET(sockfd, &readfds);
+
+                //log_debug(fLogger, "Selecting sockets to read");
+                select_ret = select(sockfd+1, &readfds, NULL, NULL, &timeout);
+                //log_debug(fLogger,"Return value of select is %d", select_ret);
 
                 if(select_ret <= 0) { //case: error or timeout of select_ret is 0
-                    close(sockfd);
                     num_attack++;
-                    cout<<"Num of attacks is "<<num_attack<<endl;
-
-                    time(&now_time);
-                    tm_info = localtime(&now_time);
-                    strftime(timebuffer, 25, "%Y:%m:%d  %H:%M:%S", tm_info);
-                    myfile << timebuffer;
-                    myfile << "  At IterationNum  ";
-                    myfile << k;
-                    myfile << ": For Attack Number ";
-                    myfile << num_attack;
-                    myfile << ", Main Server's link got attacked becasue the read() function times out!!!\n";
-
-                    // 2 Resiliency Strategies
-                    char filename[20];
-                    strcpy(filename,data_port);
-                    if (argc==15) {
-                        if (atoi(num_of_attack)==1 && num_attack==1) {
-                            //Strategy 1: run server source code in the first backup Client 1 VM background	
-                            puts("Starting now:");
-                            char command[50];
-                            strcpy(command, "ADMMServer ");
-                            strcat(command, num_of_pdcs);
-                            strcat(command, " ");				
-                            strcat(command, backupserver1_port);
-                            strcat(command, " &");
-                            system(command);
-                            std::cout<<"Happy New Server at PDC"<<std::endl;			
-                        } 
-                        if (atoi(num_of_attack)==2 && num_attack==2) {
-                            //Strategy 1: run server source code in the second backup Client 1 VM background					
-                            puts("Starting now:");
-                            char command[50];
-                            strcpy(command, "ADMMServer ");
-                            strcat(command, num_of_pdcs);
-                            strcat(command, " ");
-                            strcat(command, backupserver2_port);
-                            strcat(command, " &");
-                            system(command);
-                            std::cout<<"Happy New Server at PDC"<<std::endl;			
-                        }
-                        if (atoi(num_of_attack)==3 && num_attack==3) {
-                            //Strategy 1: run server source code in the third backup Client 3 VM background	
-                            puts("Starting now:");
-                            cout<<"Num of attacks is "<<num_attack<<endl;
-                            char command[50];
-                            strcpy(command, "ADMMServer ");
-                            strcat(command, num_of_pdcs);
-                            strcat(command, " ");				
-                            strcat(command, backupserver3_port);
-                            strcat(command, " &");
-                            system(command);
-                            std::cout<<"Happy New Server at PDC"<<std::endl;		
-                        } 
-                        if (atoi(num_of_attack)==4 && num_attack==4) {
-                            //Strategy 1: run server source code in the fourth backup Client 4 VM background					
-                            puts("Starting now:");
-                            cout<<"Num of attacks is "<<num_attack<<endl;
-                            char command[50];
-                            strcpy(command, "ADMMServer ");
-                            strcat(command, num_of_pdcs);
-                            strcat(command, " ");
-                            strcat(command, backupserver4_port);
-                            strcat(command, " &");
-                            system(command);
-                            std::cout<<"Happy New Server at PDC"<<std::endl;		
-                        }
-
-                    }
-                    //Strategy 0&1: backup server or run a server side at client1
-                    //Create a client socket and connection with predefined new server
-                    struct hostent *he2;
-                    struct in_addr **addr_list2;
-                    char* ip2;
-
-                    memset(&new_serv_addr, '0', sizeof(new_serv_addr));   
-                    new_serv_addr.sin_family = AF_INET;   
-
-                    if (num_attack==1) {
-                        if ((he2 = gethostbyname(backupserver1_host)) == NULL) {  // get the host info
-                            exit(1);
-                        }
-
-                        addr_list2 = (struct in_addr **)he2->h_addr_list;
-                        for(i = 0; addr_list2[i] != NULL; i++) {
-                            ip2 = inet_ntoa(*addr_list2[i]);
-                        }
-                        
-                        new_serv_addr.sin_port = htons(atoi(backupserver1_port));
-                        if(inet_pton(AF_INET, ip2, &new_serv_addr.sin_addr)<=0){
-                            printf("\n inet_pton error occured\n");
-                            return 1;
-                        }
-                    } 
-                    if (num_attack==2) {
-                        if ((he2 = gethostbyname(backupserver2_host)) == NULL) {  // get the host info
-                            exit(1);
-                        }
-
-                        addr_list2 = (struct in_addr **)he2->h_addr_list;
-                        for(i = 0; addr_list2[i] != NULL; i++) {
-                            ip2 = inet_ntoa(*addr_list2[i]);
-                        }
-                        
-                        new_serv_addr.sin_port = htons(atoi(backupserver2_port));
-                        if(inet_pton(AF_INET, ip2, &new_serv_addr.sin_addr)<=0){
-                            printf("\n inet_pton error occured\n");
-                            return 1;
-                        }
-                    }
-                    if (num_attack==3) {
-                        if ((he2 = gethostbyname(backupserver3_host)) == NULL) {  // get the host info
-                            exit(1);
-                        }
-
-                        addr_list2 = (struct in_addr **)he2->h_addr_list;
-                        for(i = 0; addr_list2[i] != NULL; i++) {
-                                ip2 = inet_ntoa(*addr_list2[i]);
-                        }
-                        
-                        new_serv_addr.sin_port = htons(atoi(backupserver3_port));
-                        if(inet_pton(AF_INET, ip2, &new_serv_addr.sin_addr)<=0){
-                            printf("\n inet_pton error occured\n");
-                            return 1;
-                        }
-                    } 
-                    if (num_attack==4) {
-                        if ((he2 = gethostbyname(backupserver4_host)) == NULL) {  // get the host info
-                            exit(1);
-                        }
-
-                        addr_list2 = (struct in_addr **)he2->h_addr_list;
-                        for(i = 0; addr_list2[i] != NULL; i++) {
-                            ip2 = inet_ntoa(*addr_list2[i]);
-                        }
-                        
-                        new_serv_addr.sin_port = htons(atoi(backupserver4_port));
-                        if(inet_pton(AF_INET, ip2, &new_serv_addr.sin_addr)<=0){
-                            printf("\n inet_pton error occured\n");
-                            return 1;
-                        }
-                    }  
-                    
-                    if((new_sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-                        printf("\n Error : Could not create new socket \n");
-                        return 1;
-                    }
-                    
-                    while (1) {
-                        if(connect(new_sockfd, (struct sockaddr *)&new_serv_addr, sizeof(new_serv_addr)) < 0){
-                            printf("\n Error : New connect Failed \n");
-                        } else {
-                            printf("\n New TCP Connection has been set up\n");
-                            break;
-                        }
-                     } //end-while
-                    
-                    sockfd = new_sockfd;	
-                    write(sockfd, buffer, size);
-                    
+                    log_debug(fLogger,"Main Server's link got attacked because the read() function times out.");
+                    sockfd = attackResProtocol(backupserver1_host, backupserver1_port,
+                                        		backupserver2_host, backupserver2_port,
+                                        		backupserver3_host, backupserver3_port,
+                                        		backupserver4_host, backupserver4_port,
+                                        		num_of_attack, num_of_pdcs,
+                                        		num_attack, sockfd, fLogger);
+                    write(sockfd, buffer, size); // Write the local estimation to new server
                 }// end if
+                //log_debug(fLogger, "Select successful");
+
 
                 // ========================== End of Resiliency Mechanisim ==========================// 
-                //cout<<"Before the read() function!"<<endl;
+                //log_debug(fLogger, "Reading from server");
                 avgBufferLen = read(sockfd, avgBuffer, DEFAULT_MAX_BUFFER_LEN);
-                //cout<<"Return value for read() is "<<avgBufferLen<<endl;
+                //log_debug(fLogger,"Return value of read is %d", avgBufferLen);
+
                 if (avgBufferLen <= 0) {
-                    perror ("The following error occurred ");		
-                    cout<<"Something wrong with the connection of old server. Try to connect to the new one ...."<<endl;
-                    close(sockfd);
-                    num_attack++;
-                    cout<<"Num of attacks is "<<num_attack<<endl;
-                    
-                    time(&now_time);
-                    tm_info = localtime(&now_time);
-                    strftime(timebuffer, 25, "%Y:%m:%d  %H:%M:%S", tm_info);
-                    myfile << timebuffer;
-                    myfile << "  At IterationNum  ";
-                    myfile << k;
-                    myfile << ": For Attack Number ";
-                    myfile << num_attack;
-                    myfile << ", main Server itself got attacked becasue the return value of read() function is negative!!!\n";
-                    
-                    if (argc==15) {
-                        if (atoi(num_of_attack)==1 && num_attack==1) {
-                            //Strategy 1: run server source code in the first backup Client 1 VM background	
-                            puts("Starting now:");
-                            char command[50];
-                            strcpy(command, "ADMMServer ");
-                            strcat(command, num_of_pdcs);
-                            strcat(command, " ");				
-                            strcat(command, backupserver1_port);
-                            strcat(command, " &");
-                            system(command);
-                            std::cout<<"Happy New Server at PDC"<<std::endl;	
-                        } 
-                        if (atoi(num_of_attack)==2 && num_attack==2) {
-                            //Strategy 1: run server source code in the second backup Client 1 VM background					
-                            puts("Starting now:");
-                            char command[50];
-                            strcpy(command, "ADMMServer ");
-                            strcat(command, num_of_pdcs);
-                            strcat(command, " ");
-                            strcat(command, backupserver2_port);
-                            strcat(command, " &");
-                            system(command);
-                            std::cout<<"Happy New Server at PDC"<<std::endl;	
-                        }
-                        if (atoi(num_of_attack)==3 && num_attack==3) {
-                            //Strategy 1: run server source code in the third backup Client 3 VM background	
-                            puts("Starting now:");
-                            cout<<"Num of attacks is "<<num_attack<<endl;
-                            char command[50];
-                            strcpy(command, "ADMMServer ");
-                            strcat(command, num_of_pdcs);
-                            strcat(command, " ");				
-                            strcat(command, backupserver3_port);
-                            strcat(command, " &");
-                            system(command);
-                            std::cout<<"Happy New Server at PDC"<<std::endl;		
-                        } 
-                        if (atoi(num_of_attack)==4 && num_attack==4) {
-                            //Strategy 1: run server source code in the fourth backup Client 4 VM background					
-                            puts("Starting now:");
-                            cout<<"Num of attacks is "<<num_attack<<endl;
-                            char command[50];
-                            strcpy(command, "ADMMServer ");
-                            strcat(command, num_of_pdcs);
-                            strcat(command, " ");
-                            strcat(command, backupserver4_port);
-                            strcat(command, " &");
-                            system(command);
-                            std::cout<<"Happy New Server at PDC"<<std::endl;		
-                        }					
-                    }
-
-                    //Strategy 0&1: backup server or run a server side at client1
-                    // Create a socket and connection with predefined new server
-                    struct hostent *he3;
-                    struct in_addr **addr_list3;
-                    char* ip3;
-
-                    memset(&new_serv_addr, '0', sizeof(new_serv_addr));   
-                    new_serv_addr.sin_family = AF_INET;
-                    if (num_attack==1) {
-                        if ((he3 = gethostbyname(backupserver1_host)) == NULL) {  // get the host info
-                            exit(1);
-                        }
-
-                        addr_list3 = (struct in_addr **)he3->h_addr_list;
-                        for(i = 0; addr_list3[i] != NULL; i++) {
-                            ip3 = inet_ntoa(*addr_list3[i]);
-                        }
-                        
-                        new_serv_addr.sin_port = htons(atoi(backupserver1_port));
-                        if(inet_pton(AF_INET, ip3, &new_serv_addr.sin_addr)<=0){
-                            printf("\n inet_pton error occured\n");
-                            return 1;
-                        }
-                    } 
-                    if (num_attack==2) {
-                        if ((he3 = gethostbyname(backupserver2_host)) == NULL) {  // get the host info
-                            exit(1);
-                        }
-
-                        addr_list3 = (struct in_addr **)he3->h_addr_list;
-                        for(i = 0; addr_list3[i] != NULL; i++) {
-                            ip3 = inet_ntoa(*addr_list3[i]);
-                        }
-                        
-                        new_serv_addr.sin_port = htons(atoi(backupserver2_port));
-                        if(inet_pton(AF_INET, ip3, &new_serv_addr.sin_addr)<=0){
-                            printf("\n inet_pton error occured\n");
-                            return 1;
-                        }
-                    }
-                    if (num_attack==3) {
-                        if ((he3 = gethostbyname(backupserver3_host)) == NULL) {  // get the host info
-                            exit(1);
-                        }
-
-                        addr_list3 = (struct in_addr **)he3->h_addr_list;
-                        for(i = 0; addr_list3[i] != NULL; i++) {
-                            ip3 = inet_ntoa(*addr_list3[i]);
-                        }
-                        
-                        new_serv_addr.sin_port = htons(atoi(backupserver3_port));
-                        if(inet_pton(AF_INET, ip3, &new_serv_addr.sin_addr)<=0){
-                            printf("\n inet_pton error occured\n");
-                            return 1;
-                        }
-                    } 
-                    if (num_attack==4) {
-                        if ((he3 = gethostbyname(backupserver4_host)) == NULL) {  // get the host info
-                            exit(1);
-                        }
-
-                        // print information about this host:
-                        addr_list3 = (struct in_addr **)he3->h_addr_list;
-                        for(i = 0; addr_list3[i] != NULL; i++) {
-                            ip3 = inet_ntoa(*addr_list3[i]);
-                        }
-                        new_serv_addr.sin_port = htons(atoi(backupserver4_port));
-                        if(inet_pton(AF_INET, ip3, &new_serv_addr.sin_addr)<=0){
-                            printf("\n inet_pton error occured\n");
-                            return 1;
-                        }
-                    } 
-                    
-                    if((new_sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-                        printf("\n Error : Could not create new socket \n");
-                        return 1;
-                    }
-                    while (1){
-                        if(connect(new_sockfd, (struct sockaddr *)&new_serv_addr, sizeof(new_serv_addr)) < 0){
-                            printf("\n Error : New connect Failed \n");
-                        } else {
-                            printf("\n New TCP Connection has been set up\n");
-                            break;
-                        }
-                    } //end-while
-                    
-                    sockfd = new_sockfd;	
+                	num_attack++;
+                	log_debug(fLogger,"Main server got attacked because the return value of read() function is negative.");
+                    sockfd = attackResProtocol(backupserver1_host, backupserver1_port,
+                                        		backupserver2_host, backupserver2_port,
+                                        		backupserver3_host, backupserver3_port,
+                                        		backupserver4_host, backupserver4_port,
+                                        		num_of_attack, num_of_pdcs,
+                                        		num_attack, sockfd, fLogger);
                     write(sockfd, buffer, size); // Write the local estimation to new server
                     avgBufferLen = read(sockfd, avgBuffer, DEFAULT_MAX_BUFFER_LEN);
                 } 
+                //log_debug(fLogger, "Read successful");
                 
                 avgBuffer[avgBufferLen]=0;
                 if (strcmp(avgBuffer,"Distributed Prony Alogrithm finishes! \r\n\r\n")==0) {
                     Algorithm_Finishes = 1;
-                    cout<<"Algorithm finishes is "<<Algorithm_Finishes<<endl;
+                    log_debug(fLogger,"Algorithm finishes");
                     break;
                 }
 
@@ -851,14 +419,10 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
             break;
         }//end of if sentence with theta.size()>initialHeight
 
-        cout<<"========================= This is end of Iteration "<<Iteration<<" . ^_^ ========================= "<<endl;
+        log_debug(fLogger,"End of Main loop. Iteration: %d", Iteration);
 
-        if (Algorithm_Finishes == 1) break;
-        gettimeofday (&currenttime, NULL);
-        cout<<"Current time is "<<currenttime.tv_sec*1000000 + currenttime.tv_usec<<endl;
-        sleep(0.05);
-        gettimeofday (&currenttime, NULL);
-        cout<<"Current time is "<<currenttime.tv_sec*1000000 + currenttime.tv_usec<<endl;
+        if (Algorithm_Finishes == 1)
+        	break;
 
         counter = theta.size();
         Iteration++;	
@@ -866,19 +430,116 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
     } //end big while loop
 	
 	if (Algorithm_Finishes == 1) {
-		size=sprintf(tempBuffer, "Distributed Prony Alogrithm finishes! \r\n\r\n");
+		size = sprintf(tempBuffer, "Distributed Prony Alogrithm finishes! \r\n\r\n");
 		printf( "Prony Client VM Writes to PMU machine:\n %s \n", tempBuffer);  
 		write(data_sockfd, tempBuffer, size); 
     }
 
 	close(sockfd);
-	cout<<"Prony algorithm ends happily.  ^_^"<<endl;
-	gettimeofday (&End, NULL); 
+ 	log_debug(fLogger,"Prony algorithm ends happily.  ^_^");
+
+ 	gettimeofday (&End, NULL);
  	timer_sub(&Start, &End, &Result);
-    log_debug(fLogger,"End Prony client");
+
     fclose(fFile);
     return 0;
 
 } /* end of PronyADMMClient */
+
+int attackResProtocol(char* backupserver1_host, char* backupserver1_port,
+		char* backupserver2_host, char* backupserver2_port,
+		char* backupserver3_host, char* backupserver3_port,
+		char* backupserver4_host, char* backupserver4_port,
+		char* num_of_attack, char* num_of_pdcs,
+		int num_attack, int sockfd, Logger* fLogger) {
+
+	close(sockfd);
+
+	time_t now_time;
+	struct tm * tm_info;
+	char timebuffer[25];
+
+	log_debug(fLogger,"Something wrong with the connection of old server. Try to connect to the new one ....");
+    close(sockfd);
+
+	log_debug(fLogger,"Attack Number %d", num_attack);
+
+	if (atoi(num_of_attack) == num_attack) {
+		//Strategy 1: run server source code in the fourth backup Client 4 VM background
+		log_debug(fLogger, "This node itself is the next backup server");
+		log_debug(fLogger,"Starting ADMM Server");
+		startServer(num_of_pdcs, backupserver4_port);
+		log_debug(fLogger,"New ADMM Server started at PDC");
+	}
+
+	struct sockaddr_in new_serv_addr;
+    memset(&new_serv_addr, '0', sizeof(new_serv_addr));
+    new_serv_addr.sin_family = AF_INET;
+
+    char* backupserver_host;
+    char* backupserver_port;
+
+    if (num_attack==1) {
+    	backupserver_host = backupserver1_host;
+    	backupserver_port = backupserver1_port;
+    }
+    if (num_attack==2) {
+    	backupserver_host = backupserver2_host;
+    	backupserver_port = backupserver2_port;
+    }
+    if (num_attack==3) {
+    	backupserver_host = backupserver3_host;
+    	backupserver_port = backupserver3_port;
+    }
+    if (num_attack==4) {
+    	backupserver_host = backupserver4_host;
+    	backupserver_port = backupserver4_port;
+    }
+
+    //Strategy 0&1: backup server or run a server side at client1
+    // Create a socket and connection with predefined new server
+    struct hostent *he1;
+    struct in_addr **addr_list1;
+    char* bkpsvr_ip;
+
+    if ((he1 = gethostbyname(backupserver_host)) == NULL) {  // get the host info
+		exit(1);
+	}
+
+	addr_list1 = (struct in_addr **)he1->h_addr_list;
+	for(int i = 0; addr_list1[i] != NULL; i++) {
+		bkpsvr_ip = inet_ntoa(*addr_list1[i]);
+	}
+
+	log_debug(fLogger, "Connecting to Backup Server");
+	log_debug(fLogger, "Server Host: %s, IP: %s, Port:%s", backupserver_host, bkpsvr_ip, backupserver_port);
+
+	new_serv_addr.sin_port = htons(atoi(backupserver_port));
+	if(inet_pton(AF_INET, bkpsvr_ip, &new_serv_addr.sin_addr)<=0){
+		log_error(fLogger,"inet_pton error occurred");
+		return 1;
+	}
+
+	int new_sockfd;
+
+    if((new_sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
+    	log_error(fLogger,"Could not create socket.");
+    	return 1;
+    }
+    log_debug(fLogger,"Socket created");
+
+    while (1){
+        if(connect(new_sockfd, (struct sockaddr *)&new_serv_addr, sizeof(new_serv_addr)) < 0){
+        	//log_debug(fLogger,"Connect failed. Will try again.");
+        	continue;
+        } else {
+        	log_debug(fLogger,"New TCP connection setup successfully.");
+            break;
+        }
+    } //end-while
+
+    return new_sockfd;
+}
+
 
 } // extern C
