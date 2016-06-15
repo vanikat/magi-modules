@@ -1,0 +1,51 @@
+set ns [new Simulator] 
+source tb_compat.tcl 
+
+set magi_start "sudo python /share/magi/test/magi_bootstrap.py" 
+
+set NDR 30
+set NGC 54
+ 
+set drlanstr ""
+set genlanstr ""
+
+for {set i 0 } {$i < $NDR } { incr i } {  
+        set dr($i) [$ns node]
+        tb-set-node-startcmd $dr($i) "$magi_start" 
+        tb-set-node-os $dr($i) Ubuntu1204-64-STD
+        append drlanstr "$dr($i) "
+} 
+
+for {set i 0 } {$i < $NGC } { incr i } {  
+        set gen($i) [$ns node]
+        tb-set-node-startcmd $gen($i) "$magi_start" 
+        tb-set-node-os $gen($i) Ubuntu1204-64-STD
+        if {$i == 4} {
+            continue
+        }
+        append genlanstr "$gen($i) "
+}
+
+set iso [$ns node] 
+tb-set-node-startcmd $iso "$magi_start"
+tb-set-node-os $iso Ubuntu1204-64-STD
+
+set grid [$ns node] 
+tb-set-node-startcmd $grid "$magi_start"
+tb-set-node-os $grid Ubuntu1204-64-STD
+
+set control [$ns node] 
+tb-set-node-startcmd $control "$magi_start"
+tb-set-node-os $control Ubuntu1204-64-STD
+
+set linkIso [$ns duplex-link $control $iso 100Mbps 0ms DropTail] 
+set lanDr [$ns make-lan "control $drlanstr" 100Mb 0ms]
+set lanGen [$ns make-lan "control $genlanstr" 100Mb 0ms]
+
+set linkAttack [$ns duplex-link $control $gen(4) 10Mbps 0ms DropTail]
+
+#set linkGrid [$ns duplex-link $control $grid 100Mbps 0ms DropTail] 
+#set linkBackup [$ns duplex-link $grid $gen(4) 10Mbps 0ms DropTail]
+
+$ns rtproto Static
+$ns run
