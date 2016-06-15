@@ -20,7 +20,7 @@ def plot(collection, agent, col, title, output=None, colRange=None, figs_dir="/t
         if colRange is None:
             y.append(rec[col])
         else:
-            y.append(rec[col][colRange[0]:colRange[1]])
+            y.append(rec[col][colRange[0]:colRange[1]+1])
     
     plt.plot(x, y)
     
@@ -74,19 +74,23 @@ def plotData(figs_dir, data_file):
         Pc_state = ((Pc_state).min(), (Pc_state).max())
         Pm_state = ((Pm_state).min(), (Pm_state).max())
 
-        plot(collection, "iso_agent", "lpf", "Line Power Flows", "lpf", None, figs_dir)
+        plot(collection, "grid_agent", "lpf", "Line Power Flows", "lpf", None, figs_dir)
         plot(collection, "iso_agent", "lambda", "LMPs [per MW]", "lmp", None, figs_dir)
         
-        plot(collection, "grid_agent", "y", "Bus Frequencies", "frequency", w_state, figs_dir)
-        plot(collection, "grid_agent", "y", "Voltage Angles", "voltage_angles", delta_state, figs_dir)
+        #plot(collection, "grid_agent", "y", "Bus Frequencies", "frequency", w_state, figs_dir)
+        #plot(collection, "grid_agent", "y", "Voltage Angles", "voltage_angles", delta_state, figs_dir)
+        plot(collection, "grid_agent", "frequency", "Bus Frequencies", "frequency", None, figs_dir)
+        plot(collection, "grid_agent", "voltageAngles", "Voltage Angles", "voltage_angles", None, figs_dir)
         
         plot(collection, "iso_agent", "pdr", "Commanded Consumption", "consumption_commanded", None, figs_dir)
-        plot(collection, "grid_agent", "y", "Actual Consumption", "consumption_actual", Pc_state, figs_dir)
+        #plot(collection, "grid_agent", "y", "Actual Consumption", "consumption_actual", Pc_state, figs_dir)
+        plot(collection, "grid_agent", "pdr", "Actual Consumption", "consumption_actual", None, figs_dir)
         
         plot(collection, "grid_agent", "edr", "Energy Consumption", "edr", None, figs_dir)
         
         plot(collection, "iso_agent", "pg", "Commanded Generation", "generation_commanded", None, figs_dir)
-        plot(collection, "grid_agent", "y", "Actual Generation", "generation_actual", Pm_state, figs_dir)
+        #plot(collection, "grid_agent", "y", "Actual Generation", "generation_actual", Pm_state, figs_dir)
+        plot(collection, "grid_agent", "pg", "Actual Generation", "generation_actual", None, figs_dir)
         
         plot(collection, "grid_agent", "rho", "Rho", "rho", None, figs_dir)
         
@@ -138,7 +142,7 @@ if __name__ == "__main__":
 #         
 #         plotData(figs_dir, data_file)    
     
-    figs_dir = "/Users/jaipuria/playground/cps/dmm_figs/attack_new/temp_0/"
+    figs_dir = "/Users/jaipuria/playground/cps/dmm_figs/temp_01/"
     if not os.path.exists(figs_dir):
         os.makedirs(figs_dir)
     

@@ -286,7 +286,8 @@ class ISO(NonBlockingDispatchAgent):
             self.mu1[:, k+1] = np.maximum(0, self.mu1[:, k] + self.Kmu1.dot(-self.T_lineR.dot(self.theta[:, k]) + self.Pmin) )
             self.mu2[:, k+1] = np.maximum(0, self.mu2[:, k] + self.Kmu2.dot(self.T_lineR.dot(self.theta[:, k]) - self.Pmax) )
             
-            self.collection.insert({'k' : k+1, 'lpf' : (self.T_lineR.dot(self.theta[:, k])).tolist()})
+            # lpf is now calculated by the grid agent
+            #self.collection.insert({'k' : k+1, 'lpf' : (self.T_lineR.dot(self.theta[:, k])).tolist()})
             
         helpers.exitlog(log, functionName, level=logging.INFO)
         

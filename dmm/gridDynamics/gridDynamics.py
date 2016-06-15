@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import logging
+import math
 import scipy.io
 import sys
 import time
@@ -28,29 +29,37 @@ class GridDynamics(NonBlockingDispatchAgent):
     def setConfiguration(self, msg, **kwargs):
         NonBlockingDispatchAgent.setConfiguration(self, msg, **kwargs)
 
-        self.config = scipy.io.loadmat(self.configFileName, mat_dtype=True)
-        self.loadProfileConfig = scipy.io.loadmat(self.loadProfileConfigFileName, mat_dtype=True)
+        config = scipy.io.loadmat(self.configFileName, mat_dtype=True)
+        loadProfileConfig = scipy.io.loadmat(self.loadProfileConfigFileName, mat_dtype=True)
         
-        self.N_bus = int(self.config['N_bus']) # number of buses in the system
-        self.N_ang = int(self.config['N_ang']) # number of voltage angles (excluding slack bus)
-        self.N_gen = int(self.config['N_gen']) # number of (conventional) generators
-        self.N_dem = int(self.config['N_dem']) # number of demand response units (specified by the user and randomly distributed in the grid)
-        self.N_xi = int(self.config['N_xi']) # number of entries in the xi vector
-        self.N_y = int(self.config['N_y']) #number of entries in the y vector
+        self.N_bus = int(config['N_bus']) # number of buses in the system
+        self.N_ang = int(config['N_ang']) # number of voltage angles (excluding slack bus)
+        self.N_gen = int(config['N_gen']) # number of (conventional) generators
+        self.N_dem = int(config['N_dem']) # number of demand response units (specified by the user and randomly distributed in the grid)
+        self.N_xi = int(config['N_xi']) # number of entries in the xi vector
+        self.N_y = int(config['N_y']) # number of entries in the y vector
+        
+        self.w_nom = int(config['w_nom']) # Nominal frequency
+        self.w_state = config['w_state'].astype(int)-1
+        self.delta_state = config['delta_state'].astype(int)-1
+        self.Pc_state = config['Pc_state'].astype(int)-1
+        self.Pm_state = config['Pm_state'].astype(int)-1
         
         self.Kf = 0.1;
         
-        self.A3 = self.config['A3']
-        self.A4 = self.config['A4']
-        self.Phi = self.config['Phi']
+        self.A3 = config['A3']
+        self.A4 = config['A4']
+        self.Phi = config['Phi']
         
-        self.Gamma_P_L = self.config['Gamma_P_L']
-        self.Gamma_P_G = self.config['Gamma_P_G']
-        self.Gamma_P_D = self.config['Gamma_P_D']
+        self.T_line = config['T_line']
         
-        self.P_L_base = np.squeeze(self.config['P_L_base'])
+        self.Gamma_P_L = config['Gamma_P_L']
+        self.Gamma_P_G = config['Gamma_P_G']
+        self.Gamma_P_D = config['Gamma_P_D']
         
-        TotalLoadProfile = self.loadProfileConfig['TotalLoadProfile']
+        self.P_L_base = np.squeeze(config['P_L_base'])
+        
+        TotalLoadProfile = loadProfileConfig['TotalLoadProfile']
         
         T_start = 0 # Start time in hours (i.e. 8 => 8am)
         duration = 24 # Duration in hours
@@ -80,16 +89,16 @@ class GridDynamics(NonBlockingDispatchAgent):
         self.rho = np.zeros((self.N_iter+1, 1));
         
         # Loading stabilized values
-        self.xi_current[:] = self.config['xi'][:, -1]
+        self.xi_current[:] = config['xi'][:, -1]
         
         # Splitting components of x
         self.theta[:] = self.xi_current[0:self.N_ang]
         self.P_G[:] = self.xi_current[(self.N_ang):(self.N_ang+self.N_gen)]
         self.P_D[:] = self.xi_current[(self.N_ang+self.N_gen):(self.N_ang+self.N_gen+self.N_dem)]
         
-        self.y[:, 0] = self.config['y'][:, -1]
-        self.rho[0] = self.config['rho']
-        self.E_D[:, 0] = self.config['E_D'][:, -1]
+        self.y[:, 0] = config['y'][:, -1]
+        self.rho[0] = config['rho']
+        self.E_D[:, 0] = config['E_D'][:, -1]
         
         self.collection = database.getCollection("grid_agent")
         self.collection.remove({})
@@ -98,7 +107,6 @@ class GridDynamics(NonBlockingDispatchAgent):
         self.collection.insert({'k' : 0, 'rho' : self.rho[0].tolist()})
         self.collection.insert({'k' : 0, 'edr' : self.E_D[:, 0].tolist()})
         
-        self.w_state = self.config['w_state'].astype(int)-1
         self.freqErrorStatus = False
     
     @agentmethod()
@@ -154,14 +162,30 @@ class GridDynamics(NonBlockingDispatchAgent):
         log.debug("Logging x (k=%d)", k)
         log.debug(self.xi_current)
         
-        self.y[:, k+1] = self.Phi.dot(self.y[:, k]) + self.Gamma_P_L.dot(self.P_L[:, k]) \
-                                                    + self.Gamma_P_G.dot(self.P_G[:]) \
-                                                    + self.Gamma_P_D.dot(self.P_D[:])
+        self.y[:, k+1] = self.Phi.dot(self.y[:, k]) + \
+                                      self.Gamma_P_L.dot(self.P_L[:, k]) + \
+                                      self.Gamma_P_G.dot(self.P_G[:]) + \
+                                      self.Gamma_P_D.dot(self.P_D[:])
+                                      
         log.debug("Logging y (k=%d)", k+1)
         log.debug(self.y[:, k+1])
         self.collection.insert({'k' : k+1, 'y' : self.y[:, k+1].tolist()})
         
-        extremeFreq = self.extreme(self.y[self.w_state.min():self.w_state.max(), k+1])
+        frequency = self.y[self.w_state.min():self.w_state.max()+1, k+1]
+        self.collection.insert({'k' : k+1, 'frequency' : (frequency + self.w_nom).tolist()})
+        
+        voltageAngles = self.y[self.delta_state.min():self.delta_state.max()+1, k+1] * 180 / math.pi
+        self.collection.insert({'k' : k+1, 'voltageAngles' : voltageAngles.tolist()})
+        
+        self.collection.insert({'k' : k+1, 'lpf' : (self.T_line.dot(self.y[self.delta_state.min():self.delta_state.max()+1, k+1])).tolist()})
+        
+        pdr = self.y[self.Pc_state.min():self.Pc_state.max()+1, k+1]
+        pg = self.y[self.Pm_state.min():self.Pm_state.max()+1, k+1] 
+        
+        self.collection.insert({'k' : k+1, 'pdr' : pdr.tolist()})
+        self.collection.insert({'k' : k+1, 'pg' : pg.tolist()})
+        
+        extremeFreq = self.extreme(frequency) # Extreme frequency deviation
         self.collection.insert({'k' : k+1, 'extremeFreq' : extremeFreq})
         
         maxAbsFreq = np.abs(extremeFreq)

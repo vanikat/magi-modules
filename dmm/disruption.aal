@@ -15,39 +15,39 @@ groups:
   sensor_group: [control]
   
 # Base config file    
-configFileName: &config /proj/montage/magi-modules/dmm/AGCDR_agent_revised.mat
+configFileName: &config /share/magi/modules/dmm/AGCDR_agent_revised.mat
 
 # Load profile config file
-loadProfileConfigFileName: &loadConfig /proj/montage/magi-modules/dmm/AGCDR_profiles.mat
+loadProfileConfigFileName: &loadConfig /share/magi/modules/dmm/AGCDR_profiles.mat
 
 attack_group: &attack_nodes [gen-4]
 
-inactiveGenConfigFile: &inactiveGenConfig /proj/montage/magi-modules/dmm/AGCDR_agent_removed_<removed-node>.mat
+inactiveGenConfigFile: &inactiveGenConfig /share/magi/modules/dmm/AGCDR_agent_removed_<removed-node>.mat
 
 iterations: &niter 150
 
 agents:
   iso_agent:
     group: iso_group
-    path: /proj/montage/magi-modules/dmm/iso/ 
+    path: /share/magi/modules/dmm/iso/ 
     dock: dmm_dock
     execargs: {configFileName: *config, loadProfileConfigFileName: *loadConfig, N_iter: *niter, inactiveGenConfigFile: *inactiveGenConfig}
 
   grid_agent:
     group: grid_group
-    path: /proj/montage/magi-modules/dmm/gridDynamics/ 
+    path: /share/magi/modules/dmm/gridDynamics/ 
     dock: dmm_dock
     execargs: {configFileName: *config, loadProfileConfigFileName: *loadConfig, N_iter: *niter}
     
   dr_agent:
     group: dr_group
-    path: /proj/montage/magi-modules/dmm/demandResponse 
+    path: /share/magi/modules/dmm/demandResponse 
     dock: dmm_dock
     execargs: {configFileName: *config, loadProfileConfigFileName: *loadConfig, N_iter: *niter}
     
   gen_agent:
     group: gen_group
-    path: /proj/montage/magi-modules/dmm/generator 
+    path: /share/magi/modules/dmm/generator 
     dock: dmm_dock
     execargs: {configFileName: *config, loadProfileConfigFileName: *loadConfig, N_iter: *niter}
     
