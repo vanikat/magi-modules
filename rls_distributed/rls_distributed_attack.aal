@@ -300,34 +300,36 @@ eventstreams:
 
       - type: trigger
         triggers: [ { event: pmuStarted } ] 
-
-      - type: event
-        agent: prony_agent1 
-        method: returnWhenServerStarted
-        trigger: backupServerStarted1
-        args:
-          name: "Backup Server 1"
-
-      - type: event
-        agent: prony_agent2 
-        method: returnWhenServerStarted
-        trigger: backupServerStarted2
-        args:
-          name: "Backup Server 2"
-
-      - type: event
-        agent: prony_agent3
-        method: returnWhenServerStarted
-        trigger: backupServerStarted3
-        args:
-          name: "Backup Server 3"
-
-      - type: event
-        agent: prony_agent4
-        method: returnWhenServerStarted
-        trigger: backupServerStarted4
-        args:
-          name: "Backup Server 4"
+        
+# Right now the c agent does not have a way to figure out if the backup server
+# has started. This is not critical to the experiment flow.
+#      - type: event
+#        agent: prony_agent1 
+#        method: returnWhenServerStarted
+#        trigger: backupServerStarted1
+#        args:
+#          name: "Backup Server 1"
+#
+#      - type: event
+#        agent: prony_agent2 
+#        method: returnWhenServerStarted
+#        trigger: backupServerStarted2
+#        args:
+#          name: "Backup Server 2"
+#
+#      - type: event
+#        agent: prony_agent3
+#        method: returnWhenServerStarted
+#        trigger: backupServerStarted3
+#        args:
+#          name: "Backup Server 3"
+#
+#      - type: event
+#        agent: prony_agent4
+#        method: returnWhenServerStarted
+#        trigger: backupServerStarted4
+#        args:
+#          name: "Backup Server 4"
                                             
       - type: event
         agent: prony_agent1 
@@ -351,8 +353,8 @@ eventstreams:
       - type: trigger
         triggers: [ { event: attackStarted0 } ] 
         
-      - type: trigger
-        triggers: [ { event: backupServerStarted1 } ] 
+#      - type: trigger
+#        triggers: [ { event: backupServerStarted1 } ] 
 
       - type: trigger
         triggers: [ { timeout: 20000 } ]
@@ -366,8 +368,8 @@ eventstreams:
       - type: trigger
         triggers: [ { event: attackStarted1 } ] 
                 
-      - type: trigger
-        triggers: [ { event: backupServerStarted2 } ] 
+#      - type: trigger
+#        triggers: [ { event: backupServerStarted2 } ] 
 
       - type: trigger
         triggers: [ { timeout: 23000 } ]
@@ -381,8 +383,8 @@ eventstreams:
       - type: trigger
         triggers: [ { event: attackStarted2 } ] 
                 
-      - type: trigger
-        triggers: [ { event: backupServerStarted3 } ] 
+#      - type: trigger
+#        triggers: [ { event: backupServerStarted3 } ] 
 
       - type: trigger
         triggers: [ { timeout: 21000 } ]
@@ -396,8 +398,8 @@ eventstreams:
       - type: trigger
         triggers: [ { event: attackStarted3 } ] 
 
-      - type: trigger
-        triggers: [ { event: backupServerStarted4 } ] 
+#      - type: trigger
+#        triggers: [ { event: backupServerStarted4 } ] 
                         
       - type: trigger
         triggers: [ { event: serverDone } ]  

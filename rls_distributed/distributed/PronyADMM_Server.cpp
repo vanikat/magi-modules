@@ -224,7 +224,38 @@ int ADMMServer(char* num_of_pmus, char* data_port) {
         double now = (((double)curTime.tv_sec * 1000000) + curTime.tv_usec) / 1000000;
         errorfile << fixed << Iteration << " " << now << " " << cal_error << endl;
 
-        log_info(nLogger,"Error is %lf", cal_error);
+        log_info(nLogger,"Iteration: %d, Error: %lf", Iteration, cal_error);
+
+        log_debug(nLogger, "Writing to Database");
+
+        double *errValue = (double*)malloc(sizeof(double));
+        *errValue = cal_error;
+        head->key = "error";
+        head->value = (void*)errValue;
+        head->type = DOUBLE_TYPE;
+        head->next = NULL;
+
+        int *itrValue = (int*)malloc(sizeof(int));
+        *itrValue = Iteration;
+        node1->key = "itr";
+        node1->value = (void*)*itrValue;
+        node1->type = INT_TYPE;
+        node1->next = NULL;
+
+        // this is so that data collected at all the different backup servers
+        // also have the same agent name.
+        // backup servers are started by prony_agents, and hence without this
+        // data collected by backup servers would have a different agent name.
+        node2->key = "agent";
+        node2->value = (void*)"server_agent";
+        node2->type = STRING_TYPE;
+        node2->next = NULL;
+
+        head->next = node1;
+        node1->next = node2;
+        mongoDBExecute(OPER_INSERT, head);
+
+        log_debug(nLogger, "Done writing to Database");
 
         //Input the polynomial coefficients from the file and put them in the op vector
         op[0] = 1;
@@ -271,33 +302,6 @@ int ADMMServer(char* num_of_pmus, char* data_port) {
             	log_debug(nLogger, "Wrote to client #%d. Bytes written: %d", i+1, status);
             }
         }
-
-        double *errValue = (double*)malloc(sizeof(double));
-		*errValue = cal_error;
-		head->key = "error";
-		head->value = (void*)errValue;
-		head->type = DOUBLE_TYPE;
-		head->next = NULL;
-
-		int *itrValue = (int*)malloc(sizeof(int));
-		*itrValue = Iteration;
-		node1->key = "itr";
-		node1->value = (void*)*itrValue;
-		node1->type = INT_TYPE;
-		node1->next = NULL;
-
-		// this is so that data collected at all the different backup servers
-		// also have the same agent name.
-		// backup servers are started by prony_agents, and hence without this
-		// data collected by backup servers would have a different agent name.
-		node2->key = "agent";
-		node2->value = (void*)"server_agent";
-		node2->type = STRING_TYPE;
-		node2->next = NULL;
-
-		head->next = node1;
-		node1->next = node2;
-		mongoDBExecute(OPER_INSERT, head);
 
         log_debug(nLogger, "End of Main loop. Iteration: %d", Iteration);
     } // end big while loop
