@@ -30,19 +30,15 @@ extern "C" {
 #define Height_H 45
 #define IniHeight 20
 
-int attackResProtocol(char* backupserver1_host, char* backupserver1_port,
-		char* backupserver2_host, char* backupserver2_port,
-		char* backupserver3_host, char* backupserver3_port,
-		char* backupserver4_host, char* backupserver4_port,
-		char* num_of_attack, char* num_of_pdcs,
-		int k, int num_attack, int sockfd, Logger* fLogger);
+int attackResProtocol(char* backupserver1_host, char* backupserver2_host,
+		char* backupserver3_host, char* backupserver4_host,
+		char* backupserver_port, char* num_of_attack, char* num_of_pdcs,
+		int num_attack, int sockfd, Logger* fLogger);
 
 int PronyADMMClient(char* server_host, char* server_port, char* data_port,
-		char* strategy, char* backupserver1_host, char* backupserver1_port,
-		char* backupserver2_host, char* backupserver2_port,
-		char* backupserver3_host, char* backupserver3_port,
-		char* backupserver4_host, char* backupserver4_port,
-		char* num_of_attack, char* num_of_pdcs) {
+		char* strategy, char* backupserver1_host, char* backupserver2_host,
+		char* backupserver3_host, char* backupserver4_host,
+		char* backupserver_port, char* num_of_attack, char* num_of_pdcs) {
 
     FILE* fFile;
     Logger* fLogger;
@@ -287,11 +283,13 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
             //cout<<"theta["<<i<<"] is "<<theta[i]<<endl;
 
         // (II): Process each sample in this packet
-        if (theta.size() >= IniHeight+ParaNum){  
+        if (theta.size() >= IniHeight+ParaNum) {
 
-        	cout<<"size of theta is "<<theta.size()<<endl;
+        	log_debug(fLogger, "size of theta is %d", theta.size());
 
         	for (k=counter; k<(int)theta.size(); k++) {
+
+        		log_debug(fLogger, "Iteration: %d", k);
 
         		gettimeofday(&algo_start_time, NULL);
                 // Step 1: Update matrice H and C, and Calculate new_a 
@@ -324,21 +322,24 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
                 		k, data_port, new_a(0), new_a(1), new_a(2), new_a(3), new_a(4), new_a(5), new_a(6), new_a(7), new_a(8),
 						new_a(9), new_a(10), new_a(11), new_a(12), new_a(13), new_a(14), new_a(15), new_a(16), new_a(17), new_a(18),
 						new_a(19), (tvalStart.tv_sec*1000000 + tvalStart.tv_usec));
-
-                cout<<"The value of size is "<<size<<endl;
                 
+                //log_debug(fLogger, "The value of size is %d", size);
+
+                log_debug(fLogger, "Sending message with time %ld", (tvalStart.tv_sec*1000000 + tvalStart.tv_usec));
+
                 // =========================== Resiliency Mechanism ===========================//
                 //log_debug(fLogger, "Writing to server");
                 flag = write(sockfd, buffer, size);
                 if (flag <= 0) {
-                	log_debug(fLogger,"Main server got attacked because the return value of write() function is negative.");
+                	log_debug(fLogger, "Main server got attacked because the return value of write() function is negative.");
                 	num_attack++;
-                    sockfd = attackResProtocol(backupserver1_host, backupserver1_port,
-                                                            		backupserver2_host, backupserver2_port,
-                                                            		backupserver3_host, backupserver3_port,
-                                                            		backupserver4_host, backupserver4_port,
-                                                            		num_of_attack, num_of_pdcs,
-                                                            		num_attack, sockfd, fLogger);
+                    sockfd = attackResProtocol(backupserver1_host,
+                    		                   backupserver2_host,
+											   backupserver3_host,
+											   backupserver4_host,
+											   backupserver_port, num_of_attack,
+											   num_of_pdcs, num_attack,
+											   sockfd, fLogger);
                     write(sockfd, buffer, size); // Write the local estimation to new server
                 } 
                 //log_debug(fLogger, "Write successful");
@@ -355,19 +356,20 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
                 FD_ZERO(&readfds);
                 FD_SET(sockfd, &readfds);
 
-                //log_debug(fLogger, "Selecting sockets to read");
+                log_debug(fLogger, "Selecting sockets to read");
                 select_ret = select(sockfd+1, &readfds, NULL, NULL, &timeout);
-                //log_debug(fLogger,"Return value of select is %d", select_ret);
+                log_debug(fLogger,"Return value of select is %d", select_ret);
 
                 if(select_ret <= 0) { //case: error or timeout of select_ret is 0
                     num_attack++;
                     log_debug(fLogger,"Main Server's link got attacked because the read() function times out.");
-                    sockfd = attackResProtocol(backupserver1_host, backupserver1_port,
-                                        		backupserver2_host, backupserver2_port,
-                                        		backupserver3_host, backupserver3_port,
-                                        		backupserver4_host, backupserver4_port,
-                                        		num_of_attack, num_of_pdcs,
-                                        		num_attack, sockfd, fLogger);
+                    sockfd = attackResProtocol(backupserver1_host,
+                    		                   backupserver2_host,
+											   backupserver3_host,
+											   backupserver4_host,
+											   backupserver_port, num_of_attack,
+											   num_of_pdcs, num_attack,
+											   sockfd, fLogger);
                     write(sockfd, buffer, size); // Write the local estimation to new server
                 }// end if
                 //log_debug(fLogger, "Select successful");
@@ -376,17 +378,18 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
                 // ========================== End of Resiliency Mechanisim ==========================// 
                 //log_debug(fLogger, "Reading from server");
                 avgBufferLen = read(sockfd, avgBuffer, DEFAULT_MAX_BUFFER_LEN);
-                //log_debug(fLogger,"Return value of read is %d", avgBufferLen);
+                log_debug(fLogger,"Return value of read is %d", avgBufferLen);
 
                 if (avgBufferLen <= 0) {
                 	num_attack++;
-                	log_debug(fLogger,"Main server got attacked because the return value of read() function is negative.");
-                    sockfd = attackResProtocol(backupserver1_host, backupserver1_port,
-                                        		backupserver2_host, backupserver2_port,
-                                        		backupserver3_host, backupserver3_port,
-                                        		backupserver4_host, backupserver4_port,
-                                        		num_of_attack, num_of_pdcs,
-                                        		num_attack, sockfd, fLogger);
+                	log_info(fLogger,"Main server got attacked because the return value of read() function is negative. Error: %d", errno);
+                	sockfd = attackResProtocol(backupserver1_host,
+											   backupserver2_host,
+											   backupserver3_host,
+											   backupserver4_host,
+											   backupserver_port, num_of_attack,
+											   num_of_pdcs, num_attack,
+											   sockfd, fLogger);
                     write(sockfd, buffer, size); // Write the local estimation to new server
                     avgBufferLen = read(sockfd, avgBuffer, DEFAULT_MAX_BUFFER_LEN);
                 } 
@@ -395,7 +398,7 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
                 avgBuffer[avgBufferLen]=0;
                 if (strcmp(avgBuffer,"Distributed Prony Alogrithm finishes! \r\n\r\n")==0) {
                     Algorithm_Finishes = 1;
-                    log_debug(fLogger,"Algorithm finishes");
+                    log_info(fLogger,"Distributed Prony Alogrithm finishes!");
                     break;
                 }
 
@@ -446,55 +449,48 @@ int PronyADMMClient(char* server_host, char* server_port, char* data_port,
 
 } /* end of PronyADMMClient */
 
-int attackResProtocol(char* backupserver1_host, char* backupserver1_port,
-		char* backupserver2_host, char* backupserver2_port,
-		char* backupserver3_host, char* backupserver3_port,
-		char* backupserver4_host, char* backupserver4_port,
-		char* num_of_attack, char* num_of_pdcs,
+int attackResProtocol(char* backupserver1_host, char* backupserver2_host,
+		char* backupserver3_host, char* backupserver4_host,
+		char* backupserver_port, char* num_of_attack, char* num_of_pdcs,
 		int num_attack, int sockfd, Logger* fLogger) {
-
-	close(sockfd);
 
 	time_t now_time;
 	struct tm * tm_info;
 	char timebuffer[25];
 
-	log_debug(fLogger,"Something wrong with the connection of old server. Try to connect to the new one ....");
+	log_debug(fLogger,"Something wrong with the connection of old server. Disconnecting.");
+	shutdown(sockfd, SHUT_RDWR);
     close(sockfd);
 
 	log_debug(fLogger,"Attack Number %d", num_attack);
+
+	char* backupserver_host;
+	if (num_attack==1) {
+		backupserver_host = backupserver1_host;
+	}
+	if (num_attack==2) {
+		backupserver_host = backupserver2_host;
+	}
+	if (num_attack==3) {
+		backupserver_host = backupserver3_host;
+	}
+	if (num_attack==4) {
+		backupserver_host = backupserver4_host;
+	}
+
+	log_debug(fLogger,"Backup Server Host: %s", backupserver_host);
 
 	if (atoi(num_of_attack) == num_attack) {
 		//Strategy 1: run server source code in the fourth backup Client 4 VM background
 		log_debug(fLogger, "This node itself is the next backup server");
 		log_debug(fLogger,"Starting ADMM Server");
-		startServer(num_of_pdcs, backupserver4_port);
+		startServer(num_of_pdcs, backupserver_port);
 		log_debug(fLogger,"New ADMM Server started at PDC");
 	}
 
 	struct sockaddr_in new_serv_addr;
     memset(&new_serv_addr, '0', sizeof(new_serv_addr));
     new_serv_addr.sin_family = AF_INET;
-
-    char* backupserver_host;
-    char* backupserver_port;
-
-    if (num_attack==1) {
-    	backupserver_host = backupserver1_host;
-    	backupserver_port = backupserver1_port;
-    }
-    if (num_attack==2) {
-    	backupserver_host = backupserver2_host;
-    	backupserver_port = backupserver2_port;
-    }
-    if (num_attack==3) {
-    	backupserver_host = backupserver3_host;
-    	backupserver_port = backupserver3_port;
-    }
-    if (num_attack==4) {
-    	backupserver_host = backupserver4_host;
-    	backupserver_port = backupserver4_port;
-    }
 
     //Strategy 0&1: backup server or run a server side at client1
     // Create a socket and connection with predefined new server

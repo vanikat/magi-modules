@@ -5,13 +5,10 @@
 extern "C" {
 #endif
 
-	int PronyADMMClient(char* server_host, char* server_port,
-			char* data_port, char* strategy,
-			char* backupserver1_host, char* backupserver1_port,
-			char* backupserver2_host, char* backupserver2_port,
-			char* backupserver3_host, char* backupserver3_port,
-			char* backupserver4_host, char* backupserver4_port,
-			char* num_of_attack, char* num_of_pdcs);
+	int PronyADMMClient(char* server_host, char* server_port, char* data_port,
+			char* strategy, char* backupserver1_host, char* backupserver2_host,
+			char* backupserver3_host, char* backupserver4_host,
+			char* backupserver_port, char* num_of_attack, char* num_of_pdcs);
 
 #ifdef __cplusplus
 }

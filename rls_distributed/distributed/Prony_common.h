@@ -66,9 +66,6 @@ struct TCP_header
 
 int timer_sub(const struct timeval *start_time, const struct timeval *end_time, struct timeval *result);
 int cal_timer(const struct timeval * sending_time, const struct timeval * current_time, const struct timeval * timeout, struct timeval * timer);
-void *Server_handle(void * parmPtr);
-void Mutex_initialization();
-void Mutex_destroy();
 //void signal_callback_handler(int signum);
 
 }

@@ -81,22 +81,22 @@ agents:
   attacker_agent0:
     group: attacker_group0
     path: /share/magi/modules/flooder/
-    execargs: {dst: 'node-0', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '15000', sport: 'minmax(1024,4096)'}
+    execargs: {dst: 'node-0', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '1500', sport: 'minmax(1024,4096)'}
 
   attacker_agent1:
     group: attacker_group1
     path: /share/magi/modules/flooder/
-    execargs: {dst: 'node-1', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '15000', sport: 'minmax(1024,4096)'}
+    execargs: {dst: 'node-1', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '1500', sport: 'minmax(1024,4096)'}
 
   attacker_agent2:
     group: attacker_group2
     path: /share/magi/modules/flooder/
-    execargs: {dst: 'node-2', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '15000', sport: 'minmax(1024,4096)'}
+    execargs: {dst: 'node-2', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '1500', sport: 'minmax(1024,4096)'}
 
   attacker_agent3:
     group: attacker_group3
     path: /share/magi/modules/flooder/
-    execargs: {dst: 'node-3', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '15000', sport: 'minmax(1024,4096)'}
+    execargs: {dst: 'node-3', proto: 'udp', length: '1024', ratetype: 'flat', highrate: '1500', sport: 'minmax(1024,4096)'}
     
 streamstarts: [ nserverstream, nclientstream, sensorstream, experimentstream, attackstream, cleanupstream ]
 
@@ -179,19 +179,16 @@ eventstreams:
         trigger: pronyStarted1 
         args:
           aserver_host: node-0-link0
-          #server_port: 65000
-          #data_port: 65002
-          bstrategy: 1
-          cbackupserver1_host: node-1-link1
-          #backupserver1_port: 65001
-          dbackupserver2_host: node-2-link2b
-          #backupserver2_port: 65001
-          ebackupserver3_host: node-3-link3b
-          #backupserver3_port: 65001
-          fbackupserver4_host: node-4-link4b
-          #backupserver4_port: 65001
-          gnum_of_attack: 1
-          hnum_of_pdcs: 4
+          #bserver_port: 65000
+          #cdata_port: 65002
+          dstrategy: 1
+          ebackupserver1_host: node-1-link1
+          fbackupserver2_host: node-2-link2b
+          gbackupserver3_host: node-3-link3b
+          hbackupserver4_host: node-4-link4b
+          #ibackupserver_port: 65001
+          jnum_of_attack: 1
+          knum_of_pdcs: 4
 
       - type: event
         agent: prony_agent2 
@@ -199,19 +196,16 @@ eventstreams:
         trigger: pronyStarted2 
         args:
           aserver_host: node-0-link0
-          #server_port: 65000
-          #data_port: 65002
-          bstrategy: 1
-          cbackupserver1_host: node-1-link1
-          #backupserver1_port: 65001
-          dbackupserver2_host: node-2-link2
-          #backupserver2_port: 65001
-          ebackupserver3_host: node-3-link3b
-          #backupserver3_port: 65001
-          fbackupserver4_host: node-4-link4b
-          #backupserver4_port: 65001
-          gnum_of_attack: 2
-          hnum_of_pdcs: 4
+          #bserver_port: 65000
+          #cdata_port: 65002
+          dstrategy: 1
+          ebackupserver1_host: node-1-link1
+          fbackupserver2_host: node-2-link2
+          gbackupserver3_host: node-3-link3b
+          hbackupserver4_host: node-4-link4b
+          #ibackupserver_port: 65001
+          jnum_of_attack: 2
+          knum_of_pdcs: 4
 
       - type: event
         agent: prony_agent3 
@@ -219,19 +213,16 @@ eventstreams:
         trigger: pronyStarted3 
         args:
           aserver_host: node-0-link0
-          #server_port: 65000
-          #data_port: 65002
-          bstrategy: 1
-          cbackupserver1_host: node-1-link1
-          #backupserver1_port: 65001
-          dbackupserver2_host: node-2-link2
-          #backupserver2_port: 65001
-          ebackupserver3_host: node-3-link3
-          #backupserver3_port: 65001
-          fbackupserver4_host: node-4-link4b
-          #backupserver4_port: 65001
-          gnum_of_attack: 3
-          hnum_of_pdcs: 4
+          #bserver_port: 65000
+          #cdata_port: 65002
+          dstrategy: 1
+          ebackupserver1_host: node-1-link1
+          fbackupserver2_host: node-2-link2
+          gbackupserver3_host: node-3-link3
+          hbackupserver4_host: node-4-link4b
+          #ibackupserver_port: 65001
+          jnum_of_attack: 3
+          knum_of_pdcs: 4
           
       - type: event
         agent: prony_agent4 
@@ -239,19 +230,16 @@ eventstreams:
         trigger: pronyStarted4
         args:
           aserver_host: node-0-link0
-          #server_port: 65000
-          #data_port: 65002
-          bstrategy: 1
-          cbackupserver1_host: node-1-link1
-          #backupserver1_port: 65001
-          dbackupserver2_host: node-2-link2
-          #backupserver2_port: 65001
-          ebackupserver3_host: node-3-link3
-          #backupserver3_port: 65001
-          fbackupserver4_host: node-4-link4
-          #backupserver4_port: 65001
-          gnum_of_attack: 4
-          hnum_of_pdcs: 4
+          #berver_port: 65000
+          #cdata_port: 65002
+          dstrategy: 1
+          ebackupserver1_host: node-1-link1
+          fbackupserver2_host: node-2-link2
+          gbackupserver3_host: node-3-link3
+          hbackupserver4_host: node-4-link4
+          #iackupserver_port: 65001
+          jnum_of_attack: 4
+          knum_of_pdcs: 4
           
       - type: trigger
         triggers: [ {event: pronyStarted1} ]

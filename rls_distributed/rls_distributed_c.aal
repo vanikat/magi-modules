@@ -138,19 +138,16 @@ eventstreams:
         trigger: pronyStarted
         args:
           aserver_host: node-0-link0
-          #server_port: 65000
-          #data_port: 65002
-          bstrategy: 1
-          cbackupserver1_host: node-1-link1
-          #backupserver1_port: 65001
-          dbackupserver2_host: node-2-link2
-          #backupserver2_port: 65001
-          ebackupserver3_host: node-3-link3
-          #backupserver3_port: 65001
-          fbackupserver4_host: node-4-link4b
-          #backupserver4_port: 65001
-          gnum_of_attack: 1
-          hnum_of_pdcs: 4
+          #bserver_port: 65000
+          #cdata_port: 65002
+          dstrategy: 1
+          ebackupserver1_host: node-1-link1b
+          fbackupserver2_host: node-2-link2b
+          gbackupserver3_host: node-3-link3b
+          hbackupserver4_host: node-4-link4b
+          #ibackupserver_port: 65001
+          jnum_of_attack: 1
+          knum_of_pdcs: 4
 
       - type: trigger
         triggers: [ {event: pronyStarted} ]

@@ -29,12 +29,16 @@ extern "C" {
 #define imagError 0.005
 #define MSS 250
 
+/* declare mutex */
+pthread_mutex_t mymutex;
+void *Server_handle(void * parmPtr);
+
+Logger* nLogger;
+struct timeval timeout;
+
 int ADMMServer(char* num_of_pmus, char* data_port) {
-    FILE* nFile;
-    Logger* nLogger;
-    nFile = fopen("/tmp/PronyADMM_server.log", "a");
+    FILE* nFile = fopen("/tmp/PronyADMM_server.log", "a");
     nLogger = Logger_create(nFile, 0);
-    log_debug(nLogger,"Start Prony server");
 
     ofstream errorfile;
     ofstream modefile;
@@ -90,6 +94,8 @@ int ADMMServer(char* num_of_pmus, char* data_port) {
         new_avgpara[i] = 0;
     }
 
+    log_debug(nLogger,"Starting Prony ADMM Server");
+
     // Prepare sending message
     char Buffer[DEFAULT_MAX_BUFFER_LEN];
     char tempBuffer[DEFAULT_MAX_BUFFER_LEN];
@@ -101,26 +107,36 @@ int ADMMServer(char* num_of_pmus, char* data_port) {
     int Server_sockfd;
     struct sockaddr_in LocalAddr;
 
-    // collecting IP addresses of PMUs from TCP connection for latter connection
-    int Client_sockfd[ClientNum];
-    struct sockaddr_in Client_address;
-    int Client_len = sizeof(Client_address);	
-    vector<sockaddr_in> client_list;  
+    // Create, bind and listen the TCP_socket
+    Server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    memset(&LocalAddr, '0', sizeof(LocalAddr));
 
     // Initiate local TCP server socket
     LocalAddr.sin_family = AF_INET;
     LocalAddr.sin_addr.s_addr = htonl(INADDR_ANY);
     LocalAddr.sin_port = htons(atoi(data_port));
 
-    // Create, bind and listen the TCP_socket 
-    Server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
     if (bind(Server_sockfd, (struct sockaddr *)&LocalAddr, sizeof(LocalAddr)) < 0) {
-        log_debug(nLogger,"bind error");
-        cout<<"Error: Can not bind the TCP socket! \n Please wait a few seconds or change port number."<<endl;
+        log_error(nLogger,"Error: Can not bind the TCP socket! \n Please wait a few seconds or change port number.");
         return 1;
     }
     listen(Server_sockfd, DEFAULT_QUEUE_LEN);
+
+    // collecting IP addresses of PMUs from TCP connection for latter connection
+	int Client_sockfd[ClientNum];
+	struct sockaddr_in Client_address;
+	int Client_len = sizeof(Client_address);
+	vector<sockaddr_in> client_list;
+
+	CountClient = 0;
+	while(CountClient < ClientNum) {
+		// Accept connection
+		log_debug(nLogger, "Waiting for client to connect");
+		Client_sockfd[CountClient] = accept(Server_sockfd, (struct sockaddr *)&Client_address, (socklen_t*)&Client_len);
+		log_debug(nLogger, "Accepted connection %d from %s", CountClient+1, inet_ntoa(Client_address.sin_addr));
+		log_debug(nLogger, "Client_sockfd is %d", Client_sockfd[CountClient]);
+		CountClient++;
+	}
 
     // Calculate roots
     typedef complex<double> dcomp;
@@ -130,38 +146,46 @@ int ADMMServer(char* num_of_pmus, char* data_port) {
     int Degree = PoleNum;
     double op[MDP1], zeroi[MAXDEGREE], zeror[MAXDEGREE]; // Coefficient vectors
     int index; // vector index
-    Mutex_initialization();
+    int status;
+
+    pthread_mutex_init(&mymutex, NULL);
+
+    bool stop = false;
 
     // ========================================= The below is the loop =========================================// 
     while(Iteration < 3500) {
         usleep(20000);
 
-        log_debug(nLogger, "Iteration (inside while): %d", Iteration);
+        log_info(nLogger, "Iteration (inside while): %d", Iteration);
 
         //========================Step1: Collect the parameters from all clients===================//
         cout<<"Step1: start collecting localpara ..."<<endl;
+
         CountClient = 0;
-
         while(CountClient < ClientNum) {
-            // Accept connection		
-            if(Iteration == 0){
-                Client_sockfd[CountClient] = accept(Server_sockfd,(struct sockaddr *)&Client_address, (socklen_t*)&Client_len);
-                log_debug(nLogger, "Accepted connection %d", CountClient+1);
-                cout<<"Client_sockfd is "<<Client_sockfd[CountClient]<<endl;		
-            }
-
             // Handle connection
             pthread_create(&handler_thread[CountClient], NULL, Server_handle, (void*) &Client_sockfd[CountClient]);
-            CountClient++;             
+            CountClient++;
         }
 
         // Wait for all threads finish and return the values
-        for (CountClient = 0; CountClient < ClientNum; CountClient++){
+        for (CountClient = 0; CountClient < ClientNum; CountClient++) {
             pthread_join(handler_thread[CountClient], &exit_status);
             thread_result = (char *)exit_status;
+            if (strcmp(thread_result, "ERROR") == 0) {
+            	log_info(nLogger, "Error while reading. Closing server");
+            	stop = true;
+            }
             list[CountClient] = thread_result;	
+            log_debug(nLogger, "Received msg of length %d from client %d", strlen(thread_result), CountClient+1);
         }	
-        cout << "All threads completed."<<endl ;
+
+        if (stop) {
+        	log_info(nLogger, "Exiting the loop.");
+        	break;
+        }
+
+        log_debug(nLogger, "All threads completed.");
 
         for (i=0; i<ClientNum; i++) {
             strcpy(Buffer, list[i].c_str());
@@ -200,25 +224,7 @@ int ADMMServer(char* num_of_pmus, char* data_port) {
         double now = (((double)curTime.tv_sec * 1000000) + curTime.tv_usec) / 1000000;
         errorfile << fixed << Iteration << " " << now << " " << cal_error << endl;
 
-        double *errValue = (double*)malloc(sizeof(double));
-        *errValue = cal_error;
-        head->key = "error";
-        head->value = (void*)errValue;
-        head->type = DOUBLE_TYPE;
-        head->next = NULL;
-
-        int *itrValue = (int*)malloc(sizeof(int));
-        *itrValue = Iteration;
-        node1->key = "itr";
-        node1->value = (void*)*itrValue;
-        node1->type = INT_TYPE;
-        node1->next = NULL;
-
-        head->next = node1;
-        mongoDBExecute(OPER_INSERT, head);
-        
-
-        cout << fixed << now << " cal_error is "<< cal_error << endl;
+        log_info(nLogger,"Error is %lf", cal_error);
 
         //Input the polynomial coefficients from the file and put them in the op vector
         op[0] = 1;
@@ -258,25 +264,65 @@ int ADMMServer(char* num_of_pmus, char* data_port) {
         printf( "Prony_Server Write:\n %s \n", avgBuffer);    
 
         for (i=0; i<ClientNum; i++){
-            write(Client_sockfd[i], avgBuffer, size); 
+            status = write(Client_sockfd[i], avgBuffer, size);
+            if (status < 0) {
+            	log_error(nLogger, "Error writing to client #%d. Error: %d", i+1, errno);
+            } else {
+            	log_debug(nLogger, "Wrote to client #%d. Bytes written: %d", i+1, status);
+            }
         }
+
+        double *errValue = (double*)malloc(sizeof(double));
+		*errValue = cal_error;
+		head->key = "error";
+		head->value = (void*)errValue;
+		head->type = DOUBLE_TYPE;
+		head->next = NULL;
+
+		int *itrValue = (int*)malloc(sizeof(int));
+		*itrValue = Iteration;
+		node1->key = "itr";
+		node1->value = (void*)*itrValue;
+		node1->type = INT_TYPE;
+		node1->next = NULL;
+
+		// this is so that data collected at all the different backup servers
+		// also have the same agent name.
+		// backup servers are started by prony_agents, and hence without this
+		// data collected by backup servers would have a different agent name.
+		node2->key = "agent";
+		node2->value = (void*)"server_agent";
+		node2->type = STRING_TYPE;
+		node2->next = NULL;
+
+		head->next = node1;
+		node1->next = node2;
+		mongoDBExecute(OPER_INSERT, head);
 
         log_debug(nLogger, "End of Main loop. Iteration: %d", Iteration);
     } // end big while loop
 
-    Mutex_destroy();
+    pthread_mutex_destroy(&mymutex);
     
-    // Broadcast the message of "Algorithm finishes!"
-    size=sprintf(tempBuffer, "Distributed Prony Alogrithm finishes! \r\n\r\n");
-    printf( "Prony Server VM Writes to Prony Client:\n %s \n", tempBuffer);  
-    
-    for (i=0; i<ClientNum; i++){
-        write(Client_sockfd[i], tempBuffer, size); 
-    }     
-    
-    sleep(2);	
-    close(Server_sockfd);
+    if (!stop) {
+    	// Broadcast the message of "Algorithm finishes!"
+		size=sprintf(tempBuffer, "Distributed Prony Alogrithm finishes! \r\n\r\n");
+		printf( "Prony Server VM Writes to Prony Client:\n %s \n", tempBuffer);
 
+		for (i=0; i<ClientNum; i++){
+			write(Client_sockfd[i], tempBuffer, size);
+		}
+
+		log_info(nLogger, "Distributed Prony Alogrithm finishes!");
+    }
+    
+    sleep(1);
+
+    for (i=0; i<ClientNum; i++){
+		close(Client_sockfd[i]);
+	}
+
+    close(Server_sockfd);
 
     // ========================================= Print out the roots to File =========================================//
     errorfile.close();
@@ -284,11 +330,96 @@ int ADMMServer(char* num_of_pmus, char* data_port) {
     timer_sub(&Start, &End, &Result);
     cout<<"Total end-to-end delay of Prony algorithm for each sample is "<<(Result.tv_sec*1000 + Result.tv_usec/1000)/(2160-40)<<"ms.  ^_^"<<endl;
     mongoDBExecute(OPER_FIND_ALL, NULL);	
-    log_debug(nLogger,"End Prony server");
+
+    log_info(nLogger,"End Prony server");
     fclose(nFile);
     return 0;
 
 } /* end of ADMMServer */
-    
+
+
+/*************************************************************
+ * Server_handle. For each TCP connection, Server need to read the local estimated
+   parameters through each thread
+ *************************************************************/
+void *Server_handle(void * parmPtr)
+{
+	int Client_sockfd = *((int *) parmPtr);
+
+	/* Claim receiving and transmitting buffer */
+	char Buffer[DEFAULT_MAX_BUFFER_LEN];
+	int BufferLen;
+	int length;
+	long int SendTime;
+	char ph2[512], pht[512];
+	char *ph1;
+	struct timeval tvalRecieve, tvalParse;
+	fd_set readfds;
+	int status;
+
+	/* lock mutex */
+	pthread_mutex_lock (&mymutex);
+
+	timeout.tv_sec = TIMEOUT_SEC;
+	timeout.tv_usec = TIMEOUT_USEC;
+
+	FD_ZERO(&readfds);
+	FD_SET(Client_sockfd, &readfds);
+
+	log_debug(nLogger,"Comm Thread sockfd %d. Selecting sockets to read", Client_sockfd);
+	status = select(Client_sockfd+1, &readfds, NULL, NULL, &timeout);
+	log_debug(nLogger,"Comm Thread sockfd %d. Return value of select is %d", Client_sockfd, status);
+
+	if (status <= 0) {
+		log_error(nLogger,"Comm Thread sockfd %d. No socket to read.", Client_sockfd);
+		ph1 = "ERROR";
+	} else {
+		/* Read data from client, we here only read once.*/
+		BufferLen = read(Client_sockfd, Buffer, DEFAULT_MAX_BUFFER_LEN);
+
+		if (BufferLen < 0) {
+			log_error(nLogger,"Comm Thread sockfd %d. Read Error return value negative. Error: %d", Client_sockfd, errno);
+			ph1 = "ERROR";
+		} else if (BufferLen == 0) {
+			log_error(nLogger,"Comm Thread sockfd %d. No Data.", Client_sockfd);
+			ph1 = "ERROR";
+		} else {
+			Buffer[BufferLen] = 0;
+
+			gettimeofday (&tvalRecieve, NULL);
+			log_debug(nLogger, "Comm Thread sockfd %d. Received message of size %d", Client_sockfd, BufferLen);
+			//printf("Buffer message with size %d is \n %s", BufferLen, Buffer);
+
+			// Parse messge
+			ph1 = strtok(Buffer, "\r\n");
+			gettimeofday (&tvalParse, NULL);
+			length = strlen(ph1);
+			//log_debug(nLogger, "Comm Thread sockfd %d. First line of message is %s with length %d", Client_sockfd, ph1, length);
+
+			strcpy(ph2, strtok(ph1+(length+1)*sizeof(char), "\r\n"));
+			//log_debug(nLogger, "Comm Thread sockfd %d. Second line of message is %s", Client_sockfd, ph2);
+
+			strcpy(pht, strtok(ph2, " "));
+			//log_debug(nLogger, "Comm Thread sockfd %d. First word in second line is %s", Client_sockfd, pht);
+
+			strcpy(pht, strtok(NULL, " "));
+			//log_debug(nLogger, "Comm Thread sockfd %d. Second word in second line is %s", Client_sockfd, pht);
+
+			SendTime = strtol(pht, NULL, 10);
+			log_debug(nLogger, "Comm Thread sockfd %d. SendTime of message is %ld", Client_sockfd, SendTime);
+		}
+	}
+
+	/* unlock mutex */
+	pthread_mutex_unlock (&mymutex);
+
+	//log_debug(nLogger, "Comm Thread sockfd %d. Total communication time including data parse time in microseconds is %ld", Client_sockfd, (tvalParse.tv_sec)*1000000+tvalParse.tv_usec - SendTime);
+
+	//free(parmPtr);
+	log_debug(nLogger, "Comm Thread sockfd %d. Thread Exiting", Client_sockfd);
+
+	pthread_exit(ph1);
+}
+
 } // extern C
 

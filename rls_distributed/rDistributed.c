@@ -43,13 +43,10 @@ struct argsPronyClient
 	char  dataPort[100];
 	char  strategy[100];
 	char  bkpServerHost1[100];
-	char  bkpServerPort1[100];
 	char  bkpServerHost2[100];
-	char  bkpServerPort2[100];
 	char  bkpServerHost3[100];
-	char  bkpServerPort3[100];
 	char  bkpServerHost4[100];
-	char  bkpServerPort4[100];
+	char  bkpServerPort[100];
 	char  numAttacks[100];
 	char  numPdcs[100];
 };
@@ -64,9 +61,9 @@ void startServer(char* a, char* b);
 void *tempStartServer(void* arg);
 void returnWhenServerDone();
 void startPronyClient(char* server_host, char* strategy,
-		char* backupserver1_host, char* backupserver2_host,
-		char* backupserver3_host, char* backupserver4_host,
-		char* num_of_attack, char* num_of_pdcs);
+		              char* backupserver1_host, char* backupserver2_host,
+					  char* backupserver3_host, char* backupserver4_host,
+					  char* num_of_attack, char* num_of_pdcs);
 void *tempStartPronyClient(void* arg);
 void startPMU(char* a, char* b, char* c);
 void *tempStartPMU(void* arg);
@@ -104,9 +101,9 @@ void returnWhenServerStarted(char* name) {
 }
 
 void startPronyClient(char* server_host, char* strategy,
-		char* backupserver1_host, char* backupserver2_host,
-		char* backupserver3_host, char* backupserver4_host,
-		char* num_of_attack, char* num_of_pdcs) {
+		              char* backupserver1_host, char* backupserver2_host,
+					  char* backupserver3_host, char* backupserver4_host,
+					  char* num_of_attack, char* num_of_pdcs) {
 	log_info(logger, "entering startPronyClient");
 	struct argsPronyClient *clientArgs = (struct argsPronyClient*) malloc(sizeof(struct argsPronyClient));
 	strcpy(clientArgs->serverHost, server_host);
@@ -114,13 +111,10 @@ void startPronyClient(char* server_host, char* strategy,
 	strcpy(clientArgs->dataPort, "65002");
 	strcpy(clientArgs->strategy, strategy);
 	strcpy(clientArgs->bkpServerHost1, backupserver1_host);
-	strcpy(clientArgs->bkpServerPort1, "65001");
 	strcpy(clientArgs->bkpServerHost2, backupserver2_host);
-	strcpy(clientArgs->bkpServerPort2, "65001");
 	strcpy(clientArgs->bkpServerHost3, backupserver3_host);
-	strcpy(clientArgs->bkpServerPort3, "65001");
 	strcpy(clientArgs->bkpServerHost4, backupserver4_host);
-	strcpy(clientArgs->bkpServerPort4, "65001");
+	strcpy(clientArgs->bkpServerPort, "65001");
 	strcpy(clientArgs->numAttacks, num_of_attack);
 	strcpy(clientArgs->numPdcs, num_of_pdcs);
 	pthread_create(&pidPronyClient, NULL, tempStartPronyClient, clientArgs);
@@ -133,10 +127,9 @@ void *tempStartPronyClient(void* arg) {
 	clientArgs = (struct argsPronyClient*)arg;
 	int retTemp = PronyADMMClient(clientArgs->serverHost, clientArgs->serverPort,
 			clientArgs->dataPort, clientArgs->strategy,
-			clientArgs->bkpServerHost1, clientArgs->bkpServerPort1,
-			clientArgs->bkpServerHost2, clientArgs->bkpServerPort2,
-			clientArgs->bkpServerHost3, clientArgs->bkpServerPort3,
-			clientArgs->bkpServerHost4, clientArgs->bkpServerPort4,
+			clientArgs->bkpServerHost1, clientArgs->bkpServerHost2,
+			clientArgs->bkpServerHost3, clientArgs->bkpServerHost4,
+			clientArgs->bkpServerPort,
 			clientArgs->numAttacks, clientArgs->numPdcs);
 	log_info(logger, "exiting tempStartPronyClient");
 	return NULL;

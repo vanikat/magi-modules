@@ -2,7 +2,7 @@ name: httpclient
 magi_version: 1.7
 display: HTTP Client
 description: A web client agent that uses the system curl software to perform http requests
-execute: socket 
+execute: thread 
 mainfile: http_client.py
 inherits:
    - TrafficClientAgent

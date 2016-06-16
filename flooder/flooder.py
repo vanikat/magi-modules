@@ -105,7 +105,7 @@ class flooder_agent(DispatchAgent):
 	@agentmethod()
 	def stop(self, msg):
 		self.stopFlood(msg)
-		DispatchAgent.stop(self)
+		DispatchAgent.stop(self, msg)
 
 	@agentmethod()
 	def confirmConfiguration(self):
