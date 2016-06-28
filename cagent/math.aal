@@ -34,5 +34,29 @@ eventstreams:
           b: 25
 
       - type: trigger
-        triggers: [ {event: subDone, retVal: 25, target: 'exit'} ]
+        triggers: [ {event: subDone, retVal: 25, target: 'integerMultiplyStream'} ]
+  
+  integerMultiplyStream:
+      - type: event
+        agent: c_agent
+        method: multiplyInteger
+        trigger: multDone
+        args:
+          a: 50
+          b: 25
+
+      - type: trigger
+        triggers: [ {event: multDone, retVal: 1250, target: 'integerDivideStream'} ]
+        
+  integerDivideStream:
+      - type: event
+        agent: c_agent
+        method: subtractInteger
+        trigger: divDone
+        args:
+          a: 50
+          b: 25
+
+      - type: trigger
+        triggers: [ {event: divDone, retVal: 2, target: 'exit'} ]
 
