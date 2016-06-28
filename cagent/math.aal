@@ -51,7 +51,7 @@ eventstreams:
   integerDivideStream:
       - type: event
         agent: c_agent
-        method: subtractInteger
+        method: divideInteger
         trigger: divDone
         args:
           a: 50
