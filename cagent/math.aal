@@ -12,7 +12,7 @@ streamstarts: [ integerAddStream ]
 
 eventstreams:
 
-  integerAddStream:         
+   integerAddStream:         
       - type: event
         agent: c_agent
         method: addInteger
@@ -24,7 +24,7 @@ eventstreams:
       - type: trigger
         triggers: [ {event: addDone, retVal: 75, target: 'integerSubtractStream'} ]
 
-  integerSubtractStream:
+   integerSubtractStream:
       - type: event
         agent: c_agent
         method: subtractInteger
@@ -34,9 +34,9 @@ eventstreams:
           b: 25
 
       - type: trigger
-        triggers: [ {event: subDone, retVal: 25, target: 'exit'} ]
-
-  integerMultiplyStream:
+        triggers: [ {event: subDone, retVal: 25, target: 'integerMultiplyStream'} ]
+  
+   integerMultiplyStream:
       - type: event
         agent: c_agent
         method: multiplyInteger
@@ -46,9 +46,9 @@ eventstreams:
           b: 25
 
       - type: trigger
-        triggers: [ {event: multDone, retVal: 1250, target: 'integerDivideStream'} 
-  
-  integerDivideStream:
+        triggers: [ {event: multDone, retVal: 1250, target: 'integerDivideStream'} ]
+
+   integerDivideStream:
       - type: event
         agent: c_agent
         method: divideInteger
@@ -58,17 +58,5 @@ eventstreams:
           b: 25
 
       - type: trigger
-        triggers: [ {event: divDone, retVal: 2, target: 'exit'} 
-  
-groups:
-  agent_group: [control]
-    
-agents:
-  c_agent:
-    group: agent_group
-    path: /proj/montage/magi-modules/cagent/ 
-    execargs: { loglevel: debug }
-
-streamstarts: [ integerAddStream ]
-
+        triggers: [ {event: divDone, retVal: 2, target: 'exit'} ]
         
