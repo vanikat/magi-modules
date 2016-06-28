@@ -12,7 +12,7 @@ streamstarts: [ integerAddStream ]
 
 eventstreams:
 
-  integerAddStream:         
+   integerAddStream:         
       - type: event
         agent: c_agent
         method: addInteger
@@ -24,7 +24,7 @@ eventstreams:
       - type: trigger
         triggers: [ {event: addDone, retVal: 75, target: 'integerSubtractStream'} ]
 
-  integerSubtractStream:
+   integerSubtractStream:
       - type: event
         agent: c_agent
         method: subtractInteger
@@ -36,7 +36,7 @@ eventstreams:
       - type: trigger
         triggers: [ {event: subDone, retVal: 25, target: 'exit'} ]
 
-  integerMultiplyStream:
+   integerMultiplyStream:
       - type: event
         agent: c_agent
         method: multiplyInteger
