@@ -5,7 +5,7 @@ groups:
 agents:
   c_agent:
     group: agent_group
-    path: /proj/montage/magi-modules/cagent/ 
+    path: /users/rning/magi-modules/cagent/ 
     execargs: { loglevel: debug }
 
 streamstarts: [ integerAddStream ]
