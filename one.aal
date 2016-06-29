@@ -1,4 +1,3 @@
-## The agent implementation and addressing information 
 agents:
   client_agent:
     group: client_group
@@ -10,7 +9,6 @@ agents:
     path: /share/magi/modules/apache/apache.tar.gz 
     execargs: []
 
-## The mapping from the AAL procedure to the experiment apparatus 
 groups:
   client_group: [clientnode]
   server_group: [servernode]
