@@ -48,4 +48,5 @@ eventstreams:
 
       - type: trigger
         triggers: [ {event: voidDone, target: 'exit'} ]
+/share/magi/current/magi_orchestrator.py --experiment $EXP --project $PROJ --events $AAL
 
