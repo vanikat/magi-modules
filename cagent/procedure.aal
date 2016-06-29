@@ -1,3 +1,6 @@
+PROJ=myExp
+EXP=myProj
+AAL=procedure.aal
 
 groups:
   agent_group: [control]
