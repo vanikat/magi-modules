@@ -61,4 +61,4 @@ eventstreams:
         triggers: [ {event: divDone, retVal: 2} ]
         
       - type: trigger
-        trigger: [ {event: addDone, event: subDone, event: multDone, event: divDone, target: 'exit'} ]
+        triggers: [ {event: addDone, event: subDone, event: multDone, event: divDone, target: 'exit'} ]
