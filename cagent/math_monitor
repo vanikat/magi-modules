@@ -1,14 +1,13 @@
-
 groups:
   agent_group: [control]
   monitor_group: [control]
-    
+  
 agents:
   c_agent:
     group: agent_group
     path: /users/rning/magi-modules/cagent/ 
     execargs: { loglevel: debug }
-    
+
   monitor_agent:
     group: monitor_group
     path: /share/magi/modules/pktcounters/pktCountersAgent.tar.gz
@@ -18,7 +17,7 @@ streamstarts: [ integerAddStream ]
 
 eventstreams:
 
-   monitorstream:
+  monitorstream:
       - type: event
         agent: monitor_agent 
         method: startCollection
@@ -30,12 +29,12 @@ eventstreams:
  
       - type: trigger
         triggers: [ {event: divDone, retVal: 2} ]
-      
+
       - type: event
         agent: monitor_agent
         method: stopCollection
         args: {}
-      
+
       - type: trigger
         triggers: [ { target: 'exit'} ]
   
