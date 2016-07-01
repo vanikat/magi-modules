@@ -1,0 +1,85 @@
+
+groups:
+  agent_group: [control]
+  monitor_group: [control]
+    
+agents:
+  c_agent:
+    group: agent_group
+    path: /users/rning/magi-modules/cagent/ 
+    execargs: { loglevel: debug }
+    
+  monitor_agent:
+    group: monitor_group
+    path: /share/magi/modules/pktcounters/pktCountersAgent.tar.gz
+    execargs: {}
+
+streamstarts: [ integerAddStream ]
+
+eventstreams:
+
+   monitorstream:
+      - type: event
+        agent: monitor_agent 
+        method: startCollection
+        trigger: collectionServer
+        args: {}
+
+      - type: trigger
+        triggers: [ { target: 'integerAddStream' } ]
+ 
+      - type: trigger
+        triggers: [ {event: divDone, retVal: 2} ]
+      
+      - type: event
+        agent: monitor_agent
+        method: stopCollection
+        args: {}
+      
+      - type: trigger
+        triggers: [ { target: 'exit'} ]
+  
+  integerAddStream:         
+      - type: event
+        agent: c_agent
+        method: addInteger
+        trigger: addDone
+        args:
+          a: 25
+          b: 50
+
+      - type: trigger
+        triggers: [ {event: addDone, retVal: 75, target: 'integerSubtractStream'} ]
+
+  integerSubtractStream:
+      - type: event
+        agent: c_agent
+        method: subtractInteger
+        trigger: subDone
+        args:
+          a: 50
+          b: 25
+
+      - type: trigger
+        triggers: [ {event: subDone, retVal: 25, target: 'integerMultiplyStream'} ]
+  
+  integerMultiplyStream:
+      - type: event
+        agent: c_agent
+        method: multiplyInteger
+        trigger: multDone
+        args:
+          a: 50
+          b: 25
+
+      - type: trigger
+        triggers: [ {event: multDone, retVal: 1250, target: 'integerDivideStream'} ]
+        
+  integerDivideStream:
+      - type: event
+        agent: c_agent
+        method: divideInteger
+        trigger: divDone
+        args:
+          a: 50
+          b: 25
