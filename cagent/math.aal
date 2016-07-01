@@ -60,3 +60,4 @@ eventstreams:
       - type: trigger
         triggers: [ {event: divDone, retVal: 2, target: 'exit'} ]
         
+magi_orchestrator.py -e experiment -p project -f math.aal
