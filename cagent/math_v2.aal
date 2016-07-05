@@ -8,10 +8,10 @@ agents:
     path: /users/rning/magi-modules/cagent/ 
     execargs: { loglevel: debug }
 
-streamstarts: [ cleanupStream, integerSubtractStream, integerAddStream, integerMultiplyStream, integerDivideStream ]
+streamstarts: [ integerSubtractStream, integerAddStream, integerMultiplyStream, integerDivideStream ]
 
 eventstreams:
-  integerAddStream:         
+  integerAddStream:
       - type: event
         agent: c_agent
         method: addInteger
@@ -67,4 +67,4 @@ eventstreams:
   
   cleanupStream:
       - type: trigger
-        triggers: [ {target: 'exit', timeout: 10000} ]
+        triggers: [ {esets: [ {event: addDone} {event: subDone} {event: multDone} {event: divDone} ], target: "exit", timeout: 1000} ]
