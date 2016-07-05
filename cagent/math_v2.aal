@@ -11,7 +11,6 @@ agents:
 streamstarts: [ integerAddStream, integerSubtractStream, integerMultiplyStream, integerDivideStream ]
 
 eventstreams:
-
   integerAddStream:         
       - type: event
         agent: c_agent
@@ -47,7 +46,7 @@ eventstreams:
 
       - type: trigger
         triggers: [ {event: multDone, retVal: 1250} ]
-        
+
   integerDivideStream:
       - type: event
         agent: c_agent
@@ -60,7 +59,7 @@ eventstreams:
       - type: trigger
         triggers: [ {event: divDone, retVal: 2} ]
   
-  cleanupStream:
+  /*cleanupStream:
       - type: trigger
         triggers: [ {event: addDone} ]
 
@@ -72,3 +71,4 @@ eventstreams:
 
       - type: trigger
         triggers: [ {event: divDone, target: 'exit'} ]
+*/
