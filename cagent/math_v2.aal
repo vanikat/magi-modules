@@ -25,7 +25,7 @@ eventstreams:
 
   integerSubtractStream:
       - type: trigger
-        triggers: [ {timeout: 5000} ]
+        triggers: [ {timeout: 500} ]
 
       - type: event
         agent: c_agent
@@ -52,7 +52,7 @@ eventstreams:
 
   integerDivideStream:
       - type: trigger
-        triggers: [ {timeout: 5000} ]
+        triggers: [ {timeout: 500} ]
 
       - type: event
         agent: c_agent
