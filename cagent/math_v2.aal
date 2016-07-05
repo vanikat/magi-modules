@@ -58,17 +58,3 @@ eventstreams:
 
       - type: trigger
         triggers: [ {event: divDone, retVal: 2} ]
-  
-  /*cleanupStream:
-      - type: trigger
-        triggers: [ {event: addDone} ]
-
-      - type: trigger
-        triggers: [ {event: subDone} ]
-
-      - type: trigger
-        triggers: [ {event: multDone} ]
-
-      - type: trigger
-        triggers: [ {event: divDone, target: 'exit'} ]
-*/
