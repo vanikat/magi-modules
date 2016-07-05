@@ -1,0 +1,48 @@
+
+groups:
+  agent_group: [testa]
+    
+agents:
+  testagent:
+    group: agent_group
+    path: /Users/hussain/projects/github/magi-modules/agent101/ 
+    execargs: {}
+
+streamstarts: [ charStream ]
+
+eventstreams:
+
+  charStream:         
+      - type: event
+        agent: testagent
+        method: testChar
+        trigger: charDone
+        args:
+          a: hello
+          b: world
+
+      - type: trigger
+        triggers: [ {event: charDone, retVal: helloworld, target: 'intStream'} ]
+
+  intStream:
+      - type: event
+        agent: testagent 
+        method: testInt
+        trigger: intDone
+        args:
+          a: 50
+          b: 55
+
+      - type: trigger
+        triggers: [ {event: intDone, retVal: 105, target: 'voidStream'} ]
+
+  voidStream:
+      - type: event
+        agent: testagent
+        method: testVoid
+        trigger: voidDone
+        args: {}
+
+      - type: trigger
+        triggers: [ {event: voidDone, target: 'exit'} ]
+
