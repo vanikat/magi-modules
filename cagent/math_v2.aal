@@ -58,3 +58,7 @@ eventstreams:
 
       - type: trigger
         triggers: [ {event: divDone, retVal: 2} ]
+  
+  cleanupStream:
+      -type: trigger
+        triggers: [ {timeout: 15000, target: 'exit'} ]
