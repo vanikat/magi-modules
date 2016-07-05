@@ -24,6 +24,9 @@ eventstreams:
         triggers: [ {event: addDone, retVal: 75} ]
 
   integerSubtractStream:
+      - type: trigger
+        triggers: [ {timeout: 5000} ]
+
       - type: event
         agent: c_agent
         method: subtractInteger
@@ -48,6 +51,9 @@ eventstreams:
         triggers: [ {event: multDone, retVal: 1250} ]
 
   integerDivideStream:
+      - type: trigger
+        triggers: [ {timeout: 5000} ]
+
       - type: event
         agent: c_agent
         method: divideInteger
