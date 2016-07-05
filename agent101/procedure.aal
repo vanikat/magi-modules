@@ -1,11 +1,11 @@
 
 groups:
-  agent_group: [testa]
+  agent_group: [control]
     
 agents:
   testagent:
     group: agent_group
-    path: /Users/hussain/projects/github/magi-modules/agent101/ 
+    path: /users/rning/magi-modules/agent101/ 
     execargs: {}
 
 streamstarts: [ charStream ]
