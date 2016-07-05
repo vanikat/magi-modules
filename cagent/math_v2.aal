@@ -8,7 +8,7 @@ agents:
     path: /users/rning/magi-modules/cagent/ 
     execargs: { loglevel: debug }
 
-streamstarts: [ integerSubtractStream, integerDivideStream ]
+streamstarts: [ integerSubtractStream, integerAddStream, integerMultiplyStream, integerDivideStream ]
 
 eventstreams:
   integerAddStream:         
