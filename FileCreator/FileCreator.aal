@@ -7,12 +7,20 @@ agents:
     myFileCreators:
         group: myFileCreatorGroup
         # (note: the "PATH" argument is the agent directory. The
-        # direcory must contain an IDL and agent implementation.)
-        path: /users/rning/magi-modules/FileCreator
+        # direcory must contain an IDL and agent implementation. It must
+        # also contain a *__init__.py* file, which is required
+        # for it to be considered as a valid python package.)
+        path: users/rning/magi-modules/FileCreator
         execargs: []
 
 eventstreams:
     main:
+        - type: event
+          agent: myFileCreators
+          method: setConfiguration
+          args:
+             filename: users/rning/FileCreator/myCreatedFile
+
         - type: event
           agent: myFileCreators
           method: createFile
