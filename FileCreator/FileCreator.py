@@ -21,7 +21,8 @@ class FileCreator(DispatchAgent):
         
         # Copy the AAL File
         # cwd = os.path.dirname(sys.argv[0])
-        copyfile(self.sourceFile, self.destinationFile)
+        # copyfile(self.sourceFile, self.destinationFile)
+        copyfile("/users/rning/magi-modules/cagent/math.aal", "/users/rning/magi-modules/cagent/mathCopy.aal")
 
 # the getAgent() method must be defined somewhere for all agents.
 # The Magi daemon invokes this mehod to get a reference to an
