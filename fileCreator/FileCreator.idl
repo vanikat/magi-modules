@@ -2,7 +2,7 @@ name: fileCreator
 display: File Creator Agent
 description:  This agent creates a file on the test node.
 execute: thread
-mainfile: fileCreator.py
+mainfile: FileCreator.py
 inherits:
    - DispatchAgent
 
