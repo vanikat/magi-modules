@@ -15,6 +15,9 @@ class FileCreator(DispatchAgent):
         '''Create a file on the host.'''
         # open and immediately close the file to create it.
         open(self.filename, 'w').close()
+        # Copy the AAL File
+        cwd = os.path.dirname(sys.argv[0])
+        copy2(cwd + "/math.aal", cwd + "/Generated.aal")
 
 # the getAgent() method must be defined somewhere for all agents.
 # The Magi daemon invokes this mehod to get a reference to an
