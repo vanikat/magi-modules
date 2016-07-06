@@ -10,7 +10,7 @@ agents:
         # direcory must contain an IDL and agent implementation. It must
         # also contain a *__init__.py* file, which is required
         # for it to be considered as a valid python package.)
-        path: users/rning/magi-modules/FileCreator
+        path: /users/rning/magi-modules/FileCreator
         execargs: []
 
 eventstreams:
