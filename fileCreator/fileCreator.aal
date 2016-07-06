@@ -1,0 +1,19 @@
+streamstarts: [main]
+
+groups:
+    myFileCreatorGroup: [NODES]
+
+agents:
+    myFileCreators:
+        group: myFileCreatorGroup
+        # (note: the "PATH" argument is the agent directory. The
+        # direcory must contain an IDL and agent implementation.)
+        path: PATH/FileCreator
+        execargs: []
+
+eventstreams:
+    main:
+        - type: event
+          agent: myFileCreators
+          method: createFile
+          args: {}
