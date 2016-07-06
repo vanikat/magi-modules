@@ -19,7 +19,7 @@ eventstreams:
           agent: myFileCreators
           method: setConfiguration
           args:
-             filename: users/rning/FileCreator/myCreatedFile
+             filename: /users/rning/magi-modules/FileCreator/myCreatedFile
 
         - type: event
           agent: myFileCreators
