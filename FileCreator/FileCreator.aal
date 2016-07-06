@@ -25,5 +25,13 @@ eventstreams:
 
         - type: event
           agent: myFileCreators
+          method: setConfiguration
+          args:
+             # filename: /users/rning/magi-modules/FileCreator/myCreatedFile
+             # targetFile: /users/rning/magi-modules/cagent/math.aal
+             destinationFile: /users/rning/magi-modules/cagent/mathCopy.aal
+
+        - type: event
+          agent: myFileCreators
           method: createFile
           args: {}
