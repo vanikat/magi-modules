@@ -1,0 +1,17 @@
+name: FileCreator
+display: File Creator Agent
+description:  This agent creates a file on the test node.
+execute: thread
+mainfile: FileCreator.py
+inherits:
+   - DispatchAgent
+
+methods:
+   - name: createFile
+     help: Create the file
+     args: []
+
+variables:
+   - name: filename
+     help: the full path of the file to create
+     type: string
