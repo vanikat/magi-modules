@@ -1,5 +1,6 @@
 from magi.util.agent import DispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
+from shutil import copyfile
 
 # The FileCreator agent implementation, derived from DispatchAgent.
 class FileCreator(DispatchAgent):
@@ -20,7 +21,7 @@ class FileCreator(DispatchAgent):
         
         # Copy the AAL File
         # cwd = os.path.dirname(sys.argv[0])
-        copy2(self.sourceFile, self.destinationFile)
+        copyfile(self.sourceFile, self.destinationFile)
 
 # the getAgent() method must be defined somewhere for all agents.
 # The Magi daemon invokes this mehod to get a reference to an
