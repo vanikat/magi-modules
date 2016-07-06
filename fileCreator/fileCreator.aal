@@ -8,12 +8,12 @@ agents:
         group: myFileCreatorGroup
         # (note: the "PATH" argument is the agent directory. The
         # direcory must contain an IDL and agent implementation.)
-        path: users/rning/magi-modules/fileCreator
+        path: /users/rning/magi-modules/fileCreator
         execargs: []
 
 eventstreams:
     main:
         - type: event
-          agent: myFileCreators
+          agent: fileCreator
           method: createFile
           args: {}
