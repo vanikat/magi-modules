@@ -24,7 +24,7 @@ eventstreams:
              destinationFile: /users/rning/magi-modules/cagent/mathCopy.aal
 
         - type: trigger
-            triggers: [ {event: configDone} ]
+          triggers: [ {event: configDone} ]
 
         - type: event
           agent: myFileCreators
