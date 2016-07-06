@@ -1,14 +1,14 @@
 streamstarts: [main]
 
 groups:
-    myFileCreatorGroup: [NODES]
+    myFileCreatorGroup: [control]
 
 agents:
     myFileCreators:
         group: myFileCreatorGroup
         # (note: the "PATH" argument is the agent directory. The
         # direcory must contain an IDL and agent implementation.)
-        path: PATH/FileCreator
+        path: users/rning/magi-modules/fileCreator
         execargs: []
 
 eventstreams:
