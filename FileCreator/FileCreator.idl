@@ -12,6 +12,9 @@ methods:
      args: []
 
 variables:
-   - name: filename
-     help: the full path of the file to create
+   - name: sourceFile
+     help: the full path of the file to use to copy
+     type: string
+   - name: destinationFile
+     help: the full path of the created file 
      type: string
