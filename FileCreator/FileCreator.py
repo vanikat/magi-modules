@@ -6,6 +6,8 @@ class FileCreator(DispatchAgent):
     def __init__(self):
         DispatchAgent.__init__(self)
         self.filename = '/tmp/newfile'
+        self.targetFile = ''
+        self.destinationFile = ''
 
     # A single method which creates the file named by self.filename.
     # (The @agentmethod() decorator is not required, but is encouraged.
@@ -14,10 +16,11 @@ class FileCreator(DispatchAgent):
     def createFile(self, msg):
         '''Create a file on the host.'''
         # open and immediately close the file to create it.
-        open(self.filename, 'w').close()
+        # open(self.filename, 'w').close()
+        
         # Copy the AAL File
-        cwd = os.path.dirname(sys.argv[0])
-        copy2(cwd + "/math.aal", cwd + "/Generated.aal")
+        # cwd = os.path.dirname(sys.argv[0])
+        copy2(self.targetFile, self.destinationFile)
 
 # the getAgent() method must be defined somewhere for all agents.
 # The Magi daemon invokes this mehod to get a reference to an
