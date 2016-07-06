@@ -6,8 +6,8 @@ class FileCreator(DispatchAgent):
     def __init__(self):
         DispatchAgent.__init__(self)
         self.filename = '/tmp/newfile'
-        targetFile = ''
-        destinationFile = ''
+        targetFile = '/tmp'
+        destinationFile = '/tmp'
 
     # A single method which creates the file named by self.filename.
     # (The @agentmethod() decorator is not required, but is encouraged.
