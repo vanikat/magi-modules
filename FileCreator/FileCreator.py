@@ -5,8 +5,8 @@ from magi.util.processAgent import initializeProcessAgent
 class FileCreator(DispatchAgent):
     def __init__(self):
         DispatchAgent.__init__(self)
-        self.filename = '/tmp/newfile'
-        self.targetFile = '/tmp'
+        # self.filename = '/tmp/newfile'
+        self.sourceFile = '/tmp'
         self.destinationFile = '/tmp'
 
     # A single method which creates the file named by self.filename.
@@ -20,7 +20,7 @@ class FileCreator(DispatchAgent):
         
         # Copy the AAL File
         # cwd = os.path.dirname(sys.argv[0])
-        copy2(self.targetFile, self.destinationFile)
+        copy2(self.sourceFile, self.destinationFile)
 
 # the getAgent() method must be defined somewhere for all agents.
 # The Magi daemon invokes this mehod to get a reference to an
