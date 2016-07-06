@@ -1,4 +1,4 @@
-name: FileCreator
+name: fileCreator
 display: File Creator Agent
 description:  This agent creates a file on the test node.
 execute: thread
