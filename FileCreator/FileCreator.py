@@ -27,9 +27,9 @@ class FileCreator(DispatchAgent):
                     # line = testln.readline()
                     # destination.write(line + "\n")
                     
-                    if line.find("a:") != -1:
+                    if "a:" in line:
                         destination.write("          a: %d" % (random.randint(1, 100))) 
-                    elif line.find("b:") != -1:
+                    elif "b:" in line:
                         destination.write("          b: %d" % (random.randint(1, 100))) 
                     else:
                         destination.write(line)
