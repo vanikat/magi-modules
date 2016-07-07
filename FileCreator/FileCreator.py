@@ -31,7 +31,7 @@ class FileCreator(DispatchAgent):
                         # stringa = "          a: %d" % (random.randint(1, 100))
                         # destination.write(stringa)
                         
-                        destination.write(line)
+                        destination.write("teststring")
                     elif "b:" in line:
                         destination.write("          b: %d" % (random.randint(1, 100)))
                     else:
