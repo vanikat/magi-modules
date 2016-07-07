@@ -28,9 +28,11 @@ class FileCreator(DispatchAgent):
                     # destination.write(line + "\n")
                     
                     if "a:" in line:
-                        destination.write("          a: %d" % (random.randint(1, 100))) 
+                        # destination.write("          a: %d" % (random.randint(1, 100)))
+                        destination.write(line[0: line.find("a:")] + "a: " + str(random.randint(1, 100)))
                     elif "b:" in line:
-                        destination.write("          b: %d" % (random.randint(1, 100))) 
+                        # destination.write("          b: %d" % (random.randint(1, 100)))
+                        destination.write(line[0: line.find("a:")] + "b: " + str(random.randint(1, 100)))
                     else:
                         destination.write(line)
 
