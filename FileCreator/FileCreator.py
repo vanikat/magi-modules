@@ -14,19 +14,9 @@ class FileCreator(DispatchAgent):
     # The @agentmethod() decorator not required, but encouraged. Does nothing of substance now, but may in future.
     @agentmethod()
     def createFile(self, msg):
-        # open and immediately close the file to create it.
-        # open(self.filename, 'w').close()
-        
-        # Copy the AAL File
-        # copyfile(self.sourceFile, self.destinationFile)
-        
-        # Aaron code test
         with open(self.destinationFile, "a") as destination:
             with open(self.sourceFile, "r") as source:
                 for line in source:
-                    # line = testln.readline()
-                    # destination.write(line + "\n")
-                    
                     if "a:" in line:
                         print >>destination, "          a: %d" % randint(1, 100)
                     elif "b:" in line:
