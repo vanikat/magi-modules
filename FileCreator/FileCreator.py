@@ -21,11 +21,10 @@ class FileCreator(DispatchAgent):
         # copyfile(self.sourceFile, self.destinationFile)
         
         # Aaron code test
-        # file = open(self.destinationFile, "wb+
         with open(self.destinationFile, "a") as destination:
             with open(self.sourceFile, "r") as source:
-                for line in source:
-                    # ln = line.readln()
+                for testln in source:
+                    line = testln.readline()
                     
                     if line.find("a:"):
                         destination.write("          a: " + str(random.random() * 100) + "\n") 
