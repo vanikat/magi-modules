@@ -22,8 +22,8 @@ class FileCreator(DispatchAgent):
         # Aaron code test
         with open(self.destinationFile, "a") as destination:
             with open(self.sourceFile, "r") as source:
-                for testln in source:
-                    line = testln.readline()
+                for line in source:
+                    # line = testln.readline()
                     destination.write(line + "\n")
                     
                     '''if line.find("a:"):
