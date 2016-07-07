@@ -13,7 +13,6 @@ class FileCreator(DispatchAgent):
     # The @agentmethod() decorator not required, but encouraged. Does nothing of substance now, but may in future.
     @agentmethod()
     def createFile(self, msg):
-        '''Create a file on the host.'''
         # open and immediately close the file to create it.
         # open(self.filename, 'w').close()
         
@@ -25,13 +24,14 @@ class FileCreator(DispatchAgent):
             with open(self.sourceFile, "r") as source:
                 for testln in source:
                     line = testln.readline()
+                    destination.write(line + "\n")
                     
-                    if line.find("a:"):
+                    '''if line.find("a:"):
                         destination.write("          a: " + str(random.random() * 100) + "\n") 
                     elif line.find("b:"):
                         destination.write("          b: " + str(random.random() * 100) + "\n") 
                     else:
-                        destination.write(line + "\n")
+                        destination.write(line + "\n")'''
 
 # getAgent() method must be defined somewhere for all agents.
 # Magi daemon invokes method to get reference to agent. Uses reference to run and interact with agent instance.
