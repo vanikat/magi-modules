@@ -2,17 +2,15 @@ from magi.util.agent import DispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
 from shutil import copyfile
 
-# The FileCreator agent implementation, derived from DispatchAgent.
+# FileCreator agent implementation, derived from DispatchAgent.
 class FileCreator(DispatchAgent):
     def __init__(self):
         DispatchAgent.__init__(self)
-        # self.filename = '/tmp/newfile'
         self.sourceFile = ''
         self.destinationFile = ''
 
-    # A single method which creates the file named by self.filename.
-    # (The @agentmethod() decorator is not required, but is encouraged.
-    #  it does nothing of substance now, but may in the future.)
+    # Method that creates destinationFile based on sourceFile.
+    # The @agentmethod() decorator not required, but encouraged. Does nothing of substance now, but may in future.
     @agentmethod()
     def createFile(self, msg):
         '''Create a file on the host.'''
@@ -20,23 +18,31 @@ class FileCreator(DispatchAgent):
         # open(self.filename, 'w').close()
         
         # Copy the AAL File
-        # cwd = os.path.dirname(sys.argv[0])
-        copyfile(self.sourceFile, self.destinationFile)
-        # DELETE copyfile("/users/rning/magi-modules/cagent/math.aal", "/users/rning/magi-modules/cagent/mathCopy.aal")
+        # copyfile(self.sourceFile, self.destinationFile)
+        
+        # Aaron code test
+        # file = open(self.destinationFile, "wb+
+        with open(self.destinationFile, "a") as destination:
+            with open(self.sourceFile, "r") as source:
+                for line in source:
+                    # ln = line.readln()
+                    
+                    if line.find("a:"):
+                        destination.write("          a: " + str(random.random() * 100) + "\n") 
+                    elif line.find("b:"):
+                        destination.write("          b: " + str(random.random() * 100) + "\n") 
+                    else:
+                        destination.write(ln)
 
-# the getAgent() method must be defined somewhere for all agents.
-# The Magi daemon invokes this mehod to get a reference to an
-# agent. It uses this reference to run and interact with an agent
-# instance.
+# getAgent() method must be defined somewhere for all agents.
+# Magi daemon invokes method to get reference to agent. Uses reference to run and interact with agent instance.
 def getAgent(**kwargs):
     agent = FileCreator()
     agent.setConfiguration(None, **kwargs)
     return agent
 
-# In case the agent is run as a separate process, we need to
-# create an instance of the agent, initialize the required
-# parameters based on the received arguments, and then call the
-# run method defined in DispatchAgent.
+# In case agent run as separate process, need to create instance of agent, initialize required
+# parameters based on received arguments, and call run method defined in DispatchAgent.
 if __name__ == "__main__":
     agent = FileCreator()
     initializeProcessAgent(agent, sys.argv)
