@@ -31,7 +31,7 @@ class FileCreator(DispatchAgent):
                     elif line.find("b:"):
                         destination.write("          b: " + str(random.random() * 100) + "\n") 
                     else:
-                        destination.write(ln)
+                        destination.write(line + "\n")
 
 # getAgent() method must be defined somewhere for all agents.
 # Magi daemon invokes method to get reference to agent. Uses reference to run and interact with agent instance.
