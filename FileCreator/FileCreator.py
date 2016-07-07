@@ -1,6 +1,7 @@
 from magi.util.agent import DispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
 from shutil import copyfile
+fron random import randint
 
 # FileCreator agent implementation, derived from DispatchAgent.
 class FileCreator(DispatchAgent):
