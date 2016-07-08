@@ -17,10 +17,22 @@ class FileCreator(DispatchAgent):
         with open(self.destinationFile, "a") as destination:
             with open(self.sourceFile, "r") as source:
                 for line in source:
+                    randa = randint(1, 100)
+                    randb = randint(1, 100)
+                    currentop = 1
                     if "a:" in line:
-                        print >>destination, "          a: %d" % randint(1, 100)
+                        print >>destination, "          a: %d" % randa
                     elif "b:" in line:
-                        print >>destination, "          b: %d" % randint(1, 100)
+                        print >>destination, "          b: %d" % randb
+                    elif "retVal:" in line:
+                        if currentop == 1:
+                            print >>destination, line[0:line.find("retVal")] + "retVal: " + str(randa + randb) + "} ]"
+                        elif currentop == 2:
+                            print >>destination, line[0:line.find("retVal")] + "retVal: " + str(randa - randb) + "} ]"
+                        elif currentop == 3:
+                            print >>destination, line[0:line.find("retVal")] + "retVal: " + str(randa * randb) + "} ]"
+                        elif currentop == 4:
+                            print >>destination, line[0:line.find("retVal")] + "retVal: " + str(randa / randb) + "} ]"
                     else:
                         destination.write(line)
 
