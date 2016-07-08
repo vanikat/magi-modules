@@ -33,6 +33,7 @@ class FileCreator(DispatchAgent):
                             print >>destination, line[0:line.find("retVal")] + "retVal: " + str(randa * randb) + "} ]"
                         elif currentop == 4:
                             print >>destination, line[0:line.find("retVal")] + "retVal: " + str(randa / randb) + "} ]"
+                        currenttop += 1
                     else:
                         destination.write(line)
 
