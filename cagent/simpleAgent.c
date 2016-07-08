@@ -62,7 +62,8 @@ int* addInteger(int a, int b) {
 	mongoDBExecute(OPER_INSERT, node1);
 	free(node1);
 	exitlog(logger, __func__, __FILE__, __LINE__);
-	return result1;
+	//return result1;
+	return true;
 }
 
 int* subtractInteger(int a, int b) {
@@ -77,7 +78,8 @@ int* subtractInteger(int a, int b) {
 	mongoDBExecute(OPER_INSERT, node1);
 	free(node1);
 	exitlog(logger, __func__, __FILE__, __LINE__);
-	return result2;
+	//return result2;
+	return true;
 }
 
 /* function to multiply integers */
@@ -93,7 +95,8 @@ int* multiplyInteger(int a, int b) {
 	mongoDBExecute(OPER_INSERT, node1);
 	free(node1);
 	exitlog(logger, __func__, __FILE__, __LINE__);
-	return result3;
+	//return result3;
+	return true;
 }
 
 /* function to divide integers */
@@ -109,7 +112,8 @@ int* divideInteger(int a, int b) {
 	mongoDBExecute(OPER_INSERT, node1);
 	free(node1);
 	exitlog(logger, __func__, __FILE__, __LINE__);
-	return result4;
+	//return result4;
+	return true;
 }
 
 int main(int argc, char **argv) {
