@@ -32,10 +32,11 @@ class FileCreator(DispatchAgent):
                         elif currentop == 3:
                             print >>destination, line[0:line.find("retVal")] + "retVal: " + str(randa * randb) + "} ]"
                         elif currentop == 4:
+                            # truncate the resulting double and cast as int to match the return of simpleAgent.c
                             print >>destination, line[0:line.find("retVal")] + "retVal: " + str(randa / randb) + "} ]"
-                        currenttop += 1
-                        randa = randint(1, 100)
-                        randb = randint(1, 100)
+                        #currenttop += 1
+                        #randa = randint(1, 100)
+                        #randb = randint(1, 100)
                     else:
                         destination.write(line)
 
