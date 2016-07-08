@@ -22,7 +22,7 @@ eventstreams:
           b: 50
 
       - type: trigger
-        triggers: [ {event: addDone, retVal: 75, target: 'integerSubtractStream'} ]
+        triggers: [ {event: addDone, target: 'integerSubtractStream'} ]
 
   integerSubtractStream:
       - type: event
@@ -34,7 +34,7 @@ eventstreams:
           b: 25
 
       - type: trigger
-        triggers: [ {event: subDone, retVal: 25, target: 'integerMultiplyStream'} ]
+        triggers: [ {event: subDone, target: 'integerMultiplyStream'} ]
   
   integerMultiplyStream:
       - type: event
@@ -46,7 +46,7 @@ eventstreams:
           b: 25
 
       - type: trigger
-        triggers: [ {event: multDone, retVal: 1250, target: 'integerDivideStream'} ]
+        triggers: [ {event: multDone, target: 'integerDivideStream'} ]
         
   integerDivideStream:
       - type: event
@@ -58,5 +58,5 @@ eventstreams:
           b: 25
 
       - type: trigger
-        triggers: [ {event: divDone, retVal: 2, target: 'exit'} ]
+        triggers: [ {event: divDone, target: 'exit'} ]
 
