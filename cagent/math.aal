@@ -21,7 +21,7 @@ eventstreams:
           b: 50
 
       - type: trigger
-        triggers: [ {event: addDone,target: 'integerSubtractStream'} ]
+        triggers: [ {event: addDone, target: 'integerSubtractStream'} ]
 
   integerSubtractStream:
       - type: event
