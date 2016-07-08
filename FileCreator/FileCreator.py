@@ -16,10 +16,10 @@ class FileCreator(DispatchAgent):
     def createFile(self, msg):
         with open(self.destinationFile, "a") as destination:
             with open(self.sourceFile, "r") as source:
+                currentop = 1
+                randa = randint(1, 100)
+                randb = randint(1, 100)
                 for line in source:
-                    randa = randint(1, 100)
-                    randb = randint(1, 100)
-                    currentop = 1
                     if "a:" in line:
                         print >>destination, "          a: %d" % randa
                     elif "b:" in line:
@@ -34,6 +34,8 @@ class FileCreator(DispatchAgent):
                         elif currentop == 4:
                             print >>destination, line[0:line.find("retVal")] + "retVal: " + str(randa / randb) + "} ]"
                         currenttop += 1
+                        randa = randint(1, 100)
+                        randb = randint(1, 100)
                     else:
                         destination.write(line)
 
