@@ -11,3 +11,7 @@ from magi.util.agent import NonBlockingDispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
 import yaml
 
+class Building(): # difference between DispatchAgent and NonBlockingDispatchAgent?
+  def __init__(self):
+    DispatchAgent.__init__(self)
+    
