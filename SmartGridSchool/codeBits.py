@@ -5,4 +5,9 @@ def setConfiguration(self, msg, **kwargs):
     from magi.testbed import testbed
     self.hostname = testbed.nodename # should be b-0 to b-21
     for line in parameters:
-      
+      if "day" in line:
+        self.day = line[len("day:"):]
+      if "solarIrradiance" in line:
+        self.solarIrradiance = line[len("solarIrradiance:"):]
+      if "panelEff" in line:
+        self.panelEff = line[len("panelEff:"):]
