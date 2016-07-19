@@ -1,7 +1,12 @@
 # This code for parsing parameters.conf and creating dictionary for each building
 # To be run when each building's function is called by orchestrator (as opposed to args being passed by orchestrator)
 def setConfiguration(self, msg, **kwargs):
-  parameters = open("parameters.conf").readlines();
+  with open("parameters.conf") as paramsFile:
+    paramsList = paramsFile.read().splitlines()
+  self.day = paramList[0][len("day:"):]
+  
+  
+  parameters = open("parameters.conf").splitlines();
   
   
   
