@@ -14,6 +14,13 @@ import yaml
 class Building(): # difference between DispatchAgent and NonBlockingDispatchAgent?
   def __init__(self):
     DispatchAgent.__init__(self)
+  
+  # electricity generation 
+  def generation(self, msg): 
+    
+  
+  # electricity consumption
+  def consumption(self, msg):
     
 
 # getAgent() method must be defined somewhere for all agents.
