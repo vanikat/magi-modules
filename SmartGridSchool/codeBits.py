@@ -22,4 +22,7 @@ def setConfiguration(self, msg, **kwargs):
   self.aapplianceDraw = paramList[index+6][len("applianceDraw:"):]
   self.tempAC = paramList[index+7][len("tempAC:"):]
 
-# 
+# To find temperature when given day and timee
+# Will most likely be included in the larger AC function
+def getTemp(self, msg):
+  
