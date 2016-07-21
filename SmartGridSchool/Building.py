@@ -15,7 +15,7 @@ import yaml
 
 class Building(): # difference between DispatchAgent and NonBlockingDispatchAgent?
     def __init__(self):
-        DispatchAgent.__init__(self)
+    DispatchAgent.__init__(self)
     
     # This code for parsing parameters.conf and creating dictionary for each building
     # To be run when each building's function is called by orchestrator (as opposed to args being passed by orchestrator)
@@ -45,7 +45,7 @@ class Building(): # difference between DispatchAgent and NonBlockingDispatchAgen
   
     # electricity generation 
     def generation(self, msg):
-          
+        
   
     # electricity consumption
     def consumption(self, msg):
