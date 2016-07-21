@@ -2,7 +2,7 @@
 # -Implement return time function in Server.py; this will be called by each building at the start of each minute
 
 # commented out code: don't know if necessary/not yet implemented
-#import logging
+import logging
 import math
 #import scipy.io
 import sys
