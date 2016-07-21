@@ -1,6 +1,8 @@
 # This code for parsing parameters.conf and creating dictionary for each building
 # To be run when each building's function is called by orchestrator (as opposed to args being passed by orchestrator)
 def setConfiguration(self, msg, **kwargs):
+  DispatchAgent.setConfiguration(self, msg, **kwargs)
+  
   # create list of strings
   with open("parameters.conf", r) as parameters:
     self.paramsList = paramsFile.read().splitlines()
