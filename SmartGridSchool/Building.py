@@ -9,7 +9,7 @@ import sys
 
 from magi.messaging.magimessage import MAGIMessage
 from magi.util import helpers, database
-from magi.util.agent import NonBlockingDispatchAgent, agentmethod
+from magi.util.agent import DispatchAgent, agentmethod
 from magi.util.processAgent import initializeProcessAgent
 import yaml
 
