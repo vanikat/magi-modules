@@ -16,40 +16,37 @@ log.setLevel(logging.DEBUG)
 #log.addHandler(ch)
 
 class Server(SharedServer):
-    
     def __init__(self):
         SharedServer.__init__(self)
-        # DEfault port when port not specified in AAL 
+        # Default port when port not specified in AAL 
         self.port = 55286 
-        
+    
+    # This function should start the server
     def runserver(self):
-    # THis function should start the server 
         functionName = self.runserver.__name__ + "on port " + str(self.port) 
         helpers.entrylog(log, functionName, level=logging.INFO)
-
+        
         self.commServer = ServerCommService()
         self.commServer.initCommServer(self.port, self.responseHandler)
-            
-        helpers.exitlog(log, functionName, level=logging.INFO)
-
-        return True 
         
+        helpers.exitlog(log, functionName, level=logging.INFO)
+        
+        return True 
     
-    def terminateserver(self): 
     # This function should stop the server 
+    def terminateserver(self): 
         functionName = self.terminateserver.__name__
         helpers.entrylog(log, functionName, level=logging.INFO)
-   
+        
         self.commServer.stop() 
         helpers.exitlog(log, functionName, level=logging.INFO)
         return True  
-
+    
+    # Dummy response handler 
     def responseHandler(self,recvdata):
-    # this is a dummy response handler 
+        log.info("Got info %s" %(rcvdata)) 
+        sendstring = "Thank you" 	
         
-	log.info("Got info %s" %(rcvdata)) 
-	sendstring = "Thank you" 	
-
         return sendstring  
 
 def getAgent(**kwargs):
