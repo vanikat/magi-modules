@@ -8,16 +8,18 @@ tb-set-node-startcmd $control "$magi_start"
 
 # Buildings (21 clients total)
 set A 20 
-set clanstr ""
+#set clanstr ""
 for {set i 0 } {$i <= $A } { incr i } {  
         set b($i) [$ns node]
         tb-set-node-startcmd $b($i) "$magi_start" 
-        append clanstr "$b($i) "
+        tb-set-node-os $b($i) Ubuntu1204-64-STD
+#        append clanstr "$b($i) "
 } 
 
 # Server (1 server total)
 set server [$ns node]
 tb-set-node-startcmd $server "$magi_start" 
+tb-set-node-os $server Ubuntu1204-64-STD
 
 #set A 0
 #set slanstr ""
