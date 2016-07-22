@@ -12,15 +12,42 @@ dayIterations: &dayIter 1
 agents:
     server_agent:
         group: server_group
-        path: /PATH/
+        path: /PATH/magi-modules/SmartGridSchool/
         execargs: {INIT PARAMS}
     
     building_agent:
         group: building_group
-        path: /PATH/
+        path: /PATH/magi-modules/SmartGridSchool/
         execargs: {INIT PARAMS}
     
 streamstarts: [ STREAMS ]
 
 eventstreams:
-    STREAM
+    server_stream:
+        -   type: event
+            agent: server_agent
+            method: startServer
+            args: { port: 54454 }
+            trigger: commServerStarted
+        
+        -   type: trigger
+            triggers: [ {event: commServerStarted, target: 'client_stream' } ]
+    
+    building_stream: 
+        -   type: event
+            agent: building_agent
+            method: startclient
+            args: {}
+            trigger: clientStarted
+        
+        -   type: trigger
+            triggers: [ {timeout: 15000} ]
+        
+        -   type: event
+            agent: building_agent
+            method: stopclient
+            args: {}
+            trigger: BagentStopped
+        
+        -   type: trigger
+            triggers: [ {event: BagentStopped, target: 'exit'} ]
