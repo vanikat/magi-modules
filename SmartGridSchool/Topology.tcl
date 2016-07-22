@@ -5,6 +5,7 @@ set magi_start "sudo python /share/magi/current/magi_bootstrap.py"
 
 set control [$ns node]
 tb-set-node-startcmd $control "$magi_start"
+tb-set-node-os $control Ubuntu1204-64-STD
 
 # Buildings (21 clients total)
 set A 20 
