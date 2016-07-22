@@ -42,7 +42,7 @@ class Building(): # difference between DispatchAgent and NonBlockingDispatchAgen
         
         '''Parsing for Parameters'''
         # create list of strings
-        with open("parameters.conf", r) as parameters:
+        with open("Parameters.conf", r) as parameters:
             self.paramsList = paramsFile.read().splitlines()
         
         # define the global parameters
