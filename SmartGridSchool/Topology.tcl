@@ -9,7 +9,7 @@ set clanstr ""
 
 for {set i 0 } {$i <= $A } { incr i } {  
         set b($i) [$ns node]
-        tb-set-node-startcmd $clientnode($i) "$magi_start" 
+        tb-set-node-startcmd $b($i) "$magi_start" 
         append clanstr "$b($i) "
 } 
 
@@ -19,7 +19,7 @@ set slanstr ""
 
 for {set i 0 } {$i <= $A } { incr i } {  
         set server($i) [$ns node]
-        tb-set-node-startcmd $servernode($i) "$magi_start" 
+        tb-set-node-startcmd $server($i) "$magi_start" 
         append slanstr "$server($i) "
 }
 
