@@ -6,6 +6,7 @@ import logging
 import math
 #import scipy.io
 import sys
+import os
 
 from magi.messaging.magimessage import MAGIMessage
 from magi.util import helpers, database
