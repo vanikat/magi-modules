@@ -42,26 +42,25 @@ class Building(DispatchAgent): # difference between DispatchAgent and NonBlockin
         
         '''Parsing for Parameters'''
         # create list of strings
-        paramFile = open("/users/rning/magi-modules/SmartGridSchool/Parameters.conf", "r")
-        self.paramList = paramFile.read().splitlines()
-        paramFile.close()
+        with open("/users/rning/magi-modules/SmartGridSchool/Parameters.conf", "r") as paramFile:
+            self.paramList = paramFile.read().splitlines()
         
         # define the global parameters
-        self.day = paramList[0][len("day:"):]
-        self.solarIrradiance = paramList[1][len("solarIrradiance:"):]
-        self.panelEff = paramList[2][len("panelEff:"):]
+        self.day = self.paramList[0][len("day:"):]
+        self.solarIrradiance = self.paramList[1][len("solarIrradiance:"):]
+        self.panelEff = self.paramList[2][len("panelEff:"):]
         
         # define the parameters unique to the building
         ## from magi.testbed import testbed 
         ## self.hostname = testbed.nodename # should be b-0 to b-21
-        index = self.paramsList.index(self.hostname)
-        self.area = paramList[index+1][len("area:"):] 
-        self.panelArea = paramList[index+2][len("panelArea:"):]
-        self.panelTracking = paramList[index+3][len("panelTracking:"):] # boolean: 0 or 1
-        self.lights = paramList[index+4][len("lights:"):]
-        self.outlets = paramList[index+5][len("outlets:"):]
-        self.aapplianceDraw = paramList[index+6][len("applianceDraw:"):]
-        self.tempAC = paramList[index+7][len("tempAC:"):]
+        index = self.paramList.index(self.hostname)
+        self.area = self.paramList[index+1][len("area:"):] 
+        self.panelArea = self.paramList[index+2][len("panelArea:"):]
+        self.panelTracking = self.paramList[index+3][len("panelTracking:"):] # boolean: 0 or 1
+        self.lights = self.paramList[index+4][len("lights:"):]
+        self.outlets = self.paramList[index+5][len("outlets:"):]
+        self.aapplianceDraw = self.paramList[index+6][len("applianceDraw:"):]
+        self.tempAC = self.paramList[index+7][len("tempAC:"):]
     
     # From simple_client > client.py
     def setClientid(self):
