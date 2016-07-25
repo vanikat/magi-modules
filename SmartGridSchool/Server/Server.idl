@@ -3,6 +3,6 @@ magi_version: 1.7
 display: TCP Server
 description: Simple server that starts on the specified port
 execute: thread
-meainfile: server.py
+mainfile: server.py
 inherits:
   - SharedServer
