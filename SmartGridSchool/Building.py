@@ -51,16 +51,16 @@ class Building(DispatchAgent): # difference between DispatchAgent and NonBlockin
         self.panelEff = self.paramList[2][len("panelEff:"):]
         
         # define the parameters unique to the building
-        ## from magi.testbed import testbed 
-        ## self.hostname = testbed.nodename # should be b-0 to b-21
-        index = self.paramList.index(self.hostname)
-        self.area = self.paramList[index+1][len("area:"):] 
-        self.panelArea = self.paramList[index+2][len("panelArea:"):]
-        self.panelTracking = self.paramList[index+3][len("panelTracking:"):] # boolean: 0 or 1
-        self.lights = self.paramList[index+4][len("lights:"):]
-        self.outlets = self.paramList[index+5][len("outlets:"):]
-        self.aapplianceDraw = self.paramList[index+6][len("applianceDraw:"):]
-        self.tempAC = self.paramList[index+7][len("tempAC:"):]
+        # UNTIL SERVER PARAMS ARE IMPLEMENTED:
+        if self.hostname != "server"
+            index = self.paramList.index(self.hostname)
+            self.area = self.paramList[index+1][len("area:"):] 
+            self.panelArea = self.paramList[index+2][len("panelArea:"):]
+            self.panelTracking = self.paramList[index+3][len("panelTracking:"):] # boolean: 0 or 1
+            self.lights = self.paramList[index+4][len("lights:"):]
+            self.outlets = self.paramList[index+5][len("outlets:"):]
+            self.aapplianceDraw = self.paramList[index+6][len("applianceDraw:"):]
+            self.tempAC = self.paramList[index+7][len("tempAC:"):]
     
     # From simple_client > client.py
     def setClientid(self):
