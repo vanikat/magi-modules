@@ -6,7 +6,6 @@ import logging
 import math
 #import scipy.io
 import sys
-import os
 
 from magi.messaging.magimessage import MAGIMessage
 from magi.util import helpers, database
@@ -43,8 +42,7 @@ class Building(DispatchAgent): # difference between DispatchAgent and NonBlockin
         
         '''Parsing for Parameters'''
         # create list of strings
-        paramPath = os.getcwd() + "/Parameters.conf"
-        with open(paramPath, "r") as parameters:
+        with open("/users/rning/magi-modules/SmartGridSchool/Parameters.conf", "r") as parameters:
             self.paramsList = paramsFile.read().splitlines()
         
         # define the global parameters
