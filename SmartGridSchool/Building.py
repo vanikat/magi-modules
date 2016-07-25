@@ -97,12 +97,12 @@ class Building(): # difference between DispatchAgent and NonBlockingDispatchAgen
         log.info("src and string: %s %s", src, string)
     
     # electricity generation 
-    def generation(self, msg):
-        
+    #def generation(self, msg):
+        #
   
     # electricity consumption
-    def consumption(self, msg):
-        
+    #def consumption(self, msg):
+        #    
 
 # getAgent() method must be defined somewhere for all agents.
 # Magi daemon invokes method to get reference to agent. Uses reference to run and interact with agent instance.
