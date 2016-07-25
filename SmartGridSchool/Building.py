@@ -17,7 +17,7 @@ from CommClient import ClientCommService
 
 log = logging.getLogger(__name__)
 
-class Building(): # difference between DispatchAgent and NonBlockingDispatchAgent?
+class Building(DispatchAgent): # difference between DispatchAgent and NonBlockingDispatchAgent?
     def __init__(self):
         DispatchAgent.__init__(self)
         
