@@ -1,0 +1,6 @@
+name: Building
+magi_version: 1.7
+display: Building Client
+description: Building client that communicates through server
+execute: thread
+mainfile: Building.py
