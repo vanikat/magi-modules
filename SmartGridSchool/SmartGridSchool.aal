@@ -12,15 +12,15 @@ dayIterations: &dayIter 1
 agents:
     server_agent:
         group: server_group
-        path: /PATH/magi-modules/SmartGridSchool/
-        execargs: {INIT PARAMS}
+        path: /users/rning/magi-modules/SmartGridSchool/
+        execargs: { port: 55353 }
     
     building_agent:
         group: building_group
-        path: /PATH/magi-modules/SmartGridSchool/
-        execargs: {INIT PARAMS}
+        path: /users/rning/magi-modules/SmartGridSchool/
+        execargs: { port: 55353, server: 'server' }
     
-streamstarts: [ STREAMS ]
+streamstarts: [ server_stream ]
 
 eventstreams:
     server_stream:
@@ -31,7 +31,7 @@ eventstreams:
             trigger: commServerStarted
         
         -   type: trigger
-            triggers: [ {event: commServerStarted, target: 'client_stream' } ]
+            triggers: [ {event: commServerStarted, target: 'building_stream' } ]
     
     building_stream: 
         -   type: event
