@@ -12,12 +12,12 @@ dayIterations: &dayIter 1
 agents:
     server_agent:
         group: server_group
-        path: /users/rning/magi-modules/SmartGridSchool/
+        path: /users/rning/magi-modules/SmartGridSchool/Server/
         execargs: { port: 55353 }
     
     building_agent:
         group: building_group
-        path: /users/rning/magi-modules/SmartGridSchool/
+        path: /users/rning/magi-modules/SmartGridSchool/Building/
         execargs: { port: 55353, server: 'server' }
     
 streamstarts: [ server_stream ]
