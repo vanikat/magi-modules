@@ -14,7 +14,7 @@ for {set i 0 } {$i <= $A } { incr i } {
         set b($i) [$ns node]
         tb-set-node-startcmd $b($i) "$magi_start" 
         tb-set-node-os $b($i) Ubuntu1204-64-STD
-        append lanstr "$b($i)"
+        append lanstr "$b($i) "
 } 
 
 # Server (1 server total)
