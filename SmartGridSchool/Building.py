@@ -52,7 +52,7 @@ class Building(DispatchAgent): # difference between DispatchAgent and NonBlockin
         
         # define the parameters unique to the building
         # UNTIL SERVER PARAMS ARE IMPLEMENTED:
-        if self.hostname != "server"
+        if self.hostname != "server":
             index = self.paramList.index(self.hostname)
             self.area = self.paramList[index+1][len("area:"):] 
             self.panelArea = self.paramList[index+2][len("panelArea:"):]
