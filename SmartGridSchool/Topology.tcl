@@ -23,7 +23,7 @@ tb-set-node-startcmd $server "$magi_start"
 tb-set-node-os $server Ubuntu1204-64-STD
 
 # create the LAN topology
-set lan0 [$ns make-lan "$lanstr" 100Mb 0ms]
+set lan0 [$ns make-lan "$lanstr $server" 100Mb 0ms]
 
 # Setting links from each building client to the server (5 LINKS MAX)
 #set A 20
