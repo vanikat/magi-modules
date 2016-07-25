@@ -42,6 +42,7 @@ class Building(DispatchAgent): # difference between DispatchAgent and NonBlockin
         
         '''Parsing for Parameters'''
         # create list of strings
+        self.paramsList = []
         with open("/users/rning/magi-modules/SmartGridSchool/Parameters.conf", "r") as paramsFile:
             self.paramsList = paramsFile.read().splitlines()
         
