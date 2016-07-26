@@ -55,12 +55,17 @@ class Building(DispatchAgent): # difference between DispatchAgent and NonBlockin
         if self.hostname != "server":
             index = self.paramList.index(self.hostname)
             self.area = self.paramList[index+1][len("area:"):] 
-            self.panelArea = self.paramList[index+2][len("panelArea:"):]
-            self.panelTracking = self.paramList[index+3][len("panelTracking:"):] # boolean: 0 or 1
-            self.lights = self.paramList[index+4][len("lights:"):]
-            self.outlets = self.paramList[index+5][len("outlets:"):]
-            self.aapplianceDraw = self.paramList[index+6][len("applianceDraw:"):]
-            self.tempAC = self.paramList[index+7][len("tempAC:"):]
+            self.volume = self.paramList[index+2][len("volume:"):] 
+            self.panelArea = self.paramList[index+3][len("panelArea:"):]
+            self.panelTracking = self.paramList[index+4][len("panelTracking:"):] # boolean: 0 or 1
+            self.pAZA = self.paramList[index+5][len("pAZA:"):]
+            self.pELA = self.paramList[index+6][len("pELA:"):] 
+            self.lightDraw = self.paramList[index+7][len("lightDraw:"):]
+            self.outlets = self.paramList[index+8][len("outlets:"):]
+            self.applianceDraw = self.paramList[index+9][len("applianceDraw:"):]
+            self.tempAC = self.paramList[index+10][len("tempAC:"):]
+            self.timeAC = self.paramList[index+11][len("timeAC:"):] # list: [ day start, day end, time of day start, time of day end ]
+            self.thermalLeak = self.paramList[index+12][len("thermalLeak:"):] 
     
     # From simple_client > client.py
     def setClientid(self):
